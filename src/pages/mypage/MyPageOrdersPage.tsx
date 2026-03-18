@@ -1,97 +1,89 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
 import {
   getPayments, getPaymentDetail, cancelPayment,
-  type OrderWithPayment, type GetPaymentsParams, type PaymentDetailResponse,
+  type OrderWithPayment, type GetPaymentsParams,
 } from '../../api/payment';
 import { PDF_SERVER_BASE_URL } from '../../api/client';
 
 export default function MyPageOrdersPage() {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<OrderWithPayment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState<GetPaymentsParams['status'] | ''>('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
 
   // 모달 상태
-  const [modalPayment, setModalPayment] = useState<PaymentDetailResponse['payment'] | null>(null);
-  const [modalLoading, setModalLoading] = useState(false);
-  const [modalError, setModalError] = useState<string | null>(null);
+  const [selectedPaymentKey, setSelectedPaymentKey] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [cancelling, setCancelling] = useState(false);
-
-  const fetchOrders = async (page: number = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const params: GetPaymentsParams = { page, per_page: 10 };
-      if (statusFilter) params.status = statusFilter;
-      const response = await getPayments(params);
-      if (response.success) {
-        setOrders(response.orders.data);
-        setCurrentPage(response.orders.current_page);
-        setTotalPages(response.orders.last_page);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '결제 내역을 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    const authenticated = isAuthenticated();
-    setIsLoggedIn(authenticated);
-    if (!authenticated) { navigate('/login'); return; }
-    fetchOrders(1);
-  }, [navigate, statusFilter]);
+    if (!isAuthenticated()) navigate('/login');
+  }, [navigate]);
 
-  const openDetailModal = async (paymentKey: string) => {
-    setModalPayment(null);
-    setModalError(null);
-    setModalLoading(true);
+  // 주문 목록 쿼리
+  const { data: ordersData, isLoading, error: fetchError } = useQuery({
+    queryKey: ['orders', currentPage, statusFilter],
+    queryFn: () => {
+      const params: GetPaymentsParams = { page: currentPage, per_page: 10 };
+      if (statusFilter) params.status = statusFilter;
+      return getPayments(params);
+    },
+    enabled: isAuthenticated(),
+  });
+
+  const orders: OrderWithPayment[] = ordersData?.success ? ordersData.orders.data : [];
+  const totalPages = ordersData?.orders.last_page ?? 1;
+  const error = fetchError instanceof Error ? fetchError.message : fetchError ? '결제 내역을 불러오는데 실패했습니다.' : null;
+
+  // 결제 상세 쿼리 (모달)
+  const { data: detailData, isLoading: modalLoading, error: detailError } = useQuery({
+    queryKey: ['payment-detail', selectedPaymentKey],
+    queryFn: () => getPaymentDetail(selectedPaymentKey!),
+    enabled: !!selectedPaymentKey,
+    staleTime: 0,
+  });
+
+  const modalPayment = detailData?.success ? detailData.payment : null;
+  const modalError = detailError instanceof Error
+    ? detailError.message
+    : !detailData?.success && detailData
+      ? '결제 정보를 불러오는데 실패했습니다.'
+      : null;
+
+  // 결제 취소 뮤테이션
+  const cancelMutation = useMutation({
+    mutationFn: ({ paymentKey, reason }: { paymentKey: string; reason: string }) =>
+      cancelPayment(paymentKey, { cancel_reason: reason }),
+    onSuccess: () => {
+      alert('결제가 취소되었습니다.');
+      closeModal();
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: (err) => alert(err instanceof Error ? err.message : '결제 취소에 실패했습니다.'),
+  });
+
+  const openDetailModal = (paymentKey: string) => {
+    setSelectedPaymentKey(paymentKey);
     setShowCancelModal(false);
     setCancelReason('');
-    try {
-      const res = await getPaymentDetail(paymentKey);
-      if (res.success) setModalPayment(res.payment);
-    } catch (err) {
-      setModalError(err instanceof Error ? err.message : '결제 정보를 불러오는데 실패했습니다.');
-    } finally {
-      setModalLoading(false);
-    }
   };
 
   const closeModal = () => {
-    setModalPayment(null);
-    setModalError(null);
-    setModalLoading(false);
+    setSelectedPaymentKey(null);
     setShowCancelModal(false);
     setCancelReason('');
   };
 
-  const handleCancelPayment = async () => {
+  const handleCancelPayment = () => {
     if (!cancelReason.trim()) { alert('취소 사유를 입력해주세요.'); return; }
     if (!modalPayment) return;
-    try {
-      setCancelling(true);
-      await cancelPayment(modalPayment.payment_key, { cancel_reason: cancelReason });
-      alert('결제가 취소되었습니다.');
-      closeModal();
-      fetchOrders(currentPage);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : '결제 취소에 실패했습니다.');
-    } finally {
-      setCancelling(false);
-    }
+    cancelMutation.mutate({ paymentKey: modalPayment.payment_key, reason: cancelReason });
   };
 
   const getStatusText = (status: string) => {
@@ -115,12 +107,11 @@ export default function MyPageOrdersPage() {
   };
 
   const handleLogout = async () => {
-    setIsLoggedIn(false);
     await logout();
     navigate('/login');
   };
 
-  if (loading && orders.length === 0) {
+  if (isLoading && orders.length === 0) {
     return (
       <MypageLayout onLogout={handleLogout}>
         <div className="flex items-center justify-center py-32">
@@ -149,7 +140,7 @@ export default function MyPageOrdersPage() {
             <div className="relative w-[150px]">
               <select
                 value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value as GetPaymentsParams['status'] | '')}
+                onChange={e => { setStatusFilter(e.target.value as GetPaymentsParams['status'] | ''); setCurrentPage(1); }}
                 className="w-full h-[56px] pl-4 pr-10 border border-[#58616A] rounded-lg text-[19px] leading-[1.5em] text-[#464C53] bg-white appearance-none focus:outline-none cursor-pointer"
               >
                 <option value="">3개월</option>
@@ -187,7 +178,7 @@ export default function MyPageOrdersPage() {
         )}
 
         {/* ── 주문 목록 ── */}
-        {loading ? (
+        {isLoading ? (
           <div className="bg-white rounded-xl p-8 flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#256EF4]" />
           </div>
@@ -271,7 +262,7 @@ export default function MyPageOrdersPage() {
 
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-4">
-                <button onClick={() => fetchOrders(currentPage - 1)} disabled={currentPage === 1} className="px-4 py-2 border border-[#CDD1D5] rounded-lg text-[15px] text-[#1E2124] disabled:opacity-40 hover:bg-[#F4F5F6]">이전</button>
+                <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="px-4 py-2 border border-[#CDD1D5] rounded-lg text-[15px] text-[#1E2124] disabled:opacity-40 hover:bg-[#F4F5F6]">이전</button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   let page: number;
                   if (totalPages <= 5) page = i + 1;
@@ -279,18 +270,18 @@ export default function MyPageOrdersPage() {
                   else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
                   else page = currentPage - 2 + i;
                   return (
-                    <button key={page} onClick={() => fetchOrders(page)} className={`px-4 py-2 border rounded-lg text-[15px] ${currentPage === page ? 'bg-[#256EF4] text-white border-[#256EF4]' : 'border-[#CDD1D5] text-[#1E2124] hover:bg-[#F4F5F6]'}`}>{page}</button>
+                    <button key={page} onClick={() => setCurrentPage(page)} className={`px-4 py-2 border rounded-lg text-[15px] ${currentPage === page ? 'bg-[#256EF4] text-white border-[#256EF4]' : 'border-[#CDD1D5] text-[#1E2124] hover:bg-[#F4F5F6]'}`}>{page}</button>
                   );
                 })}
-                <button onClick={() => fetchOrders(currentPage + 1)} disabled={currentPage === totalPages} className="px-4 py-2 border border-[#CDD1D5] rounded-lg text-[15px] text-[#1E2124] disabled:opacity-40 hover:bg-[#F4F5F6]">다음</button>
+                <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages} className="px-4 py-2 border border-[#CDD1D5] rounded-lg text-[15px] text-[#1E2124] disabled:opacity-40 hover:bg-[#F4F5F6]">다음</button>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* ── 주문 상세 모달 (OrderDetailModal 인라인) ── */}
-      {(modalLoading || modalPayment || modalError) && (
+      {/* ── 주문 상세 모달 ── */}
+      {(selectedPaymentKey) && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
@@ -406,17 +397,17 @@ export default function MyPageOrdersPage() {
                     <div className="flex gap-3">
                       <button
                         onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
-                        disabled={cancelling}
+                        disabled={cancelMutation.isPending}
                         className="flex-1 h-12 border border-[#CDD1D5] rounded-lg text-[17px] text-[#464C53] hover:bg-[#F4F5F6] disabled:opacity-40"
                       >
                         닫기
                       </button>
                       <button
                         onClick={handleCancelPayment}
-                        disabled={cancelling}
+                        disabled={cancelMutation.isPending}
                         className="flex-1 h-12 bg-[#D32F2F] text-white rounded-lg text-[17px] hover:bg-[#B71C1C] disabled:opacity-40"
                       >
-                        {cancelling ? '취소 중...' : '결제 취소'}
+                        {cancelMutation.isPending ? '취소 중...' : '결제 취소'}
                       </button>
                     </div>
                   </div>

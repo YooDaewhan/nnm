@@ -1,5 +1,6 @@
-import { useEffect, useState, Suspense } from 'react';
+import { Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
 import { osSearchText } from '@/api/opensearch-direct';
 import {
@@ -18,79 +19,47 @@ function truncateQuery(query: string) {
 
 function OpenSearchTextContent() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const pageParam = searchParams.get('page');
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [searchResults, setSearchResults] = useState<OpenSearchTextResultItem[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [totalResults, setTotalResults] = useState(0);
+  const isLoggedIn = isAuthenticated();
 
-  const [cartLoadingId, setCartLoadingId] = useState<string | null>(null);
-  const [buyNowLoadingId, setBuyNowLoadingId] = useState<string | null>(null);
+  // 검색 쿼리
+  const { data, isLoading: searchLoading, error: searchErr } = useQuery({
+    queryKey: ['search', query, currentPage],
+    queryFn: () =>
+      osSearchText({
+        query: query.trim(),
+        limit: ITEMS_PER_PAGE,
+        offset: (currentPage - 1) * ITEMS_PER_PAGE,
+      }),
+    enabled: !!query.trim(),
+  });
 
+  const searchResults = (data?.results as unknown as OpenSearchTextResultItem[]) ?? [];
+  const totalResults = data?.total ?? data?.count ?? 0;
+  const searchError = searchErr instanceof Error ? searchErr.message : searchErr ? '검색 중 오류가 발생했습니다.' : null;
   const totalPages = Math.ceil(totalResults / ITEMS_PER_PAGE);
 
-  useEffect(() => {
-    setIsLoggedIn(isAuthenticated());
-  }, []);
-
-  useEffect(() => {
-    if (query) {
-      performSearch(query, currentPage);
-    }
-  }, [query, currentPage]);
-
-  const performSearch = async (searchText: string, page: number) => {
-    if (!searchText.trim()) return;
-    setSearchLoading(true);
-    setSearchError(null);
-
-    const offset = (page - 1) * ITEMS_PER_PAGE;
-    try {
-      const response = await osSearchText({
-        query: searchText.trim(),
-        limit: ITEMS_PER_PAGE,
-        offset,
-      });
-      setSearchResults(response.results as unknown as OpenSearchTextResultItem[]);
-      setTotalResults(response.total ?? response.count);
-    } catch (error) {
-      setSearchError(error instanceof Error ? error.message : '검색 중 오류가 발생했습니다.');
-      setSearchResults([]);
-      setTotalResults(0);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
-  const goToPage = (page: number) => {
-    navigate(`/search?q=${encodeURIComponent(query)}&page=${page}`);
-  };
-
-  const handleAddToCart = async (e: React.MouseEvent, resultId: string) => {
-    e.stopPropagation();
-    if (!isLoggedIn) { navigate('/login'); return; }
-    setCartLoadingId(resultId);
-    try {
+  // 장바구니 뮤테이션
+  const cartMutation = useMutation({
+    mutationFn: async (resultId: string) => {
       const paper = await getPaperDetail(resultId);
       await addToCart({ publication_id: paper.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       alert('장바구니에 추가되었습니다.');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.');
-    } finally {
-      setCartLoadingId(null);
-    }
-  };
+    },
+    onError: (err) => alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
+  });
 
-  const handleBuyNow = async (e: React.MouseEvent, resultId: string) => {
-    e.stopPropagation();
-    if (!isLoggedIn) { navigate('/login'); return; }
-    setBuyNowLoadingId(resultId);
-    try {
+  // 바로구매 뮤테이션
+  const buyNowMutation = useMutation({
+    mutationFn: async (resultId: string) => {
       const paper = await getPaperDetail(resultId);
       sessionStorage.setItem('directBuyItem', JSON.stringify({
         publication_id: paper.id,
@@ -98,12 +67,25 @@ function OpenSearchTextContent() {
         unit_price: 5000,
         quantity: 1,
       }));
-      navigate('/pay?direct=true');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : '구매하기에 실패했습니다.');
-    } finally {
-      setBuyNowLoadingId(null);
-    }
+    },
+    onSuccess: () => navigate('/pay?direct=true'),
+    onError: (err) => alert(err instanceof Error ? err.message : '구매하기에 실패했습니다.'),
+  });
+
+  const handleAddToCart = (e: React.MouseEvent, resultId: string) => {
+    e.stopPropagation();
+    if (!isLoggedIn) { navigate('/login'); return; }
+    cartMutation.mutate(resultId);
+  };
+
+  const handleBuyNow = (e: React.MouseEvent, resultId: string) => {
+    e.stopPropagation();
+    if (!isLoggedIn) { navigate('/login'); return; }
+    buyNowMutation.mutate(resultId);
+  };
+
+  const goToPage = (page: number) => {
+    navigate(`/search?q=${encodeURIComponent(query)}&page=${page}`);
   };
 
   const renderPageButtons = () => {
@@ -198,7 +180,7 @@ function OpenSearchTextContent() {
                     <div className="flex items-center gap-4 flex-shrink-0">
                       <button
                         onClick={(e) => handleAddToCart(e, result.id)}
-                        disabled={cartLoadingId === result.id}
+                        disabled={cartMutation.isPending && cartMutation.variables === result.id}
                         className="text-[#33363D] hover:text-[#1E2124] transition-colors disabled:opacity-50"
                         title="장바구니 담기"
                       >
@@ -257,17 +239,17 @@ function OpenSearchTextContent() {
                     <div className="flex flex-col items-stretch justify-end gap-2 flex-shrink-0 w-[100px] self-stretch">
                       <button
                         onClick={(e) => handleBuyNow(e, result.id)}
-                        disabled={buyNowLoadingId === result.id}
+                        disabled={buyNowMutation.isPending && buyNowMutation.variables === result.id}
                         className="h-10 flex items-center justify-center bg-white text-[#AB2B36] text-[15px] font-bold rounded-md border border-[#CDD1D5] hover:bg-gray-50 transition-colors disabled:opacity-50"
                       >
                         ￦ 5,000
                       </button>
                       <button
                         onClick={(e) => handleBuyNow(e, result.id)}
-                        disabled={buyNowLoadingId === result.id}
+                        disabled={buyNowMutation.isPending && buyNowMutation.variables === result.id}
                         className="h-10 flex items-center justify-center bg-[#ECF2FE] text-[#0B50D0] text-[15px] font-normal rounded-md border border-[#256EF4] hover:bg-[#dce7fd] transition-colors disabled:opacity-50"
                       >
-                        {buyNowLoadingId === result.id ? '처리 중...' : '구매하기'}
+                        {buyNowMutation.isPending && buyNowMutation.variables === result.id ? '처리 중...' : '구매하기'}
                       </button>
                     </div>
                   </div>

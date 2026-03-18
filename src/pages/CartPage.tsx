@@ -1,58 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '../lib/auth';
 import { getCart, removeFromCart, type CartItem } from '../api/cart';
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+
+  const { data: cartItems = [], isLoading, error: fetchError } = useQuery({
+    queryKey: ['cart'],
+    queryFn: getCart,
+    enabled: isAuthenticated(),
+  });
+
+  const error = fetchError instanceof Error ? fetchError.message : fetchError ? '장바구니 조회에 실패했습니다.' : null;
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login');
       return;
     }
-
-    getCart()
-      .then((items) => {
-        setCartItems(items);
-        setSelectedItems(items.map(item => item.id));
-      })
-      .catch((err) => {
-        if (err.message !== '인증이 필요합니다.') {
-          console.error('장바구니 조회 실패:', err);
-          setError(err.message || '장바구니 조회에 실패했습니다.');
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
   }, [navigate]);
 
-  const totalAmount = cartItems
-    .filter(item => selectedItems.includes(item.id))
-    .reduce((sum, item) => sum + item.subtotal, 0);
+  useEffect(() => {
+    setSelectedItems(cartItems.map((item: CartItem) => item.id));
+  }, [cartItems]);
 
-  const handleRemoveItem = async (id: number) => {
-    try {
-      await removeFromCart(id);
-      setCartItems((prev) => prev.filter((item) => item.id !== id));
+  const removeMutation = useMutation({
+    mutationFn: removeFromCart,
+    onSuccess: (_, id) => {
       setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : '삭제에 실패했습니다.';
-      setError(message);
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (err) => alert(err instanceof Error ? err.message : '삭제에 실패했습니다.'),
+  });
 
-  const handleQuantityChange = (id: number, quantity: number) => {
-    if (quantity < 1) return;
-    setCartItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
-    );
-  };
+  const totalAmount = cartItems
+    .filter((item: CartItem) => selectedItems.includes(item.id))
+    .reduce((sum: number, item: CartItem) => sum + item.subtotal, 0);
 
   const handleSelectItem = (id: number) => {
     setSelectedItems((prev) =>
@@ -64,11 +51,11 @@ export default function CartPage() {
     if (selectedItems.length === cartItems.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(cartItems.map(item => item.id));
+      setSelectedItems(cartItems.map((item: CartItem) => item.id));
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F4F5F6] flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -164,11 +151,10 @@ export default function CartPage() {
                 </div>
                 <button
                   onClick={async () => {
-                    for (const id of selectedItems) {
-                      await handleRemoveItem(id);
-                    }
+                    await Promise.all(selectedItems.map((id) => removeMutation.mutateAsync(id)));
                   }}
-                  className="h-10 px-3 text-[15px] leading-[1.5] text-[#1E2124] border border-[#58616A] rounded-md hover:bg-[#F8FAFC]"
+                  disabled={removeMutation.isPending}
+                  className="h-10 px-3 text-[15px] leading-[1.5] text-[#1E2124] border border-[#58616A] rounded-md hover:bg-[#F8FAFC] disabled:opacity-50"
                 >
                   선택삭제
                 </button>
@@ -178,7 +164,7 @@ export default function CartPage() {
 
               {/* 상품 아이템 리스트 */}
               <div className="space-y-6">
-                {cartItems.map((item) => (
+                {cartItems.map((item: CartItem) => (
                   <div key={item.id} className="flex gap-6">
                     <div className="flex items-center justify-center pt-1">
                       <input
@@ -228,8 +214,9 @@ export default function CartPage() {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="flex items-center justify-center"
+                        onClick={() => removeMutation.mutate(item.id)}
+                        disabled={removeMutation.isPending && removeMutation.variables === item.id}
+                        className="flex items-center justify-center disabled:opacity-50"
                       >
                         <svg className="w-8 h-8" viewBox="0 0 32 32" fill="none">
                           <circle cx="16" cy="16" r="13.33" stroke="#33363D" strokeWidth="2"/>

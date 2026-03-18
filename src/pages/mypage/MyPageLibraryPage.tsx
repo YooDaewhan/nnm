@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
@@ -15,34 +16,24 @@ type LibraryItem = {
 
 export default function MyPageLibraryPage() {
   const navigate = useNavigate();
-  const [items, setItems] = useState<LibraryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
 
   useEffect(() => {
-    if (!isAuthenticated()) { navigate('/login'); return; }
+    if (!isAuthenticated()) navigate('/login');
   }, [navigate]);
 
-  useEffect(() => {
-    fetchLibrary();
-  }, [currentPage]);
-
-  const fetchLibrary = async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data, isLoading, error: fetchError } = useQuery({
+    queryKey: ['mypage-library', currentPage],
+    queryFn: async () => {
       const res = await getPurchaseLibrary({ page: currentPage, per_page: 20 });
-      const json = res as unknown as { library: LibraryItem[]; pagination: { current_page: number; last_page: number } };
-      setItems(json.library ?? []);
-      setLastPage(json.pagination?.last_page ?? 1);
-    } catch {
-      setError('보관함을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res as unknown as { library: LibraryItem[]; pagination: { current_page: number; last_page: number } };
+    },
+    enabled: isAuthenticated(),
+  });
+
+  const items = data?.library ?? [];
+  const lastPage = data?.pagination?.last_page ?? 1;
+  const error = fetchError instanceof Error ? fetchError.message : fetchError ? '보관함을 불러오지 못했습니다.' : null;
 
   const handleLogout = async () => { await logout(); navigate('/login'); };
 
@@ -51,16 +42,16 @@ export default function MyPageLibraryPage() {
       <div className="bg-white rounded-xl border border-[#D6E0EB] p-8">
         <h2 className="text-[22px] font-bold text-[#1E2124] mb-6">보관함</h2>
 
-        {loading && (
+        {isLoading && (
           <div className="flex justify-center py-16">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
           </div>
         )}
         {error && <p className="text-center py-16 text-red-500">{error}</p>}
-        {!loading && !error && items.length === 0 && (
+        {!isLoading && !error && items.length === 0 && (
           <p className="text-center py-16 text-[#9CA3AF]">보관함이 비어 있습니다.</p>
         )}
-        {!loading && items.length > 0 && (
+        {!isLoading && items.length > 0 && (
           <>
             <ul className="divide-y divide-[#F3F4F6]">
               {items.map(item => (

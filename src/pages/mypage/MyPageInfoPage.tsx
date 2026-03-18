@@ -1,78 +1,73 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { isAuthenticated } from '../../lib/auth';
 import { getCurrentUser, logout, changePassword, withdraw } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
 
 export default function MyPageInfoPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [newPwConfirm, setNewPwConfirm] = useState('');
   const [pwError, setPwError] = useState<string | null>(null);
-  const [pwLoading, setPwLoading] = useState(false);
 
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawPw, setWithdrawPw] = useState('');
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
-  const [withdrawLoading, setWithdrawLoading] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated()) { navigate('/login'); return; }
-    getCurrentUser()
-      .then(setUser)
-      .catch(() => navigate('/login'))
-      .finally(() => setLoading(false));
+    if (!isAuthenticated()) navigate('/login');
   }, [navigate]);
+
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: getCurrentUser,
+    enabled: isAuthenticated(),
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: ({ current, next }: { current: string; next: string }) =>
+      changePassword(current, next),
+    onSuccess: () => {
+      alert('비밀번호가 변경되었습니다.');
+      setShowPasswordModal(false);
+      setCurrentPw(''); setNewPw(''); setNewPwConfirm('');
+    },
+    onError: (err) => setPwError(err instanceof Error ? err.message : '비밀번호 변경에 실패했습니다.'),
+  });
+
+  const withdrawMutation = useMutation({
+    mutationFn: (password: string) => withdraw(password),
+    onSuccess: () => {
+      alert('회원탈퇴가 완료되었습니다.');
+      navigate('/');
+    },
+    onError: (err) => setWithdrawError(err instanceof Error ? err.message : '회원탈퇴에 실패했습니다.'),
+  });
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = () => {
     setPwError(null);
     if (newPw !== newPwConfirm) { setPwError('새 비밀번호가 일치하지 않습니다.'); return; }
     if (newPw.length < 8) { setPwError('비밀번호는 8자 이상이어야 합니다.'); return; }
-    setPwLoading(true);
-    try {
-      await changePassword(currentPw, newPw);
-      alert('비밀번호가 변경되었습니다.');
-      setShowPasswordModal(false);
-      setCurrentPw(''); setNewPw(''); setNewPwConfirm('');
-    } catch (err) {
-      setPwError(err instanceof Error ? err.message : '비밀번호 변경에 실패했습니다.');
-    } finally {
-      setPwLoading(false);
-    }
-  };
-
-  const handleWithdraw = async () => {
-    setWithdrawError(null);
-    setWithdrawLoading(true);
-    try {
-      await withdraw(withdrawPw);
-      alert('회원탈퇴가 완료되었습니다.');
-      navigate('/');
-    } catch (err) {
-      setWithdrawError(err instanceof Error ? err.message : '회원탈퇴에 실패했습니다.');
-    } finally {
-      setWithdrawLoading(false);
-    }
+    passwordMutation.mutate({ current: currentPw, next: newPw });
   };
 
   return (
     <MypageLayout onLogout={handleLogout}>
-      {loading && (
+      {isLoading && (
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
       )}
-      {!loading && (<>
+      {!isLoading && (<>
       <div className="bg-white rounded-xl border border-[#D6E0EB] p-8">
         <h2 className="text-[22px] font-bold text-[#1E2124] mb-6">회원정보</h2>
 
@@ -117,9 +112,9 @@ export default function MyPageInfoPage() {
             <div className="flex gap-3 mt-2">
               <button onClick={() => setShowPasswordModal(false)}
                 className="flex-1 py-3 border border-[#CDD1D5] rounded-lg text-[#6B7280] hover:bg-[#F3F4F6] transition">취소</button>
-              <button onClick={handleChangePassword} disabled={pwLoading}
+              <button onClick={handleChangePassword} disabled={passwordMutation.isPending}
                 className="flex-1 py-3 bg-[#039BE5] text-white rounded-lg disabled:opacity-50 hover:bg-[#0288D1] transition">
-                {pwLoading ? '변경 중...' : '변경'}
+                {passwordMutation.isPending ? '변경 중...' : '변경'}
               </button>
             </div>
           </div>
@@ -138,9 +133,9 @@ export default function MyPageInfoPage() {
             <div className="flex gap-3 mt-2">
               <button onClick={() => setShowWithdrawModal(false)}
                 className="flex-1 py-3 border border-[#CDD1D5] rounded-lg text-[#6B7280] hover:bg-[#F3F4F6] transition">취소</button>
-              <button onClick={handleWithdraw} disabled={withdrawLoading}
+              <button onClick={() => withdrawMutation.mutate(withdrawPw)} disabled={withdrawMutation.isPending}
                 className="flex-1 py-3 bg-red-500 text-white rounded-lg disabled:opacity-50 hover:bg-red-600 transition">
-                {withdrawLoading ? '처리 중...' : '탈퇴하기'}
+                {withdrawMutation.isPending ? '처리 중...' : '탈퇴하기'}
               </button>
             </div>
           </div>

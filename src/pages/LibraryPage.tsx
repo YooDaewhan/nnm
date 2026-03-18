@@ -1,53 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { isAuthenticated } from '../lib/auth';
-import { getPurchaseLibrary, PurchaseLibraryItem, GetPurchaseLibraryParams } from '../api/purchase';
+import { getPurchaseLibrary, type PurchaseLibraryItem } from '../api/purchase';
 
 export default function LibraryPage() {
   const navigate = useNavigate();
-  const [items, setItems] = useState<PurchaseLibraryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
-  const fetchLibrary = async (page: number = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const params: GetPurchaseLibraryParams = {
-        page,
-        per_page: 20,
-      };
-
-      const response = await getPurchaseLibrary(params);
-      const res = response as any;
-
-      setItems(res.library ?? []);
-      setCurrentPage(res.pagination?.current_page ?? 1);
-      setTotalPages(res.pagination?.last_page ?? 1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '구매 목록을 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate('/login');
-      return;
-    }
-
-    fetchLibrary(1);
+    if (!isAuthenticated()) navigate('/login');
   }, [navigate]);
 
-  const handlePageChange = (page: number) => {
-    fetchLibrary(page);
-  };
+  const { data, isLoading, error: fetchError } = useQuery({
+    queryKey: ['library', currentPage],
+    queryFn: async () => {
+      const res = await getPurchaseLibrary({ page: currentPage, per_page: 20 });
+      return res as unknown as {
+        library: PurchaseLibraryItem[];
+        pagination: { current_page: number; last_page: number };
+      };
+    },
+    enabled: isAuthenticated(),
+  });
 
-  if (loading && items.length === 0) {
+  const items = data?.library ?? [];
+  const totalPages = data?.pagination?.last_page ?? 1;
+  const error = fetchError instanceof Error ? fetchError.message : fetchError ? '구매 목록을 불러오는데 실패했습니다.' : null;
+
+  if (isLoading && items.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -114,7 +95,7 @@ export default function LibraryPage() {
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-6">
             <button
-              onClick={() => handlePageChange(currentPage - 1)}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
@@ -124,7 +105,7 @@ export default function LibraryPage() {
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
                 key={page}
-                onClick={() => handlePageChange(page)}
+                onClick={() => setCurrentPage(page)}
                 className={`px-3 py-2 border rounded-md text-sm ${
                   currentPage === page
                     ? 'bg-blue-500 text-white border-blue-500'
@@ -136,7 +117,7 @@ export default function LibraryPage() {
             ))}
 
             <button
-              onClick={() => handlePageChange(currentPage + 1)}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >

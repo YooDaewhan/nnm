@@ -1,7 +1,8 @@
-import { useEffect, useState, Suspense, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, Suspense, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { getPaperDetail, PaperDetail } from '../api/search';
+import { useQuery } from '@tanstack/react-query';
+import { getPaperDetail } from '../api/search';
 
 const PDF_VIEWER_BASE = import.meta.env.VITE_PDF_SERVER_URL || 'http://localhost:3000';
 
@@ -43,14 +44,24 @@ function PdfViewerModal({ paperId, onClose }: { paperId: string; onClose: () => 
 
 function PaperDetailContent() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const id = searchParams.get('id');
 
-  const [paper, setPaper] = useState<PaperDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  const { data: paper, isLoading, error: fetchError } = useQuery({
+    queryKey: ['paper', id],
+    queryFn: () => getPaperDetail(id!),
+    enabled: !!id,
+  });
+
+  const error = !id
+    ? '논문 ID가 필요합니다.'
+    : fetchError instanceof Error
+      ? fetchError.message
+      : fetchError
+        ? '논문 정보를 불러오는데 실패했습니다.'
+        : null;
 
   const handleDownload = useCallback(async () => {
     if (!paper) return;
@@ -71,26 +82,6 @@ function PaperDetailContent() {
       setDownloading(false);
     }
   }, [paper]);
-
-  useEffect(() => {
-    if (!id) {
-      setError('논문 ID가 필요합니다.');
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    getPaperDetail(id)
-      .then((data) => {
-        setPaper(data);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : '논문 정보를 불러오는데 실패했습니다.');
-      })
-      .finally(() => setLoading(false));
-  }, [id]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -137,7 +128,7 @@ function PaperDetailContent() {
           {/* Content Area */}
           <div className="flex gap-12">
             <div className="flex-1">
-              {loading ? (
+              {isLoading ? (
                 <div className="bg-white rounded-xl p-10 flex justify-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
                 </div>

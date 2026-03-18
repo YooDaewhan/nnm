@@ -137,7 +137,15 @@ export const createOrder = async (data: CreateOrderRequest): Promise<CreateOrder
     throw new Error(errorData.message || '유효성 검사에 실패했습니다.');
   }
 
-  throw new Error('주문 생성에 실패했습니다.');
+  let errorBody = '';
+  try {
+    errorBody = await response.text();
+    console.error('주문 생성 실패 응답:', response.status, errorBody);
+  } catch {
+    // ignore
+  }
+
+  throw new Error(`주문 생성에 실패했습니다. (${response.status})${errorBody ? ': ' + errorBody : ''}`);
 };
 
 /**
