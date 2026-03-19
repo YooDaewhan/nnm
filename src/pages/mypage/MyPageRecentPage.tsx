@@ -4,65 +4,111 @@ import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
 
-type RecentItem = {
-  id: string | number;
+const STORAGE_KEY = 'recent_papers';
+
+export type RecentPaper = {
+  id: string;
   title: string;
-  authors?: string[];
-  venue?: string;
+  authors: string[];
   published_at?: string;
-  viewedAt: string;
+  venue?: string;
+  viewedAt: number;
 };
+
+function getRecentPapers(): RecentPaper[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function clearRecentPapers(): void {
+  localStorage.removeItem(STORAGE_KEY);
+}
 
 export default function MyPageRecentPage() {
   const navigate = useNavigate();
-  const [items, setItems] = useState<RecentItem[]>([]);
+  const [papers, setPapers] = useState<RecentPaper[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated()) { navigate('/login'); return; }
-    // localStorage에서 최근 본 논문 로드
-    try {
-      const stored = localStorage.getItem('recent_papers');
-      if (stored) setItems(JSON.parse(stored));
-    } catch {}
+    setPapers(getRecentPapers());
   }, [navigate]);
 
   const handleLogout = async () => { await logout(); navigate('/login'); };
 
-  const handleClearAll = () => {
-    localStorage.removeItem('recent_papers');
-    setItems([]);
+  const handleClear = () => {
+    clearRecentPapers();
+    setPapers([]);
   };
 
   return (
     <MypageLayout onLogout={handleLogout}>
-      <div className="bg-white rounded-xl border border-[#D6E0EB] p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[22px] font-bold text-[#1E2124]">최근 본 논문</h2>
-          {items.length > 0 && (
-            <button onClick={handleClearAll} className="text-[13px] text-[#9CA3AF] hover:text-red-500 transition underline">
-              전체 삭제
-            </button>
-          )}
+      <div className="flex flex-col gap-4">
+        {/* 헤더 카드 */}
+        <div className="bg-white rounded-xl p-8 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-[32px] font-bold leading-[1.5em] tracking-[0.03em] text-[#1E2124]">
+              최근 본 논문
+            </h1>
+            {papers.length > 0 && (
+              <button
+                onClick={handleClear}
+                className="text-[15px] text-[#8A949E] hover:text-[#464C53] transition-colors"
+              >
+                전체 삭제
+              </button>
+            )}
+          </div>
+          <div className="border-t-2 border-[#1E2124]" />
         </div>
 
-        {items.length === 0 && (
-          <p className="text-center py-16 text-[#9CA3AF]">최근 본 논문이 없습니다.</p>
+        {/* 빈 상태 */}
+        {papers.length === 0 && (
+          <div className="bg-white rounded-xl p-8 text-center">
+            <p className="text-[17px] text-[#464C53]">최근 본 논문이 없습니다.</p>
+          </div>
         )}
-        {items.length > 0 && (
-          <ul className="divide-y divide-[#F3F4F6]">
-            {items.map(item => (
-              <li key={item.id}
-                className="py-4 cursor-pointer hover:bg-[#F8FAFC] rounded-lg px-3 transition"
-                onClick={() => navigate(`/papers?id=${item.id}`)}>
-                <div className="text-[16px] font-semibold text-[#1E2124] mb-1">{item.title}</div>
-                <div className="flex items-center gap-3 text-[13px] text-[#9CA3AF]">
-                  {item.authors && <span>{item.authors.slice(0, 2).join(', ')}</span>}
-                  {item.venue && <span>{item.venue}</span>}
-                  {item.viewedAt && <span>조회 {new Date(item.viewedAt).toLocaleDateString('ko-KR')}</span>}
+
+        {/* 목록 */}
+        {papers.length > 0 && (
+          <div className="bg-white rounded-xl divide-y divide-[#F0F2F5]">
+            {papers.map((paper) => (
+              <div
+                key={paper.id}
+                onClick={() => navigate(`/papers?id=${paper.id}`)}
+                className="flex flex-col gap-1 px-8 py-5 hover:bg-[#FAFAFC] transition-colors cursor-pointer"
+              >
+                <p className="text-[17px] font-bold leading-[1.5em] text-[#1E2124] line-clamp-2">
+                  {paper.title}
+                </p>
+                <div className="flex items-center gap-2 text-[15px] text-[#8A949E]">
+                  {paper.authors.length > 0 && (
+                    <span>
+                      {paper.authors.slice(0, 3).join(', ')}
+                      {paper.authors.length > 3 ? ' 외' : ''}
+                    </span>
+                  )}
+                  {paper.venue && (
+                    <>
+                      <span>·</span>
+                      <span>{paper.venue}</span>
+                    </>
+                  )}
+                  {paper.published_at && (
+                    <>
+                      <span>·</span>
+                      <span>{new Date(paper.published_at).getFullYear()}</span>
+                    </>
+                  )}
+                  <span>·</span>
+                  <span>{new Date(paper.viewedAt).toLocaleDateString('ko-KR')}</span>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </MypageLayout>
