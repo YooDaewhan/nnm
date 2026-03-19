@@ -1,8 +1,10 @@
 import { useState, Suspense, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getPaperDetail } from '../api/search';
+import { getPayments } from '../api/payment';
+import { isAuthenticated } from '../lib/auth';
 
 const PDF_VIEWER_BASE = import.meta.env.VITE_PDF_SERVER_URL || 'http://localhost:3000';
 
@@ -45,15 +47,47 @@ function PdfViewerModal({ paperId, onClose }: { paperId: string; onClose: () => 
 function PaperDetailContent() {
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
+  const navigate = useNavigate();
 
   const [pdfOpen, setPdfOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  const loggedIn = isAuthenticated();
 
   const { data: paper, isLoading, error: fetchError } = useQuery({
     queryKey: ['paper', id],
     queryFn: () => getPaperDetail(id!),
     enabled: !!id,
   });
+
+  const { data: ordersData } = useQuery({
+    queryKey: ['orders-paid'],
+    queryFn: () => getPayments({ status: 'paid', per_page: 100 }),
+    enabled: loggedIn,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const paidOrders = ordersData?.success ? ordersData.orders.data : [];
+
+  const isPurchased = loggedIn && paidOrders.some(
+    (order) => ((order as any).metadata?.items as { publication_id?: string }[] ?? []).some(
+      (item) => item.publication_id === paper?.id
+    )
+  );
+
+  const handlePurchase = () => {
+    if (!loggedIn) {
+      navigate('/login');
+      return;
+    }
+    sessionStorage.setItem('directBuyItem', JSON.stringify({
+      publication_id: paper!.id,
+      title: paper!.title,
+      unit_price: 5000,
+      quantity: 1,
+    }));
+    navigate('/pay?direct=true');
+  };
 
   const error = !id
     ? '논문 ID가 필요합니다.'
@@ -289,22 +323,33 @@ function PaperDetailContent() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setPdfOpen(true)}
-                          className="inline-flex items-center justify-center px-5 h-14 bg-white border border-[#256EF4] text-[#0B50D0] text-[19px] leading-[1.5em] font-normal rounded-lg hover:bg-[#ECF2FE] transition-colors"
-                        >
-                          원문보기
-                        </button>
-                        {pdfOpen && paper && (
-                          <PdfViewerModal paperId={paper.id} onClose={() => setPdfOpen(false)} />
+                        {isPurchased ? (
+                          <>
+                            <button
+                              onClick={() => setPdfOpen(true)}
+                              className="inline-flex items-center justify-center px-5 h-14 bg-white border border-[#256EF4] text-[#0B50D0] text-[19px] leading-[1.5em] font-normal rounded-lg hover:bg-[#ECF2FE] transition-colors"
+                            >
+                              원문보기
+                            </button>
+                            {pdfOpen && paper && (
+                              <PdfViewerModal paperId={paper.id} onClose={() => setPdfOpen(false)} />
+                            )}
+                            <button
+                              onClick={handleDownload}
+                              disabled={downloading}
+                              className="inline-flex items-center justify-center px-5 h-14 bg-[#256EF4] text-white text-[19px] leading-[1.5em] font-normal rounded-lg hover:bg-[#1E5ADB] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {downloading ? '다운로드 중...' : '다운로드'}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={handlePurchase}
+                            className="inline-flex items-center justify-center px-5 h-14 bg-[#256EF4] text-white text-[19px] leading-[1.5em] font-normal rounded-lg hover:bg-[#1E5ADB] transition-colors"
+                          >
+                            구매하기
+                          </button>
                         )}
-                        <button
-                          onClick={handleDownload}
-                          disabled={downloading}
-                          className="inline-flex items-center justify-center px-5 h-14 bg-[#256EF4] text-white text-[19px] leading-[1.5em] font-normal rounded-lg hover:bg-[#1E5ADB] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          {downloading ? '다운로드 중...' : '다운로드'}
-                        </button>
                       </div>
                     </div>
                   </div>
