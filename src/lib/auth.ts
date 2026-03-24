@@ -50,17 +50,45 @@ export const getToken = (): string | null => {
   return null;
 };
 
+// refresh token 저장
+export const saveRefreshToken = (token: string) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('refresh_token', token);
+  }
+};
+
+// refresh token 가져오기
+export const getRefreshToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('refresh_token');
+  }
+  return null;
+};
+
 // 토큰 삭제
 export const removeToken = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
   }
 };
 
-// 로그인 여부 확인
+// 로그인 여부 확인 (JWT 만료 체크 포함)
 export const isAuthenticated = (): boolean => {
-  return !!getToken();
+  const token = getToken();
+  if (!token) return false;
+
+  const payload = decodeJWT(token);
+  if (payload?.exp) {
+    // exp는 초 단위 Unix timestamp
+    if (Date.now() / 1000 > payload.exp) {
+      removeToken();
+      return false;
+    }
+  }
+
+  return true;
 };
 
 // 토큰 만료/인증 실패 시 처리 (토큰 삭제 + 이벤트 발송)

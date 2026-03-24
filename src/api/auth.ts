@@ -6,7 +6,7 @@ import {
   getApiAuthSocialAccounts,
   deleteApiAuthSocialProvider,
 } from './generated';
-import { getToken, removeToken, saveToken } from '@/lib/auth';
+import { getToken, getRefreshToken, removeToken, saveToken, saveRefreshToken } from '@/lib/auth';
 import { API_BASE_URL } from './client';
 
 /**
@@ -82,21 +82,24 @@ export const logoutAll = async () => {
  * 토큰을 갱신합니다.
  */
 export const refreshToken = async () => {
-  const token = getToken();
-  if (!token) {
-    throw new Error('인증되지 않았습니다.');
+  const refresh = getRefreshToken();
+  if (!refresh) {
+    throw new Error('리프레시 토큰이 없습니다.');
   }
 
+  const accessToken = getToken();
   const response = await postApiAuthRefresh(
-    { refresh_token: token },
-    { headers: { Authorization: `Bearer ${token}` } },
+    { refresh_token: refresh },
+    { headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {} },
   );
 
   if (response.status === 200 && 'access_token' in response.data) {
-    const newToken = response.data.access_token;
-    if (newToken) {
-      saveToken(newToken);
-      return newToken;
+    const newAccessToken = response.data.access_token;
+    const newRefreshToken = response.data.refresh_token;
+    if (newAccessToken) {
+      saveToken(newAccessToken);
+      if (newRefreshToken) saveRefreshToken(newRefreshToken);
+      return newAccessToken;
     }
   }
 

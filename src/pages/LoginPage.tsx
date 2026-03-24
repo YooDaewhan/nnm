@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isAuthenticated, saveToken } from '../lib/auth';
+import { isAuthenticated, saveToken, saveRefreshToken } from '../lib/auth';
 import { postApiAuthLogin, type PostApiAuthLoginBody } from '../api/generated';
 import { startSocialLogin, type SocialProvider } from '../api/social-auth';
 
@@ -30,6 +30,8 @@ export default function LoginPage() {
         const data = response.data;
         if (data.access_token) {
           saveToken(data.access_token);
+          const refresh = (data as any).refresh_token;
+          if (refresh) saveRefreshToken(refresh);
           navigate('/');
         } else {
           throw new Error('토큰을 받지 못했습니다.');
