@@ -1,77 +1,102 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-/* ── 학문 분야 아이콘 ── */
+/* ───────────────────────────────────────────
+   Static data
+   ─────────────────────────────────────────── */
+
 const SUBJECTS = [
-  { id: '1-1', label: '인문학',      icon: '/icons/1-1 인문학 1.png' },
-  { id: '1-2', label: '사회과학',    icon: '/icons/1-2 사회과학 1.png' },
-  { id: '1-3', label: '자연과학',    icon: '/icons/1-3 자연과학 1.png' },
-  { id: '1-4', label: '공학',        icon: '/icons/1-4 공학 1.png' },
-  { id: '1-5', label: '의약학',      icon: '/icons/1-5 의약학 1.png' },
-  { id: '1-6', label: '농수해양학',  icon: '/icons/1-6 농수해양학 1.png' },
-  { id: '1-7', label: '예술체육학',  icon: '/icons/1-7 예술체육학 1.png' },
-  { id: '1-8', label: '교육학',      icon: '/icons/1-8 교육학 1.png' },
-  { id: '1-9', label: '복합학',      icon: '/icons/1-9 복합학 1.png' },
+  { id: '1-1', label: '인문학', icon: '/icons/1-1 인문학 1.png' },
+  { id: '1-2', label: '사회과학', icon: '/icons/1-2 사회과학 1.png' },
+  { id: '1-3', label: '자연과학', icon: '/icons/1-3 자연과학 1.png' },
+  { id: '1-4', label: '공학', icon: '/icons/1-4 공학 1.png' },
+  { id: '1-5', label: '의약학', icon: '/icons/1-5 의약학 1.png' },
+  { id: '1-6', label: '농수해양학', icon: '/icons/1-6 농수해양학 1.png' },
+  { id: '1-7', label: '예술체육학', icon: '/icons/1-7 예술체육학 1.png' },
+  { id: '1-8', label: '교육학', icon: '/icons/1-8 교육학 1.png' },
+  { id: '1-9', label: '복합학', icon: '/icons/1-9 복합학 1.png' },
 ];
 
-/* ── 트렌드 태그 ── */
+const POPULAR_KEYWORDS = [
+  '인공지능', '머신러닝', '딥러닝', '생성형 AI', 'LLM',
+  '학술 데이터', '딥페이크', '반도체', '에너지 전환', '개인정보',
+  '소형모듈원전', '가스터빈', 'AI 데이터센터', 'HBMA', 'AMD',
+];
+
 const TREND_TAGS = [
   '#AI Agent', '#추론형 LLM', '#RAG',
   '#Hallucination', '#sLLM', '#생성형 인공지능',
   '#딥러닝', '#윤리적 AI',
 ];
 
-/* ── 추천 논문 더미 데이터 ── */
-const RECOMMENDED_PAPERS = [
-  { title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰', author: '김아림(Kim, Ahrim)', org: '한국언어학회', year: '2018' },
-  { title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰', author: '김아림(Kim, Ahrim)', org: '한국언어학회', year: '2018' },
-  { title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰', author: '김아림(Kim, Ahrim)', org: '한국언어학회', year: '2018' },
-  { title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰', author: '김아림(Kim, Ahrim)', org: '한국언어학회', year: '2018' },
+const RECENT_PAPERS = [
+  {
+    title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰',
+    author: '김아림(Kim, Ahrim)',
+    publisher: '한국언어학회',
+    year: '2018',
+  },
+  {
+    title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰',
+    author: '김아림(Kim, Ahrim)',
+    publisher: '한국언어학회',
+    year: '2018',
+  },
+  {
+    title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰',
+    author: '김아림(Kim, Ahrim)',
+    publisher: '한국언어학회',
+    year: '2018',
+  },
+  {
+    title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰',
+    author: '김아림(Kim, Ahrim)',
+    publisher: '한국언어학회',
+    year: '2018',
+  },
 ];
 
-/* ── 인기 검색 키워드 ── */
-const POPULAR_KEYWORDS = [
-  '인공지능', '머신러닝', '딥러닝', '생성형 AI', 'LLM',
-  '학술 데이터', '딥페이크', '반도체', '에너지 전환', '개인정보',
-  '소형모듈원전', '거스타인', 'AI 데이터센터', 'HBMA', 'AMD',
-];
-
-/* ── 신규 업데이트 저널 더미 데이터 ── */
 const JOURNAL_CARDS = [
   {
-    badges: ['벤처', '벤처'],
     title: '한국노년학연구',
     issn: '1226-2641',
     publisher: '한국노년학연구회',
-    cover: '/images/journal-cover-1.png',
-    desc: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
-    kci: '1.33',
-    cited: '36',
+    cover: '',
+    description: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
+    kciIf: '1.33',
+    citations: '36',
+    badges: ['벤저', '벤저'],
   },
   {
-    badges: ['벤처', '벤처'],
     title: '저널 타이틀',
     issn: '0000-2222',
     publisher: '발행기관',
     cover: '',
-    desc: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
-    kci: '0.00',
-    cited: '00',
+    description: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
+    kciIf: '0.00',
+    citations: '00',
+    badges: ['벤저', '벤저'],
   },
   {
-    badges: ['벤처', '벤처'],
     title: '저널 타이틀',
     issn: '0000-2222',
     publisher: '발행기관',
     cover: '',
-    desc: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
-    kci: '0.00',
-    cited: '00',
+    description: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
+    kciIf: '0.00',
+    citations: '00',
+    badges: ['벤저', '벤저'],
   },
 ];
 
-const font = 'Pretendard GOV, Pretendard, sans-serif';
+/* ───────────────────────────────────────────
+   Shared font helper
+   ─────────────────────────────────────────── */
+const ff = 'Pretendard GOV, Pretendard, sans-serif';
 
+/* ───────────────────────────────────────────
+   Component
+   ─────────────────────────────────────────── */
 export default function HomePage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -90,44 +115,39 @@ export default function HomePage() {
     <div className="bg-white flex flex-col flex-1">
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          1. HERO + SEARCH + TREND CARD
+          1. HERO + SHORTCUT + PAPER LIST
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="w-full bg-white">
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+
+        {/* Hero row */}
+        <div className="max-w-[1280px] mx-auto px-4">
           <div
-            className="flex flex-row items-center"
-            style={{ paddingTop: 80, paddingBottom: 0, gap: 64 }}
+            className="flex flex-row items-start gap-16"
+            style={{ paddingTop: 80, paddingBottom: 0 }}
           >
-            {/* Left: Title + Search */}
-            <div className="flex flex-col justify-center" style={{ width: 600, paddingLeft: 16 }}>
-              <div className="flex flex-col" style={{ gap: 16, marginBottom: 48 }}>
-                <h1 style={{ fontFamily: font, fontWeight: 800, fontSize: 56, lineHeight: '1.25', color: '#1E2124', whiteSpace: 'pre-line', margin: 0 }}>
+            {/* Left: title + search */}
+            <div className="flex flex-col justify-center gap-12 flex-shrink-0" style={{ width: 600 }}>
+              <div className="flex flex-col gap-4" style={{ paddingLeft: 8 }}>
+                <h1 style={{ fontFamily: ff, fontWeight: 800, fontSize: 56, lineHeight: '1.25em', color: '#1E2124', whiteSpace: 'pre-line' }}>
                   {`논문 검색\n더 쉬워졌습니다`}
                 </h1>
-                <p style={{ fontFamily: font, fontWeight: 500, fontSize: 20, lineHeight: '1.6', color: '#464C53', margin: 0 }}>
+                <p style={{ fontFamily: ff, fontWeight: 500, fontSize: 20, lineHeight: '1.6em', color: '#464C53' }}>
                   복잡한 절차 없이 핵심 논문을 빠르게 찾아보세요
                 </p>
               </div>
 
-              {/* 검색바 */}
+              {/* Search bar */}
               <form onSubmit={handleSearch}>
                 <div
                   className="flex flex-row items-center"
-                  style={{
-                    width: 560, height: 80,
-                    background: '#1E2124', borderRadius: 14,
-                    paddingLeft: 40, paddingRight: 20,
-                  }}
+                  style={{ width: 560, height: 80, background: '#1E2124', borderRadius: 14, paddingLeft: 40, paddingRight: 20 }}
                 >
                   <input
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="검색어를 입력해주세요"
-                    style={{
-                      flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                      fontFamily: font, fontWeight: 500, fontSize: 20, color: '#FFFFFF',
-                    }}
+                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontFamily: ff, fontWeight: 700, fontSize: 20, color: '#FFFFFF' }}
                     className="placeholder-white/40"
                   />
                   <button
@@ -136,49 +156,41 @@ export default function HomePage() {
                     style={{ width: 40, height: 40, background: 'transparent', border: 'none', cursor: 'pointer' }}
                   >
                     <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                      <circle cx="17" cy="17" r="9" stroke="#FFFFFF" strokeWidth="2.2"/>
-                      <path d="M24 24L32 32" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round"/>
+                      <circle cx="17" cy="17" r="9" stroke="#FFFFFF" strokeWidth="2.2" />
+                      <path d="M24 24L32 32" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" />
                     </svg>
                   </button>
                 </div>
               </form>
             </div>
 
-            {/* Right: Trend Card */}
+            {/* Right: trend card */}
             <div
-              className="shrink-0 relative overflow-hidden"
-              style={{
-                width: 600, height: 400, borderRadius: 20,
-                background: 'linear-gradient(135deg, #1a1a3e 0%, #2d2d6e 40%, #4a4aaf 100%)',
-              }}
+              className="flex-1 rounded-2xl overflow-hidden relative"
+              style={{ width: 600, height: 400, minHeight: 400, background: 'linear-gradient(135deg, #0a1628 0%, #1a3a5c 40%, #3b82f6 100%)' }}
             >
-              {/* 배경 이미지 */}
               <img
                 src="/images/hero-main.png"
                 alt=""
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
               />
-              {/* 텍스트 오버레이 */}
-              <div className="relative flex flex-col" style={{ padding: 60, gap: 8, zIndex: 1 }}>
+              <div className="relative z-10 flex flex-col gap-2" style={{ padding: '60px' }}>
                 <span
                   style={{
                     display: 'inline-block', width: 'fit-content',
                     padding: '0 8px', borderRadius: 4,
-                    background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)',
-                    fontFamily: font, fontWeight: 700, fontSize: 13, color: '#FFFFFF', lineHeight: '20px',
+                    background: 'rgba(255,255,255,0.15)',
+                    fontFamily: ff, fontWeight: 700, fontSize: 13, color: '#FFFFFF', lineHeight: '20px',
                   }}
                 >
                   TREND
                 </span>
-                <h2 style={{ fontFamily: font, fontWeight: 800, fontSize: 40, color: '#FFFFFF', lineHeight: '1.5', margin: '4px 0 12px' }}>
+                <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 36, color: '#FFFFFF', lineHeight: '1.4em', marginTop: 2 }}>
                   AI 에이전트
                 </h2>
-                <div className="flex flex-wrap" style={{ gap: '8px 16px' }}>
+                <div className="flex flex-wrap gap-x-4 gap-y-1" style={{ marginTop: 8 }}>
                   {TREND_TAGS.map((tag) => (
-                    <span
-                      key={tag}
-                      style={{ fontFamily: font, fontWeight: 400, fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: '26px' }}
-                    >
+                    <span key={tag} style={{ fontFamily: ff, fontWeight: 400, fontSize: 15, color: 'rgba(255,255,255,0.75)', lineHeight: '26px' }}>
                       {tag}
                     </span>
                   ))}
@@ -187,64 +199,60 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          2. 학문 분야 SHORTCUT + 추천 논문
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="w-full bg-white">
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+        {/* Shortcut + divider + paper list */}
+        <div className="max-w-[1280px] mx-auto px-4" style={{ paddingBottom: 0 }}>
           <div
-            style={{
-              marginLeft: 16, marginRight: 16,
-              background: '#FFFFFF', border: '1px solid #E4E7EA', borderRadius: 20,
-              padding: '48px',
-            }}
+            className="rounded-2xl"
+            style={{ background: '#FFFFFF', border: '1px solid #E4E7EA', marginTop: 0, padding: '48px' }}
           >
-            {/* 학문 분야 아이콘 그리드 */}
-            <div className="flex flex-row items-start justify-between" style={{ marginBottom: 40 }}>
+            {/* Subject shortcut grid */}
+            <div className="flex flex-row items-center justify-between" style={{ gap: 12 }}>
               {SUBJECTS.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => handleSubjectClick(s.label)}
-                  className="flex flex-col items-center transition-all hover:opacity-70"
-                  style={{ gap: 10, background: 'none', border: 'none', cursor: 'pointer', flex: '1 1 0', minWidth: 0 }}
+                  className="flex flex-col items-center gap-3 transition-all hover:opacity-70"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', flex: 1 }}
                 >
                   <div className="flex items-center justify-center" style={{ width: 80, height: 80 }}>
                     <img src={s.icon} alt={s.label} style={{ width: 64, height: 64, objectFit: 'contain' }} />
                   </div>
-                  <span style={{ fontFamily: font, fontWeight: 700, fontSize: 14, color: '#1E2124', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontFamily: ff, fontWeight: 700, fontSize: 14, color: '#1E2124', lineHeight: '1.5em', whiteSpace: 'nowrap' }}>
                     {s.label}
                   </span>
                 </button>
               ))}
             </div>
 
-            {/* 디바이더 */}
-            <div style={{ height: 1, background: '#E4E7EA', marginBottom: 40 }} />
+            {/* Divider */}
+            <div style={{ height: 1, background: '#E4E7EA', margin: '40px 0' }} />
 
-            {/* 추천 논문 리스트 (2열 x 2행) */}
+            {/* Recent paper list (2×2) */}
             <div
               className="grid"
-              style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px 32px' }}
+              style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px', columnGap: '32px', rowGap: '16px' }}
             >
-              {RECOMMENDED_PAPERS.map((paper, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-col cursor-pointer hover:opacity-80 transition-opacity"
-                  style={{ gap: 4 }}
+              {RECENT_PAPERS.map((p, i) => (
+                <button
+                  key={i}
+                  className="flex flex-col gap-1 text-left transition-colors hover:bg-gray-50 rounded-lg"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 0' }}
+                  onClick={() => navigate(`/search?q=${encodeURIComponent(p.title)}`)}
                 >
-                  <p style={{ fontFamily: font, fontWeight: 500, fontSize: 17, color: '#1E2124', lineHeight: '29px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {paper.title}
-                  </p>
-                  <div className="flex flex-row items-center" style={{ gap: 0 }}>
-                    <span style={{ fontFamily: font, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{paper.author}</span>
-                    <span style={{ width: 1, height: 14, background: '#CDD1D5', margin: '0 8px' }} />
-                    <span style={{ fontFamily: font, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{paper.org}</span>
-                    <span style={{ width: 1, height: 14, background: '#CDD1D5', margin: '0 8px' }} />
-                    <span style={{ fontFamily: font, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{paper.year}</span>
+                  <span
+                    style={{ fontFamily: ff, fontWeight: 600, fontSize: 16, color: '#1E2124', lineHeight: '29px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: 560 }}
+                  >
+                    {p.title}
+                  </span>
+                  <div className="flex items-center gap-0" style={{ lineHeight: '26px' }}>
+                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{p.author}</span>
+                    <span style={{ margin: '0 8px', width: 1, height: 14, background: '#CDD1D5', display: 'inline-block' }} />
+                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{p.publisher}</span>
+                    <span style={{ margin: '0 8px', width: 1, height: 14, background: '#CDD1D5', display: 'inline-block' }} />
+                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{p.year}</span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -252,14 +260,14 @@ export default function HomePage() {
       </section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          3. 인기 검색 키워드
+          2. 인기 검색 키워드
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="w-full bg-white" style={{ paddingTop: 80, paddingBottom: 80 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', paddingLeft: 16, paddingRight: 16 }}>
-          <h2 style={{ fontFamily: font, fontWeight: 800, fontSize: 32, color: '#1E2124', lineHeight: '48px', margin: '0 0 32px' }}>
+        <div className="max-w-[1280px] mx-auto px-4">
+          <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 32, color: '#1E2124', lineHeight: '48px', marginBottom: 32, paddingLeft: 16 }}>
             인기 검색 키워드
           </h2>
-          <div className="flex flex-wrap" style={{ gap: 16 }}>
+          <div className="flex flex-wrap gap-3" style={{ paddingLeft: 16 }}>
             {POPULAR_KEYWORDS.map((kw) => (
               <button
                 key={kw}
@@ -269,9 +277,9 @@ export default function HomePage() {
                 }}
                 className="flex items-center justify-center transition-colors hover:bg-[#E8EAEC]"
                 style={{
-                  height: 46, padding: '0 20px',
-                  background: '#F4F5F6', border: '1px solid #E4E7EA', borderRadius: 999, cursor: 'pointer',
-                  fontFamily: font, fontSize: 16, fontWeight: 500, color: '#464C53',
+                  height: 46, padding: '0 24px', borderRadius: 1000,
+                  background: '#F4F5F6', border: '1px solid #E4E7EA',
+                  cursor: 'pointer', fontFamily: ff, fontSize: 15, fontWeight: 500, color: '#1E2124',
                 }}
               >
                 {kw}
@@ -282,18 +290,18 @@ export default function HomePage() {
       </section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          4. SIMS 배너
+          3. SIMS 배너
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="w-full" style={{ background: 'linear-gradient(135deg, #2d1b69 0%, #4a2d9e 50%, #7b5ec7 100%)' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', paddingLeft: 16, paddingRight: 16 }}>
+      <section className="w-full" style={{ background: 'linear-gradient(135deg, #2a1a4e 0%, #4a3a8e 40%, #6b5ce7 100%)', overflow: 'hidden' }}>
+        <div className="max-w-[1280px] mx-auto px-4">
           <div
-            className="flex flex-col items-center justify-center"
-            style={{ height: 240, textAlign: 'center' }}
+            className="flex flex-col items-center justify-center text-center"
+            style={{ padding: '40px 0', minHeight: 200 }}
           >
-            <p style={{ fontFamily: font, fontWeight: 500, fontSize: 18, color: 'rgba(255,255,255,0.7)', margin: '0 0 8px' }}>
+            <p style={{ fontFamily: ff, fontWeight: 500, fontSize: 17, color: 'rgba(255,255,255,0.7)', lineHeight: '36px' }}>
               효율적인 학회 운영 관리
             </p>
-            <h2 style={{ fontFamily: font, fontWeight: 800, fontSize: 32, color: '#FFFFFF', lineHeight: '48px', margin: 0 }}>
+            <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 32, color: '#FFFFFF', lineHeight: '48px' }}>
               학회통합관리시스템 SIMS로 해결하세요!
             </h2>
           </div>
@@ -301,61 +309,63 @@ export default function HomePage() {
       </section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          5. 신규 업데이트 저널
+          4. 신규 업데이트 저널
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="w-full bg-white" style={{ paddingTop: 80, paddingBottom: 80 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', paddingLeft: 16, paddingRight: 16 }}>
-
-          {/* 타이틀 + 페이징 */}
-          <div className="flex flex-row items-center justify-between" style={{ marginBottom: 32 }}>
-            <h2 style={{ fontFamily: font, fontWeight: 800, fontSize: 32, color: '#1E2124', lineHeight: '48px', margin: 0 }}>
+        <div className="max-w-[1280px] mx-auto px-4">
+          {/* Section header */}
+          <div className="flex items-center justify-between" style={{ marginBottom: 32, paddingLeft: 16, paddingRight: 16 }}>
+            <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 32, color: '#1E2124', lineHeight: '48px' }}>
               신규 업데이트 저널
             </h2>
-            <span style={{ fontFamily: font, fontWeight: 500, fontSize: 16, color: '#8A949E' }}>
+            <span style={{ fontFamily: ff, fontWeight: 500, fontSize: 15, color: '#8A949E' }}>
               1 / 8
             </span>
           </div>
 
-          {/* 저널 카드 리스트 */}
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
-            {JOURNAL_CARDS.map((card, idx) => (
+          {/* Journal cards grid */}
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, paddingLeft: 16, paddingRight: 16 }}>
+            {JOURNAL_CARDS.map((card, i) => (
               <div
-                key={idx}
-                className="flex flex-col rounded-2xl transition-shadow hover:shadow-md"
-                style={{ background: '#FFFFFF', border: '1px solid #E4E7EA', overflow: 'hidden' }}
+                key={i}
+                className="flex flex-col rounded-2xl overflow-hidden transition-shadow hover:shadow-lg"
+                style={{ background: '#FFFFFF', border: '1px solid #E4E7EA' }}
               >
-                {/* row-1: 뱃지 + 아이콘 버튼 */}
-                <div className="flex flex-row items-center justify-between" style={{ padding: '24px 24px 0' }}>
-                  <div className="flex flex-row" style={{ gap: 4 }}>
+                {/* Row 1: badges + action buttons */}
+                <div className="flex items-center justify-between" style={{ padding: '24px 24px 0' }}>
+                  <div className="flex gap-1">
                     {card.badges.map((b, bi) => (
                       <span
                         key={bi}
                         style={{
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          padding: '0 8px', height: 24, borderRadius: 4,
-                          background: '#F4F5F6', fontFamily: font, fontSize: 12, fontWeight: 600, color: '#58616A',
+                          height: 24, padding: '0 8px', borderRadius: 4,
+                          background: '#F4F5F6', fontFamily: ff, fontSize: 12, fontWeight: 600, color: '#58616A',
                         }}
                       >
                         {b}
                       </span>
                     ))}
                   </div>
-                  <div className="flex flex-row items-center" style={{ gap: 4 }}>
-                    {/* 공유, 좋아요, 북마크 아이콘 */}
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#8A949E' }}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 7L12 4M12 4L9 7M12 4V13M5 9V15C5 15.5523 5.44772 16 6 16H18C18.5523 16 19 15.5523 19 15V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <div className="flex items-center gap-2">
+                    {/* Share */}
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 7a2 2 0 100-4 2 2 0 000 4zM5 12a2 2 0 100-4 2 2 0 000 4zM15 17a2 2 0 100-4 2 2 0 000 4zM7 11l6 3M13 6l-6 3" stroke="#8A949E" strokeWidth="1.5" strokeLinecap="round" /></svg>
                     </button>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#8A949E' }}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 16.25S2.5 11.25 2.5 6.875C2.5 4.56 4.31 2.75 6.625 2.75C8.125 2.75 9.45 3.6 10 4.85C10.55 3.6 11.875 2.75 13.375 2.75C15.69 2.75 17.5 4.56 17.5 6.875C17.5 11.25 10 16.25 10 16.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    {/* Heart */}
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17s-7-4.35-7-8.5A3.5 3.5 0 0110 5.96 3.5 3.5 0 0117 8.5C17 12.65 10 17 10 17z" stroke="#8A949E" strokeWidth="1.5" /></svg>
                     </button>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#8A949E' }}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 2.5V17.5L10 14.5L15 17.5V2.5H5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    {/* Cart */}
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M6 6h12l-1.5 7H7.5L6 6zM8 17a1 1 0 100-2 1 1 0 000 2zM15 17a1 1 0 100-2 1 1 0 000 2z" stroke="#8A949E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                   </div>
                 </div>
 
-                {/* contents: 이미지 + 메타 */}
-                <div className="flex flex-row" style={{ padding: '16px 24px', gap: 24 }}>
+                {/* Contents: image + meta */}
+                <div className="flex gap-4" style={{ padding: '16px 24px 0' }}>
+                  {/* Cover image */}
                   <div
                     className="shrink-0 rounded overflow-hidden"
                     style={{ width: 90, height: 125, background: '#F4F5F6' }}
@@ -363,39 +373,54 @@ export default function HomePage() {
                     {card.cover ? (
                       <img src={card.cover} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <div className="flex items-center justify-center w-full h-full">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="6" y="4" width="20" height="24" rx="2" stroke="#CDD1D5" strokeWidth="1.5"/><path d="M11 10H21M11 14H21M11 18H17" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      <div
+                        className="flex flex-col items-center justify-center w-full h-full gap-2"
+                        style={{
+                          background: [
+                            'linear-gradient(145deg, #E8F0FE 0%, #C2D4F8 100%)',
+                            'linear-gradient(145deg, #E6F4EA 0%, #B7DFC0 100%)',
+                            'linear-gradient(145deg, #FEF3E2 0%, #F7D59C 100%)',
+                          ][i % 3],
+                        }}
+                      >
+                        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                          <rect x="7" y="3" width="16" height="22" rx="2" fill="white" fillOpacity="0.7" />
+                          <rect x="11" y="7" width="16" height="22" rx="2" fill="white" fillOpacity="0.5" stroke={['#6B9BF4','#4CAF72','#E6A020'][i % 3]} strokeWidth="1.2" />
+                          <path d="M15 13h8M15 17h8M15 21h5" stroke={['#6B9BF4','#4CAF72','#E6A020'][i % 3]} strokeWidth="1.4" strokeLinecap="round" />
+                        </svg>
+                        <span style={{ fontSize: 9, fontWeight: 600, color: ['#4A7CF0','#2E8B4A','#C07800'][i % 3], letterSpacing: '0.03em' }}>JOURNAL</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col" style={{ gap: 16 }}>
-                    <h3 style={{ fontFamily: font, fontWeight: 700, fontSize: 18, color: '#1E2124', lineHeight: '29px', margin: '8px 0 0' }}>
+                  {/* Meta */}
+                  <div className="flex flex-col justify-start" style={{ paddingTop: 8 }}>
+                    <h3 style={{ fontFamily: ff, fontWeight: 700, fontSize: 18, color: '#1E2124', lineHeight: '29px', marginBottom: 16 }}>
                       {card.title}
                     </h3>
-                    <div className="flex flex-col" style={{ gap: 8 }}>
-                      <div className="flex flex-row items-center" style={{ gap: 16 }}>
-                        <span style={{ fontFamily: font, fontSize: 14, fontWeight: 500, color: '#8A949E' }}>ISSN</span>
-                        <span style={{ fontFamily: font, fontSize: 14, fontWeight: 400, color: '#58616A' }}>{card.issn}</span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span style={{ fontFamily: ff, fontWeight: 500, fontSize: 13, color: '#8A949E' }}>ISSN</span>
+                        <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 13, color: '#58616A' }}>{card.issn}</span>
                       </div>
-                      <span style={{ fontFamily: font, fontSize: 14, fontWeight: 400, color: '#58616A' }}>{card.publisher}</span>
+                      <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 13, color: '#58616A' }}>{card.publisher}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* description + stats */}
-                <div className="flex flex-col" style={{ padding: '0 24px 24px' }}>
-                  <p style={{ fontFamily: font, fontSize: 14, fontWeight: 400, color: '#58616A', lineHeight: '23px', margin: '0 0 10px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {card.desc}
+                {/* Description + stats */}
+                <div className="flex flex-col" style={{ padding: '16px 24px 24px' }}>
+                  <p style={{ fontFamily: ff, fontWeight: 400, fontSize: 14, color: '#58616A', lineHeight: '23px', marginBottom: 12, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {card.description}
                   </p>
-                  <div style={{ height: 1, background: '#E4E7EA', margin: '10px 0' }} />
-                  <div className="flex flex-row items-center justify-between">
-                    <span style={{ fontFamily: font, fontSize: 14, fontWeight: 400, color: '#8A949E' }}>KCI IF (2년)</span>
-                    <span style={{ fontFamily: font, fontSize: 14, fontWeight: 600, color: '#1E2124' }}>{card.kci}</span>
+                  <div style={{ height: 1, background: '#E4E7EA', marginBottom: 10 }} />
+                  <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 13, color: '#8A949E' }}>KCI IF (2년)</span>
+                    <span style={{ fontFamily: ff, fontWeight: 600, fontSize: 13, color: '#1E2124' }}>{card.kciIf}</span>
                   </div>
-                  <div style={{ height: 1, background: '#E4E7EA', margin: '10px 0' }} />
-                  <div className="flex flex-row items-center justify-between">
-                    <span style={{ fontFamily: font, fontSize: 14, fontWeight: 400, color: '#8A949E' }}>피인용 횟수</span>
-                    <span style={{ fontFamily: font, fontSize: 14, fontWeight: 600, color: '#1E2124' }}>{card.cited}</span>
+                  <div style={{ height: 1, background: '#E4E7EA', marginBottom: 10 }} />
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 13, color: '#8A949E' }}>피인용 횟수</span>
+                    <span style={{ fontFamily: ff, fontWeight: 600, fontSize: 13, color: '#1E2124' }}>{card.citations}</span>
                   </div>
                 </div>
               </div>

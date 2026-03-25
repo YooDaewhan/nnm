@@ -334,6 +334,7 @@ function OpenSearchTextContent() {
         )}
 
         <div className="flex gap-6 items-start">
+          <div className="sticky top-24 self-start">
           <SearchFilterSidebar
             onApply={async (filters, wq) => {
               // 필터 변경 시 원본 ID 캐시 무효화
@@ -363,6 +364,7 @@ function OpenSearchTextContent() {
             }}
             onWithinSearch={(wq) => handleWithinSearch(wq)}
           />
+          </div>
 
           {/* 결과 목록 */}
           <div className="flex-1">
