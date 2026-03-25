@@ -773,6 +773,11 @@ export type PostApiSearchOpensearchTextBody = {
   min_score?: number;
   vector_weight?: number;
   text_weight?: number;
+  within_ids?: string[];
+  provider_id?: number;
+  provider_name?: string;
+  venue_name?: string;
+  sort?: 'relevance' | 'popularity' | 'latest';
 };
 
 export type OpenSearchTextResultItem = {
@@ -789,7 +794,10 @@ export type PostApiSearchOpensearchText200 = {
   success: boolean;
   results: OpenSearchTextResultItem[];
   count: number;
+  total: number;
   has_more: boolean;
+  limit: number;
+  offset: number;
 };
 
 export type PostApiSearchOpensearchText400 = {
@@ -819,7 +827,10 @@ export type OpenSearchTextSearchResponse = {
   success: boolean;
   results: OpenSearchTextResultItem[];
   count: number;
+  total: number;
   has_more: boolean;
+  limit: number;
+  offset: number;
 };
 
 export async function searchOpensearchText(params: {
@@ -830,6 +841,11 @@ export async function searchOpensearchText(params: {
   min_score?: number;
   vector_weight?: number;
   text_weight?: number;
+  within_ids?: string[];
+  provider_id?: number;
+  provider_name?: string;
+  venue_name?: string;
+  sort?: 'relevance' | 'popularity' | 'latest';
 }): Promise<OpenSearchTextSearchResponse> {
   const response = await postApiSearchOpensearchText(params);
 
@@ -843,7 +859,10 @@ export async function searchOpensearchText(params: {
     success: data.success ?? false,
     results: data.results ?? [],
     count: data.count ?? 0,
+    total: data.total ?? data.count ?? 0,
     has_more: data.has_more ?? false,
+    limit: data.limit ?? 10,
+    offset: data.offset ?? 0,
   };
 }
 

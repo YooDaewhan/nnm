@@ -1,10 +1,11 @@
-import { useState, Suspense, useCallback } from 'react';
+import { useState, Suspense, useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getPaperDetail } from '../api/search';
+import { osGetPaperById, OSPaperDetail } from '../api/opensearch-direct';
 import { getPayments } from '../api/payment';
 import { isAuthenticated } from '../lib/auth';
+import { addRecentPaper } from './mypage/MyPageRecentPage';
 
 const PDF_VIEWER_BASE = import.meta.env.VITE_PDF_SERVER_URL || 'http://localhost:3000';
 
@@ -54,9 +55,9 @@ function PaperDetailContent() {
 
   const loggedIn = isAuthenticated();
 
-  const { data: paper, isLoading, error: fetchError } = useQuery({
+  const { data: paper, isLoading, error: fetchError } = useQuery<OSPaperDetail>({
     queryKey: ['paper', id],
-    queryFn: () => getPaperDetail(id!),
+    queryFn: () => osGetPaperById(id!),
     enabled: !!id,
   });
 
@@ -66,6 +67,24 @@ function PaperDetailContent() {
     enabled: loggedIn,
     staleTime: 1000 * 60 * 5,
   });
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  useEffect(() => {
+    if (paper) {
+      console.log('[PapersPage] paper:', { id: paper.id, title: paper.title, authors: paper.authors, keywords: paper.keywords, venue: paper.venue });
+      addRecentPaper({
+        id: paper.id,
+        title: paper.title,
+        authors: Array.isArray(paper.authors) ? paper.authors.map((a) => (typeof a === 'string' ? a : a.name)) : [],
+        published_at: paper.published_at ?? undefined,
+        venue: typeof paper.venue === 'string' ? paper.venue : paper.venue?.name,
+      });
+    }
+    if (fetchError) console.error('[PapersPage] error:', fetchError);
+  }, [paper, fetchError]);
 
   const paidOrders = ordersData?.success ? ordersData.orders.data : [];
 
@@ -125,7 +144,7 @@ function PaperDetailContent() {
     <div className="min-h-screen bg-[#FAFAFC]">
       <main className="flex justify-center px-0 py-10">
         <div className="w-full max-w-[1280px] px-4">
-          {/* Breadcrumb */}
+          {/* Breadcrumb 
           <nav className="mb-8 pb-0 flex items-center gap-1 text-[15px]">
             <Link
               to="/"
@@ -157,10 +176,10 @@ function PaperDetailContent() {
             <span className="text-[#1E2124] px-1 py-0.5 text-[15px] leading-[1.5em]">
               논문상세
             </span>
-          </nav>
+          </nav>*/}
 
           {/* Content Area */}
-          <div className="flex gap-12">
+          <div className="flex gap-12 w-full">
             <div className="flex-1">
               {isLoading ? (
                 <div className="bg-white rounded-xl p-10 flex justify-center">
@@ -174,10 +193,10 @@ function PaperDetailContent() {
                   </Link>
                 </div>
               ) : paper ? (
-                <div className="bg-white rounded-xl py-10 space-y-12">
+                <div className="bg-white rounded-xl py-10 flex flex-col gap-12">
                   {/* ── SUMMARY ── */}
                   <div className="flex flex-col gap-6">
-                    <div className="flex flex-col gap-1 px-10">
+                    <div className="flex flex-col gap-1 px-10" style={{ maxWidth: 1200 }}>
                       <h1
                         className="text-[32px] font-bold leading-[1.5em] text-[#131416]"
                         style={{ letterSpacing: '0.03125em' }}
@@ -193,8 +212,9 @@ function PaperDetailContent() {
 
                     <div
                       className="flex flex-col gap-4 py-6 px-10"
-                      style={{ borderTop: '1px solid #CDD1D5', borderBottom: '1px solid #CDD1D5' }}
+                      style={{ borderTop: '1px solid #CDD1D5', borderBottom: '1px solid #CDD1D5', minHeight: 258 }}
                     >
+                      {/* 자료유형 */}
                       {paper.type && (
                         <div className="flex gap-6 items-start">
                           <div className="flex-shrink-0 flex items-center" style={{ width: 180, minHeight: 32 }}>
@@ -207,6 +227,7 @@ function PaperDetailContent() {
                         </div>
                       )}
 
+                      {/* 저자정보 */}
                       {paper.authors && paper.authors.length > 0 && (
                         <div className="flex gap-6 items-start">
                           <div className="flex-shrink-0 flex items-center" style={{ width: 180, minHeight: 32 }}>
@@ -225,50 +246,76 @@ function PaperDetailContent() {
                         </div>
                       )}
 
-                      {paper.venue && (
+                      {/* 발행정보 — venue 없어도 year/view_count/citation_count 있으면 표시 */}
+                      {(paper.venue || paper.published_at || (paper as any).year) && (
                         <div className="flex gap-6 items-start">
                           <div className="flex-shrink-0 flex items-center" style={{ width: 180, minHeight: 32 }}>
                             <span className="text-[17px] font-bold leading-[1.5em] text-[#131416]">발행정보</span>
                           </div>
                           <div className="flex flex-col gap-0.5">
+                            {/* venue 정보가 있을 때만 기관/저널/권호/페이지 행 표시 */}
+                            {paper.venue && (
+                              <div className="flex items-center flex-wrap gap-0.5">
+                                {paper.publisher_name && (
+                                  <>
+                                    <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">{paper.publisher_name}</button>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                                      <path d="M6 4l4 4-4 4" stroke="#464C53" strokeWidth="1.2" />
+                                    </svg>
+                                  </>
+                                )}
+                                <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">{paper.venue.name}</button>
+                                {paper.issue?.label && (
+                                  <>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                                      <path d="M6 4l4 4-4 4" stroke="#464C53" strokeWidth="1.2" />
+                                    </svg>
+                                    <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">{paper.issue.label}</button>
+                                  </>
+                                )}
+                                {(paper.page_start || paper.page_end) && (
+                                  <>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                                      <path d="M6 4l4 4-4 4" stroke="#464C53" strokeWidth="1.2" />
+                                    </svg>
+                                    <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">
+                                      {paper.page_start && paper.page_end
+                                        ? `pp.${paper.page_start}-${paper.page_end} (${Number(paper.page_end) - Number(paper.page_start) + 1}pages)`
+                                        : paper.page_start
+                                          ? `p.${paper.page_start}`
+                                          : ''}
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                            {/* 발행일·이용수·인용수 행 */}
                             <div className="flex items-center flex-wrap gap-0.5">
-                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">한국노년학연구회</button>
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                <path d="M6 4l4 4-4 4" stroke="#464C53" strokeWidth="1.2" />
-                              </svg>
-                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">{paper.venue.name}</button>
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                <path d="M6 4l4 4-4 4" stroke="#464C53" strokeWidth="1.2" />
-                              </svg>
-                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">{paper.issue?.label || '34(2)'}</button>
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                <path d="M6 4l4 4-4 4" stroke="#464C53" strokeWidth="1.2" />
-                              </svg>
-                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">
-                                {paper.page_start && paper.page_end
-                                  ? `pp.${paper.page_start}-${paper.page_end} (${Number(paper.page_end) - Number(paper.page_start) + 1}pages)`
-                                  : '페이지 수록 정보'}
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-0.5">
                               <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">
                                 {paper.published_at
-                                  ? new Date(paper.published_at).toLocaleDateString('ko-KR').replace(/\s/g, '')
-                                  : '발행년월'}
+                                  ? new Date(paper.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit' }).replace(/\s/g, '')
+                                  : (paper as any).year
+                                    ? `${(paper as any).year}년`
+                                    : '발행년월'}
                               </button>
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                                 <line x1="8" y1="3" x2="8" y2="13" stroke="#8A949E" strokeWidth="1" />
                               </svg>
-                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">이용수 {paper.view_count ?? '000'}</button>
+                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">이용수 {paper.view_count ?? 0}</button>
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                                 <line x1="8" y1="3" x2="8" y2="13" stroke="#8A949E" strokeWidth="1" />
                               </svg>
-                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">인용수 {paper.citation_count ?? '000'}</button>
+                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">인용수 {paper.citation_count ?? 0}</button>
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                                <line x1="8" y1="3" x2="8" y2="13" stroke="#8A949E" strokeWidth="1" />
+                              </svg>
+                              <button className="inline-flex items-center justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#464C53] hover:underline">다운로드 {paper.download_count ?? 0}</button>
                             </div>
                           </div>
                         </div>
                       )}
 
+                      {/* DOI */}
                       {paper.doi && (
                         <div className="flex gap-6 items-start">
                           <div className="flex-shrink-0 flex items-center" style={{ width: 180, minHeight: 32 }}>
@@ -286,48 +333,94 @@ function PaperDetailContent() {
                           </div>
                         </div>
                       )}
+
+                      {/* ISSN */}
+                      {(paper.pissn || paper.eissn) && (
+                        <div className="flex gap-6 items-start">
+                          <div className="flex-shrink-0 flex items-center" style={{ width: 180, minHeight: 32 }}>
+                            <span className="text-[17px] font-bold leading-[1.5em] text-[#131416]">ISSN</span>
+                          </div>
+                          <div className="flex items-center gap-4 h-8">
+                            {paper.pissn && <span className="text-[17px] leading-[1.5em] text-[#464C53]">Print {paper.pissn}</span>}
+                            {paper.eissn && <span className="text-[17px] leading-[1.5em] text-[#464C53]">Online {paper.eissn}</span>}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 발행기관 (venue 없을 때만 단독 표시) */}
+                      {paper.publisher_name && !paper.venue && (
+                        <div className="flex gap-6 items-start">
+                          <div className="flex-shrink-0 flex items-center" style={{ width: 180, minHeight: 32 }}>
+                            <span className="text-[17px] font-bold leading-[1.5em] text-[#131416]">발행기관</span>
+                          </div>
+                          <div className="flex items-center h-8">
+                            <span className="text-[17px] leading-[1.5em] text-[#464C53]">{paper.publisher_name}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 총 페이지 수 */}
+                      {paper.total_pages != null && (
+                        <div className="flex gap-6 items-start">
+                          <div className="flex-shrink-0 flex items-center" style={{ width: 180, minHeight: 32 }}>
+                            <span className="text-[17px] font-bold leading-[1.5em] text-[#131416]">페이지 수</span>
+                          </div>
+                          <div className="flex items-center h-8">
+                            <span className="text-[17px] leading-[1.5em] text-[#464C53]">{paper.total_pages}p</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex items-center justify-between px-10">
-                      <div className="flex items-center gap-4">
-                        <button className="inline-flex items-center gap-1 h-8 px-0.5 text-[17px] leading-[1.5em] text-[#1E2124] hover:underline">
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <rect x="3" y="2" width="11" height="14" rx="1" stroke="#1E2124" strokeWidth="1.3" />
-                            <circle cx="14" cy="14" r="3.5" stroke="#1E2124" strokeWidth="1.3" />
-                            <path d="M16.5 16.5l2 2" stroke="#1E2124" strokeWidth="1.3" strokeLinecap="round" />
+                    <div className="flex items-center justify-end px-10">
+                      {/* 액션 버튼 그룹 (왼쪽) */}
+                      {/* <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => setPdfOpen(true)}
+                          className="inline-flex items-center gap-1 justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#1E2124] border border-transparent hover:bg-[#F0F2F5] rounded px-2 transition-colors"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="flex-shrink-0">
+                            <path d="M13 2H6a1 1 0 00-1 1v14a1 1 0 001 1h10a1 1 0 001-1V6l-4-4z" stroke="#1E2124" strokeWidth="1.4" strokeLinejoin="round" />
+                            <path d="M13 2v4h4M8 11h4M8 14h2" stroke="#1E2124" strokeWidth="1.4" strokeLinecap="round" />
+                            <circle cx="10" cy="9" r="1" fill="#1E2124" />
                           </svg>
                           미리보기
                         </button>
-                        <button className="inline-flex items-center gap-1 h-8 px-0.5 text-[17px] leading-[1.5em] text-[#1E2124] hover:underline">
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <rect x="3" y="2" width="14" height="16" rx="1" stroke="#1E2124" strokeWidth="1.3" />
-                            <line x1="6" y1="7" x2="14" y2="7" stroke="#1E2124" strokeWidth="1.2" />
-                            <line x1="6" y1="10" x2="14" y2="10" stroke="#1E2124" strokeWidth="1.2" />
-                            <line x1="6" y1="13" x2="11" y2="13" stroke="#1E2124" strokeWidth="1.2" />
+                        <button
+                          className="inline-flex items-center gap-1 justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#1E2124] hover:bg-[#F0F2F5] rounded px-2 transition-colors"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="flex-shrink-0">
+                            <path d="M13 2H6a1 1 0 00-1 1v14a1 1 0 001 1h10a1 1 0 001-1V6l-4-4z" stroke="#1E2124" strokeWidth="1.4" strokeLinejoin="round" />
+                            <path d="M13 2v4h4M8 9h4M8 12h4M8 15h2" stroke="#1E2124" strokeWidth="1.4" strokeLinecap="round" />
                           </svg>
                           초록보기
                         </button>
-                        <button className="inline-flex items-center gap-1 h-8 px-0.5 text-[17px] leading-[1.5em] text-[#1E2124] hover:underline">
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M10 3l1.5 4.5H16l-3.7 2.7 1.4 4.3L10 12l-3.7 2.5 1.4-4.3L4 7.5h4.5L10 3z" stroke="#1E2124" strokeWidth="1.2" fill="none" />
+                        <button
+                          className="inline-flex items-center gap-1 justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#1E2124] hover:bg-[#F0F2F5] rounded px-2 transition-colors"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="flex-shrink-0">
+                            <path d="M4 10h12M10 4l6 6-6 6" stroke="#1E2124" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           AI 요약
                         </button>
-                        <button className="inline-flex items-center gap-1 h-8 px-0.5 text-[17px] leading-[1.5em] text-[#1E2124] hover:underline">
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M4 8.5c0-1.1.9-2 2-2h1v3H5.5A1.5 1.5 0 014 8.5zM10 8.5c0-1.1.9-2 2-2h1v3h-1.5A1.5 1.5 0 0110 8.5z" stroke="#1E2124" strokeWidth="1.1" fill="none" />
-                            <path d="M7 9.5v4M13 9.5v4" stroke="#1E2124" strokeWidth="1.1" />
+                        <button
+                          className="inline-flex items-center gap-1 justify-center h-8 px-0.5 text-[17px] leading-[1.5em] text-[#1E2124] hover:bg-[#F0F2F5] rounded px-2 transition-colors"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="flex-shrink-0">
+                            <path d="M6 7c0-1.1.9-2 2-2h1V3H9a4 4 0 00-4 4v3H3v2h2v5h2v-5h2V10H7V7z" fill="#1E2124" />
+                            <path d="M12 7c0-1.1.9-2 2-2h1V3h-1a4 4 0 00-4 4v3h-2v2h2v5h2v-5h2V10h-2V7z" fill="#1E2124" />
                           </svg>
                           인용하기
                         </button>
-                      </div>
+                      </div> */}
 
+                      {/* 구매 버튼 그룹 (오른쪽) */}
                       <div className="flex items-center gap-2">
                         {isPurchased ? (
                           <>
                             <button
                               onClick={() => setPdfOpen(true)}
-                              className="inline-flex items-center justify-center px-5 h-14 bg-white border border-[#256EF4] text-[#0B50D0] text-[19px] leading-[1.5em] font-normal rounded-lg hover:bg-[#ECF2FE] transition-colors"
+                              className="inline-flex items-center justify-center px-6 h-12 bg-white border border-[#256EF4] text-[#0B50D0] text-[17px] leading-[1.5em] font-normal rounded-md hover:bg-[#ECF2FE] transition-colors"
                             >
                               원문보기
                             </button>
@@ -337,25 +430,35 @@ function PaperDetailContent() {
                             <button
                               onClick={handleDownload}
                               disabled={downloading}
-                              className="inline-flex items-center justify-center px-5 h-14 bg-[#256EF4] text-white text-[19px] leading-[1.5em] font-normal rounded-lg hover:bg-[#1E5ADB] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              className="inline-flex items-center justify-center px-6 h-12 bg-[#256EF4] text-white text-[17px] leading-[1.5em] font-normal rounded-md hover:bg-[#1E5ADB] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                               {downloading ? '다운로드 중...' : '다운로드'}
                             </button>
                           </>
                         ) : (
-                          <button
-                            onClick={handlePurchase}
-                            className="inline-flex items-center justify-center px-5 h-14 bg-[#256EF4] text-white text-[19px] leading-[1.5em] font-normal rounded-lg hover:bg-[#1E5ADB] transition-colors"
-                          >
-                            구매하기
-                          </button>
+                          <>
+                            <button
+                              className="inline-flex items-center justify-center px-6 h-12 bg-white border border-transparent text-[#AB2B36] text-[17px] leading-[1.5em] font-normal rounded-md hover:bg-[#FFF0F0] transition-colors"
+                            >
+                              ￦ 7,000
+                            </button>
+                            <button
+                              onClick={handlePurchase}
+                              className="inline-flex items-center justify-center px-6 h-12 bg-white border border-[#256EF4] text-[#0B50D0] text-[17px] leading-[1.5em] font-normal rounded-md hover:bg-[#ECF2FE] transition-colors"
+                            >
+                              구매하기
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
+                    {pdfOpen && paper && (
+                      <PdfViewerModal paperId={paper.id} onClose={() => setPdfOpen(false)} />
+                    )}
                   </div>
 
                   {/* ── DETAILS ── */}
-                  <div className="flex flex-col gap-16 px-10">
+                  <div className="flex flex-col gap-16 px-10" style={{ paddingTop: 0 }}>
                     {paper.abstract && (
                       <div className="flex flex-col gap-5">
                         <h2 className="text-[24px] font-bold leading-[1.5em] text-[#131416]">초록</h2>
@@ -370,22 +473,37 @@ function PaperDetailContent() {
                       </div>
                     )}
 
-                    <div className="flex flex-col gap-5">
-                      <h2 className="text-[24px] font-bold leading-[1.5em] text-[#131416]">키워드</h2>
-                      <div className="flex flex-wrap gap-2">
-                        {(paper.keywords && paper.keywords.length > 0
-                          ? paper.keywords
-                          : ['기후변화', '기후 적응', '노인', '건강', '삶의 질']
-                        ).map((kw, idx) => (
-                          <button
-                            key={idx}
-                            className="inline-flex items-center justify-center px-4 h-[34px] bg-[#EEF2F7] text-[#1E2124] text-[15px] leading-[1.5em] rounded-full hover:bg-[#D6E0EB] transition-colors"
-                          >
-                            #{kw}
-                          </button>
-                        ))}
+                    {paper.keywords && paper.keywords.length > 0 && (
+                      <div className="flex flex-col gap-5">
+                        <h2 className="text-[24px] font-bold leading-[1.5em] text-[#131416]">키워드</h2>
+                        <div className="flex flex-wrap gap-2">
+                          {paper.keywords.map((kw, idx) => (
+                            <button
+                              key={idx}
+                              className="inline-flex items-center justify-center px-4 h-[34px] bg-[#EEF2F7] text-[#1E2124] text-[15px] leading-[1.5em] rounded-full hover:bg-[#D6E0EB] transition-colors"
+                            >
+                              #{kw}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {paper.keywords_en && paper.keywords_en.length > 0 && (
+                      <div className="flex flex-col gap-5">
+                        <h2 className="text-[24px] font-bold leading-[1.5em] text-[#131416]">영문 키워드</h2>
+                        <div className="flex flex-wrap gap-2">
+                          {paper.keywords_en.map((kw, idx) => (
+                            <button
+                              key={idx}
+                              className="inline-flex items-center justify-center px-4 h-[34px] bg-[#EEF2F7] text-[#1E2124] text-[15px] leading-[1.5em] rounded-full hover:bg-[#D6E0EB] transition-colors"
+                            >
+                              #{kw}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex flex-col gap-5">
                       <h2 className="text-[24px] font-bold leading-[1.5em] text-[#131416]">목차</h2>

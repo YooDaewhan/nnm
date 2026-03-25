@@ -26,6 +26,7 @@ export default function MyPageInfoPage() {
     queryKey: ['current-user'],
     queryFn: getCurrentUser,
     enabled: isAuthenticated(),
+    staleTime: 1000 * 60 * 10, // 10분간 캐시 유지
   });
 
   const passwordMutation = useMutation({

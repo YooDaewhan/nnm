@@ -28,13 +28,23 @@ function clearRecentPapers(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
+export function addRecentPaper(paper: Omit<RecentPaper, 'viewedAt'>): void {
+  try {
+    const existing = getRecentPapers().filter((p) => p.id !== paper.id);
+    const updated = [{ ...paper, viewedAt: Date.now() }, ...existing].slice(0, 20);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // ignore
+  }
+}
+
 export default function MyPageRecentPage() {
   const navigate = useNavigate();
   const [papers, setPapers] = useState<RecentPaper[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated()) { navigate('/login'); return; }
-    setPapers(getRecentPapers());
+    setPapers(getRecentPapers().filter((p) => p.id.startsWith('hnm_')));
   }, [navigate]);
 
   const handleLogout = async () => { await logout(); navigate('/login'); };

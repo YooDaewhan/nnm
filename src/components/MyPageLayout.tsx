@@ -28,17 +28,6 @@ export default function MypageLayout({ children, onLogout }: MypageLayoutProps) 
     <div className="min-h-screen bg-[#F4F5F6]">
       <main className="flex justify-center py-10">
         <div className="w-[1280px] px-4">
-          {/* Breadcrumb */}
-          <div className="pb-8">
-            <div className="flex items-center gap-1 text-[15px] text-[#1E2124]">
-              <span>홈</span>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 3l5 5-5 5" stroke="#1E2124" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span>1Depth</span>
-            </div>
-          </div>
-
           {/* contents-area: 왼쪽 세로 네비 + 오른쪽 콘텐츠 */}
           <div className="flex flex-row gap-8 items-start">
 

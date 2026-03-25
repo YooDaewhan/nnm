@@ -207,6 +207,8 @@ function PayPageContent() {
       const firstItem = displayItems[0].title;
       const orderName = displayItems.length > 1 ? `${firstItem} 외 ${displayItems.length - 1}건` : firstItem;
 
+      console.log('[PayPage] displayItems:', displayItems.map(i => ({ id: i.id, publication_id: i.publication_id, title: i.title })));
+
       const orderResponse = await createOrder({
         order_name: orderName,
         amount: totalAmount,

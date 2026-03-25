@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { handleSocialCallback } from '../api/social-auth';
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
@@ -8,32 +7,37 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    const state = searchParams.get('state');
     const errorParam = searchParams.get('error');
+    const errorCode = searchParams.get('error_code');
 
-    if (errorParam) {
+    // 백엔드가 에러 파라미터를 보낸 경우
+    if (errorParam || errorCode) {
       setError('소셜 로그인이 취소되었거나 오류가 발생했습니다.');
       setTimeout(() => navigate('/login'), 3000);
       return;
     }
 
-    if (!code) {
-      setError('인증 코드를 받지 못했습니다.');
-      setTimeout(() => navigate('/login'), 3000);
+    // 백엔드가 redirect로 토큰을 URL에 담아 보낸 경우: access_token 또는 token 파라미터
+    const accessToken = searchParams.get('access_token') ?? searchParams.get('token');
+
+    if (accessToken) {
+      localStorage.setItem('access_token', accessToken);
+      localStorage.removeItem('oauth_provider');
+      navigate('/');
       return;
     }
 
-    handleSocialCallback(code, state).then((result) => {
-      if (result.success && result.access_token) {
-        localStorage.setItem('access_token', result.access_token);
-        if (result.user) localStorage.setItem('user_data', JSON.stringify(result.user));
-        navigate('/');
-      } else {
-        setError(result.error || '로그인에 실패했습니다.');
-        setTimeout(() => navigate('/login'), 3000);
-      }
-    });
+    // code 파라미터가 실제 JWT인 경우 (3자리 숫자 상태코드 제외)
+    const code = searchParams.get('code');
+    if (code && !/^\d{3}$/.test(code)) {
+      localStorage.setItem('access_token', code);
+      localStorage.removeItem('oauth_provider');
+      navigate('/');
+      return;
+    }
+
+    setError('로그인 처리 중 오류가 발생했습니다.');
+    setTimeout(() => navigate('/login'), 3000);
   }, []);
 
   return (

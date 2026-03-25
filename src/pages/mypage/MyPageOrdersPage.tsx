@@ -147,7 +147,7 @@ export default function MyPageOrdersPage() {
                 <option value="">6개월</option>
                 <option value="">1년</option>
                 <option value="paid">결제 완료</option>
-                <option value="pending">결제 대기</option>
+                {/* <option value="pending">결제 대기</option> */}
                 <option value="cancelled">취소됨</option>
                 <option value="failed">결제 실패</option>
               </select>
@@ -189,7 +189,7 @@ export default function MyPageOrdersPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {orders.map(order => {
+            {orders.filter(order => order.status !== 'pending' /* 결제 대기 숨김 */).map(order => {
               const items: any[] = (order as any).metadata?.items ?? [];
               return (
                 <div key={order.id} className="bg-white rounded-xl overflow-hidden">

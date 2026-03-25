@@ -162,10 +162,7 @@ export default function LoginPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #CDD1D5', margin: 0 }} />
-          <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
-              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', display: 'flex', alignItems: 'center', gap: '2px', fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#1E2124' }}>비회원 주문조회</button>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
               <button type="button" onClick={() => setShowTermsModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#464C53' }}>약관 및 정책</button>
               <button type="button" onClick={() => setShowSupportModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#464C53' }}>고객센터</button>
