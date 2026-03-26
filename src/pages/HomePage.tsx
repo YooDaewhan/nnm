@@ -368,9 +368,12 @@ export default function HomePage() {
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="w-full" style={{ background: 'linear-gradient(135deg, #2a1a4e 0%, #4a3a8e 40%, #6b5ce7 100%)', overflow: 'hidden' }}>
         <div className="max-w-[1280px] mx-auto px-4">
-          <div
+          <a
+            href="https://sims.newnonmun.com/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex flex-col items-center justify-center text-center"
-            style={{ padding: '40px 0', minHeight: 200 }}
+            style={{ padding: '40px 0', minHeight: 200, cursor: 'pointer', textDecoration: 'none' }}
           >
             <p style={{ fontFamily: ff, fontWeight: 500, fontSize: 17, color: 'rgba(255,255,255,0.7)', lineHeight: '36px' }}>
               효율적인 학회 운영 관리
@@ -378,7 +381,7 @@ export default function HomePage() {
             <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 32, color: '#FFFFFF', lineHeight: '48px' }}>
               학회통합관리시스템 SIMS로 해결하세요!
             </h2>
-          </div>
+          </a>
         </div>
       </section>
 
