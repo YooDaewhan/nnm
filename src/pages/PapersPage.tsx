@@ -440,7 +440,7 @@ function PaperDetailContent() {
                             <button
                               className="inline-flex items-center justify-center px-6 h-12 bg-white border border-transparent text-[#AB2B36] text-[17px] leading-[1.5em] font-normal rounded-md hover:bg-[#FFF0F0] transition-colors"
                             >
-                              ￦ 7,000
+                              ￦ 5,000
                             </button>
                             <button
                               onClick={handlePurchase}

@@ -29,6 +29,14 @@ const IconSearch = () => (
   </svg>
 );
 
+const IconLogOut = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m16 17 5-5-5-5"/>
+    <path d="M21 12H9"/>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+  </svg>
+);
+
 /* ─── 유틸리티 select 아이템 ─── */
 const UtilSelect = ({ label }: { label: string }) => (
   <button className="flex items-center gap-0.5 h-6 px-0.5 rounded hover:bg-gray-50 transition-colors">
@@ -206,23 +214,46 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
           <div className="flex-1 flex justify-end">
             {isLoggedIn === null ? null : isLoggedIn ? (
               /* status=login: bag → user, 48×48, gap 32px */
-              <div className="flex items-center" style={{ gap: '32px', height: '56px' }}>
-                <button
-                  onClick={() => navigate('/cart')}
-                  className="flex items-center justify-center hover:opacity-70 transition-opacity"
-                  style={{ width: '48px', height: '48px' }}
-                  aria-label="장바구니"
-                >
-                  <img src="/icons/bag-B.svg" alt="장바구니" style={{ width: 40, height: 40 }} />
-                </button>
-                <button
-                  onClick={() => navigate('/mypage')}
-                  className="flex items-center justify-center hover:opacity-70 transition-opacity"
-                  style={{ width: '48px', height: '48px' }}
-                  aria-label="마이페이지"
-                >
-                  <img src="/icons/user-A.svg" alt="마이페이지" style={{ width: 40, height: 40 }} />
-                </button>
+              <div className="flex items-center" style={{ gap: '16px', height: '56px' }}>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigate('/cart')}
+                    className="flex items-center justify-center hover:opacity-70 transition-opacity"
+                    style={{ width: '48px', height: '48px' }}
+                    aria-label="장바구니"
+                  >
+                    <img src="/icons/bag-B.svg" alt="장바구니" style={{ width: 40, height: 40 }} />
+                  </button>
+                  <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    장바구니
+                  </span>
+                </div>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigate('/mypage')}
+                    className="flex items-center justify-center hover:opacity-70 transition-opacity"
+                    style={{ width: '48px', height: '48px' }}
+                    aria-label="마이페이지"
+                  >
+                    <img src="/icons/user-A.svg" alt="마이페이지" style={{ width: 40, height: 40 }} />
+                  </button>
+                  <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    마이페이지
+                  </span>
+                </div>
+                <div className="relative group">
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center justify-center hover:opacity-70 transition-opacity"
+                    style={{ width: '48px', height: '48px' }}
+                    aria-label="로그아웃"
+                  >
+                    <IconLogOut />
+                  </button>
+                  <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    로그아웃
+                  </span>
+                </div>
               </div>
             ) : (
               /* status=logout: 회원가입(outline) + 로그인(solid), h56, r1000px */

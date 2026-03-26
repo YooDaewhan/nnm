@@ -506,6 +506,7 @@ function PayPageContent() {
                 gap: 24,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer' }}>
                   <button
                     onClick={() => setAgreed(!agreed)}
                     style={{
@@ -537,6 +538,7 @@ function PayPageContent() {
                   }}>
                     주문 상품정보 및 결제대행 서비스 이용약관에 모두 동의하십니까?
                   </span>
+                  </label>
                   <span
                     onClick={() => setTermsModalOpen(true)}
                     style={{

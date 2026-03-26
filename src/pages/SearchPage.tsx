@@ -152,6 +152,10 @@ function OpenSearchTextContent() {
   const totalPages = Math.ceil(totalResults / ITEMS_PER_PAGE);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [query]);
+
+  useEffect(() => {
     if (data) console.log('[SearchPage] results:', { total: totalResults, count: searchResults.length, first: searchResults[0] });
     if (searchErr) console.error('[SearchPage] error:', searchErr);
   }, [data, searchErr]);

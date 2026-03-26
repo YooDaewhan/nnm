@@ -56,6 +56,65 @@ const RECENT_PAPERS = [
   },
 ];
 
+type Paper = { title: string; author: string; publisher: string; year: string };
+
+const PAPERS_BY_SUBJECT: Record<string, Paper[]> = {
+  '인문학': [
+    { title: '한국 근대 문학에서의 자아 정체성 탐구', author: '이수현(Lee, Soohyun)', publisher: '한국문학연구학회', year: '2021' },
+    { title: '동서양 철학의 비교 연구: 존재론적 관점에서', author: '박철호(Park, Cheolho)', publisher: '철학연구회', year: '2020' },
+    { title: '조선시대 한문학의 미적 특성 고찰', author: '정미란(Jung, Miran)', publisher: '한국한문학회', year: '2019' },
+    { title: '현대 언어학적 관점에서 본 한국어 경어법', author: '최지영(Choi, Jiyoung)', publisher: '한국언어학회', year: '2022' },
+  ],
+  '사회과학': [
+    { title: '디지털 전환 시대의 사회적 불평등 구조 분석', author: '김민준(Kim, Minjun)', publisher: '한국사회학회', year: '2023' },
+    { title: '포스트 코로나 시대의 복지국가 재편 방향', author: '이정훈(Lee, Junghoon)', publisher: '사회복지연구', year: '2022' },
+    { title: '청년 세대의 정치 참여와 민주주의 변화', author: '박서연(Park, Seoyeon)', publisher: '한국정치학회보', year: '2021' },
+    { title: '미디어 소비 패턴 변화와 여론 형성 메커니즘', author: '윤재호(Yoon, Jaeho)', publisher: '언론학연구', year: '2023' },
+  ],
+  '자연과학': [
+    { title: '기후변화가 한반도 생태계에 미치는 영향 분석', author: '장수빈(Jang, Subin)', publisher: '한국생태학회지', year: '2023' },
+    { title: '양자 얽힘 현상의 새로운 실험적 검증 방법', author: '오동현(Oh, Donghyun)', publisher: '물리학회지', year: '2022' },
+    { title: '나노 소재를 활용한 수질 정화 기술 연구', author: '한소희(Han, Sohee)', publisher: '환경과학회지', year: '2021' },
+    { title: '뇌신경 가소성 기제의 분자생물학적 규명', author: '임태양(Im, Taeyang)', publisher: '한국생명과학회지', year: '2020' },
+  ],
+  '공학': [
+    { title: '대규모 언어 모델 경량화를 위한 양자화 기법', author: '서준혁(Seo, Junhyuk)', publisher: '한국정보과학회', year: '2024' },
+    { title: '스마트 그리드 환경에서의 에너지 최적화 알고리즘', author: '강민서(Kang, Minseo)', publisher: '전기학회논문지', year: '2023' },
+    { title: '자율주행 차량의 실시간 객체 탐지 시스템 설계', author: '조현우(Jo, Hyeonwoo)', publisher: '제어로봇시스템학회', year: '2022' },
+    { title: '5G 기반 초저지연 통신 프로토콜 최적화 연구', author: '신예진(Shin, Yejin)', publisher: '한국통신학회논문지', year: '2023' },
+  ],
+  '의약학': [
+    { title: 'mRNA 백신 플랫폼의 면역 반응 기전 분석', author: '류지현(Ryu, Jihyun)', publisher: '대한의학회지', year: '2023' },
+    { title: '알츠하이머 조기 진단을 위한 바이오마커 연구', author: '문성호(Moon, Seongho)', publisher: '신경과학회지', year: '2022' },
+    { title: '항암 면역치료제의 부작용 최소화 전략', author: '배나연(Bae, Nayeon)', publisher: '종양학연구', year: '2021' },
+    { title: '마이크로바이옴과 정신건강의 상관관계 연구', author: '홍승현(Hong, Seunghyun)', publisher: '정신의학연구', year: '2023' },
+  ],
+  '농수해양학': [
+    { title: '스마트팜 기술 적용을 통한 작물 생산성 향상', author: '전민경(Jeon, Minkyung)', publisher: '한국농업과학지', year: '2023' },
+    { title: '해양 미세플라스틱이 수산물에 미치는 영향', author: '노준호(No, Junho)', publisher: '수산해양교육연구', year: '2022' },
+    { title: '연근해 어류 자원 회복을 위한 관리 방안 연구', author: '엄지수(Um, Jisu)', publisher: '한국수산과학회지', year: '2021' },
+    { title: '기후변화 대응 내건성 작물 품종 개발 현황', author: '방정희(Bang, Junghee)', publisher: '한국육종학회지', year: '2020' },
+  ],
+  '예술체육학': [
+    { title: 'K-팝 글로벌 확산에 따른 한국 대중음악 변화', author: '송다은(Song, Daeun)', publisher: '한국음악학회', year: '2023' },
+    { title: '스포츠 심리학적 관점에서 본 엘리트 선수 번아웃', author: '권세진(Kwon, Sejin)', publisher: '한국스포츠심리학회지', year: '2022' },
+    { title: '현대 미술에서 디지털 미디어의 예술적 가능성', author: '성혜원(Seong, Hyewon)', publisher: '미술이론과현장', year: '2021' },
+    { title: '전통 무용의 현대적 재해석과 융합 공연 연구', author: '탁승훈(Tak, Seunghun)', publisher: '무용예술학연구', year: '2020' },
+  ],
+  '교육학': [
+    { title: 'AI 튜터링 시스템이 학습 성취도에 미치는 영향', author: '구나래(Koo, Narae)', publisher: '교육공학연구', year: '2024' },
+    { title: '플립드 러닝 환경에서 학습자 자기조절 전략', author: '도현석(Do, Hyunseok)', publisher: '교육심리연구', year: '2023' },
+    { title: '다문화 가정 학생 학교 적응 지원 방안 연구', author: '변소영(Byeon, Soyoung)', publisher: '다문화교육연구', year: '2022' },
+    { title: '메타버스 기반 원격 교육의 교육적 효과성 분석', author: '여준혁(Yeo, Junhyuk)', publisher: '교육정보미디어연구', year: '2023' },
+  ],
+  '복합학': [
+    { title: '빅데이터와 인문학의 융합: 디지털 인문학 연구 동향', author: '석민지(Seok, Minji)', publisher: '인문콘텐츠학회', year: '2023' },
+    { title: '사회-기술 시스템 전환과 복잡계 이론의 적용', author: '안형준(An, Hyungjun)', publisher: '복잡계학회지', year: '2022' },
+    { title: '젠더와 과학기술의 교차점: 페미니스트 기술과학 연구', author: '남다희(Nam, Dahee)', publisher: '과학기술학연구', year: '2021' },
+    { title: '도시 재생 사업의 다학제적 평가 프레임워크 개발', author: '유성민(Yu, Seongmin)', publisher: '도시설계학회지', year: '2020' },
+  ],
+};
+
 const JOURNAL_CARDS = [
   {
     title: '한국노년학연구',
@@ -100,6 +159,7 @@ const ff = 'Pretendard GOV, Pretendard, sans-serif';
 export default function HomePage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,8 +168,12 @@ export default function HomePage() {
   };
 
   const handleSubjectClick = (label: string) => {
-    navigate(`/papers?subject=${encodeURIComponent(label)}`);
+    setSelectedSubject(prev => prev === label ? null : label);
   };
+
+  const displayedPapers = selectedSubject
+    ? (PAPERS_BY_SUBJECT[selectedSubject] ?? RECENT_PAPERS)
+    : RECENT_PAPERS;
 
   return (
     <div className="bg-white flex flex-col flex-1">
@@ -208,21 +272,31 @@ export default function HomePage() {
           >
             {/* Subject shortcut grid */}
             <div className="flex flex-row items-center justify-between" style={{ gap: 12 }}>
-              {SUBJECTS.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => handleSubjectClick(s.label)}
-                  className="flex flex-col items-center gap-3 transition-all hover:opacity-70"
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', flex: 1 }}
-                >
-                  <div className="flex items-center justify-center" style={{ width: 80, height: 80 }}>
-                    <img src={s.icon} alt={s.label} style={{ width: 64, height: 64, objectFit: 'contain' }} />
-                  </div>
-                  <span style={{ fontFamily: ff, fontWeight: 700, fontSize: 14, color: '#1E2124', lineHeight: '1.5em', whiteSpace: 'nowrap' }}>
-                    {s.label}
-                  </span>
-                </button>
-              ))}
+              {SUBJECTS.map((s) => {
+                const isSelected = selectedSubject === s.label;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => handleSubjectClick(s.label)}
+                    className="flex flex-col items-center gap-3 transition-all hover:opacity-70"
+                    style={{
+                      background: isSelected ? '#F0F4FF' : 'transparent',
+                      border: isSelected ? '2px solid #4C6EF5' : '2px solid transparent',
+                      borderRadius: 12,
+                      cursor: 'pointer',
+                      flex: 1,
+                      padding: '8px 4px',
+                    }}
+                  >
+                    <div className="flex items-center justify-center" style={{ width: 80, height: 80 }}>
+                      <img src={s.icon} alt={s.label} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+                    </div>
+                    <span style={{ fontFamily: ff, fontWeight: 700, fontSize: 14, color: isSelected ? '#4C6EF5' : '#1E2124', lineHeight: '1.5em', whiteSpace: 'nowrap' }}>
+                      {s.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Divider */}
@@ -233,7 +307,7 @@ export default function HomePage() {
               className="grid"
               style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px', columnGap: '32px', rowGap: '16px' }}
             >
-              {RECENT_PAPERS.map((p, i) => (
+              {displayedPapers.map((p, i) => (
                 <button
                   key={i}
                   className="flex flex-col gap-1 text-left transition-colors hover:bg-gray-50 rounded-lg"

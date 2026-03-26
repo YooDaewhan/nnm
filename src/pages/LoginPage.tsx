@@ -152,10 +152,10 @@ export default function LoginPage() {
                 style={{ width: '54px', height: '54px', borderRadius: '50%', backgroundColor: '#FEE500', border: 'none', cursor: loading !== null ? 'not-allowed' : 'pointer', opacity: loading !== null ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="카카오 로그인">
                 <svg width="24" height="22.4" viewBox="0 0 24 22.4" fill="none"><path fill="#000000" d="M12 0.75c-5.436 0-9.844 3.435-9.844 7.674 0 2.839 1.785 5.334 4.481 6.824l-.836 3.446c-.192.609.029.645.443.388l4.133-2.703c.514.055 1.04.103 1.624.103 5.436 0 9.844-3.435 9.844-7.674S17.436 0.75 12 0.75z"/></svg>
               </button>
-              <button type="button" onClick={() => handleSocialLogin('google')} disabled={loading !== null}
+              {/*<button type="button" onClick={() => handleSocialLogin('google')} disabled={loading !== null}
                 style={{ width: '54px', height: '54px', borderRadius: '50%', backgroundColor: '#E9F1FF', border: 'none', cursor: loading !== null ? 'not-allowed' : 'pointer', opacity: loading !== null ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="구글 로그인">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path fill="#4285F4" d="M18.8 10.21c0-.65-.06-1.28-.17-1.88H10v3.55h4.93c-.22 1.14-.87 2.11-1.84 2.76v2.31h2.97c1.74-1.6 2.74-3.95 2.74-6.74z"/><path fill="#34A853" d="M10 19.17c2.48 0 4.55-.82 6.07-2.22l-2.97-2.31c-.82.55-1.86.88-3.1.88-2.38 0-4.4-1.61-5.13-3.77H1.81v2.37C3.33 17.1 6.42 19.17 10 19.17z"/><path fill="#FBBC05" d="M4.87 11.75c-.18-.55-.29-1.13-.29-1.75s.11-1.2.29-1.75V5.88H1.81A9.17 9.17 0 0 0 .83 10c0 1.48.36 2.88.98 4.12l3.06-2.37z"/><path fill="#EB4335" d="M10 4.48c1.35 0 2.56.46 3.51 1.37l2.63-2.63C14.55 1.74 12.47.83 10 .83 6.42.83 3.33 2.9 1.81 5.88l3.06 2.37C5.6 6.09 7.62 4.48 10 4.48z"/></svg>
-              </button>
+              </button>*/}
             </div>
           </div>
         </div>

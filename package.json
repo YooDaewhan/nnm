@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && cp serve.json dist/serve.json",
     "preview": "vite preview",
     "lint": "eslint src",
     "generate-api": "orval"
