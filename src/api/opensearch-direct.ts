@@ -15,6 +15,7 @@ export type OsSearchTextParams = {
   filters?: OpenSearchTextFilters;
   min_score?: number;
   within_ids?: string[];
+  within_query?: string;
   provider_id?: number;
   provider_name?: string;
   venue_name?: string;
@@ -50,7 +51,7 @@ type OSHit = {
 };
 
 export async function osSearchText(params: OsSearchTextParams): Promise<OpenSearchTextSearchResponse> {
-  const { query, limit = 10, offset = 0, filters, min_score, within_ids, provider_name, venue_name, sort } = params;
+  const { query, limit = 10, offset = 0, filters, min_score, within_ids, within_query, provider_name, venue_name, sort } = params;
 
   const filterClauses: object[] = [];
 
@@ -80,9 +81,14 @@ export async function osSearchText(params: OsSearchTextParams): Promise<OpenSear
     },
   };
 
+  const mustClauses: object[] = [textQuery];
+  if (within_query?.trim()) {
+    mustClauses.push({ multi_match: { query: within_query.trim(), fields: ['title^2', 'abstract', 'authors'] } });
+  }
+
   const queryBody =
-    filterClauses.length > 0
-      ? { bool: { must: [textQuery], filter: filterClauses } }
+    filterClauses.length > 0 || mustClauses.length > 1
+      ? { bool: { must: mustClauses, ...(filterClauses.length > 0 && { filter: filterClauses }) } }
       : textQuery;
 
   const requestBody: Record<string, unknown> = {

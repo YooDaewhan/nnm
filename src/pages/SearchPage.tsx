@@ -1,8 +1,8 @@
-import { Suspense, useState, useRef, useCallback, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
-import { osSearchText, osGetPaperById, OsSearchTextParams } from '@/api/opensearch-direct';
+import { osSearchText, osGetPaperById } from '@/api/opensearch-direct';
 import {
   OpenSearchTextResultItem,
 } from '@/api/search';
@@ -10,58 +10,12 @@ import { addToCart } from '@/api/cart';
 import SearchFilterSidebar, { Filters } from '@/components/SearchFilterSidebar';
 
 const ITEMS_PER_PAGE = 10;
-const FETCH_LIMIT = 100;
 const MAX_QUERY_DISPLAY = 25;
 
 function truncateQuery(query: string) {
   return query.length > MAX_QUERY_DISPLAY ? query.slice(0, MAX_QUERY_DISPLAY) + '...' : query;
 }
 
-/**
- * 원본 메인 검색의 전체 ID를 가져오는 헬퍼.
- * ⚠️ within_ids를 절대 넘기지 않아 항상 순수 메인 검색 기준.
- */
-async function fetchAllMainIds(
-  mainQuery: string,
-  filters?: Partial<Filters>,
-): Promise<string[]> {
-  const baseParams: OsSearchTextParams = {
-    query: mainQuery.trim(),
-    limit: FETCH_LIMIT,
-    offset: 0,
-    sort: filters?.sort,
-    provider_name: filters?.providerName || undefined,
-    venue_name: filters?.venueName || undefined,
-    filters:
-      filters?.yearFrom || filters?.yearTo
-        ? {
-            year: {
-              gte: filters.yearFrom ? parseInt(filters.yearFrom) : undefined,
-              lte: filters.yearTo ? parseInt(filters.yearTo) : undefined,
-            },
-          }
-        : undefined,
-    // ⚠️ within_ids 없이! 순수 메인 검색
-  };
-
-  const first = await osSearchText(baseParams);
-  const total = first.total ?? first.count;
-  const allIds = first.results.map((r) => r.id);
-
-  if (total <= FETCH_LIMIT) return allIds;
-
-  const pageCount = Math.ceil(total / FETCH_LIMIT);
-  const rest = await Promise.all(
-    Array.from({ length: pageCount - 1 }, (_, i) =>
-      osSearchText({ ...baseParams, offset: (i + 1) * FETCH_LIMIT }),
-    ),
-  );
-  for (const res of rest) {
-    allIds.push(...res.results.map((r) => r.id));
-  }
-
-  return allIds;
-}
 
 function OpenSearchTextContent() {
   const navigate = useNavigate();
@@ -74,17 +28,7 @@ function OpenSearchTextContent() {
   const isLoggedIn = isAuthenticated();
 
   const [appliedFilters, setAppliedFilters] = useState<Partial<Filters>>({});
-  const [withinIds, setWithinIds] = useState<string[] | null>(null);
   const [withinQuery, setWithinQuery] = useState<string>('');
-  const [withinLoading, setWithinLoading] = useState(false);
-  const withinSearchIdRef = useRef(0);
-
-  // ★ 핵심: 원본 메인 검색의 전체 ID를 캐싱하는 ref
-  const originalMainIdsRef = useRef<string[] | null>(null);
-  // 원본 ID가 어떤 메인 쿼리 + 필터 기준인지 추적
-  const originalMainKeyRef = useRef<string>('');
-  // 백그라운드 prefetch 중복 방지
-  const prefetchingRef = useRef(false);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const toggleExpand = (e: React.MouseEvent, id: string) => {
@@ -96,49 +40,24 @@ function OpenSearchTextContent() {
     });
   };
 
-  // 필터 기반 캐시 키 생성
-  const makeMainKey = useCallback(
-    (q: string, f: Partial<Filters>) =>
-      JSON.stringify({ q, sort: f.sort, pn: f.providerName, vn: f.venueName, yf: f.yearFrom, yt: f.yearTo }),
-    [],
-  );
-
-  /**
-   * ★ 원본 메인 검색 ID를 가져오거나 캐시에서 반환
-   */
-  const getOrFetchOriginalIds = useCallback(
-    async (mainQuery: string, filters: Partial<Filters>): Promise<string[]> => {
-      const key = makeMainKey(mainQuery, filters);
-      if (originalMainIdsRef.current && originalMainKeyRef.current === key) {
-        return originalMainIdsRef.current;
-      }
-      const ids = await fetchAllMainIds(mainQuery, filters);
-      originalMainIdsRef.current = ids;
-      originalMainKeyRef.current = key;
-      return ids;
-    },
-    [makeMainKey],
-  );
-
   // 검색 쿼리 (TanStack Query)
   const { data, isLoading: searchLoading, error: searchErr } = useQuery({
-    queryKey: ['search', query, currentPage, appliedFilters, withinIds, withinQuery],
+    queryKey: ['search', query, currentPage, appliedFilters, withinQuery],
     queryFn: () => {
       const yearGte = appliedFilters.yearFrom ? parseInt(appliedFilters.yearFrom) : undefined;
       const yearLte = appliedFilters.yearTo ? parseInt(appliedFilters.yearTo) : undefined;
       return osSearchText({
-        query: (withinQuery || query).trim(),
+        query: query.trim(),
+        within_query: withinQuery.trim() || undefined,
         limit: ITEMS_PER_PAGE,
         offset: (currentPage - 1) * ITEMS_PER_PAGE,
         sort: appliedFilters.sort,
         provider_name: appliedFilters.providerName || undefined,
         venue_name: appliedFilters.venueName || undefined,
-        filters:
-          yearGte || yearLte ? { year: { gte: yearGte, lte: yearLte } } : undefined,
-        within_ids: withinIds && withinIds.length > 0 ? withinIds : undefined,
+        filters: yearGte || yearLte ? { year: { gte: yearGte, lte: yearLte } } : undefined,
       });
     },
-    enabled: !!query.trim() && !withinLoading,
+    enabled: !!query.trim(),
   });
 
   const searchResults = (data?.results as unknown as OpenSearchTextResultItem[]) ?? [];
@@ -160,41 +79,6 @@ function OpenSearchTextContent() {
     if (searchErr) console.error('[SearchPage] error:', searchErr);
   }, [data, searchErr]);
 
-  // ★ 메인 검색 결과가 로드되면 백그라운드에서 전체 ID를 미리 캐싱
-  // → 나중에 within-search 할 때 즉시 사용 가능 (첫 within-search도 빠름)
-  useEffect(() => {
-    // within-search 중이 아니고, 메인 검색 결과가 있고, 아직 캐싱 안 된 경우만
-    if (withinIds || !data || !query.trim() || prefetchingRef.current) return;
-
-    const key = makeMainKey(query, appliedFilters);
-    if (originalMainIdsRef.current && originalMainKeyRef.current === key) return; // 이미 캐싱됨
-
-    const total = data.total ?? data.count ?? 0;
-    if (total <= ITEMS_PER_PAGE) {
-      // 결과가 한 페이지 이하면 현재 결과의 ID가 곧 전체 ID
-      originalMainIdsRef.current = data.results.map((r) => r.id);
-      originalMainKeyRef.current = key;
-      return;
-    }
-
-    // 백그라운드 prefetch 시작
-    prefetchingRef.current = true;
-    fetchAllMainIds(query, appliedFilters)
-      .then((ids) => {
-        // 그 사이 쿼리/필터가 바뀌지 않았으면 캐싱
-        const currentKey = makeMainKey(query, appliedFilters);
-        if (currentKey === key) {
-          originalMainIdsRef.current = ids;
-          originalMainKeyRef.current = key;
-        }
-      })
-      .catch((e) => {
-        console.error('[prefetch] background ID fetch failed:', e);
-      })
-      .finally(() => {
-        prefetchingRef.current = false;
-      });
-  }, [data, query, appliedFilters, withinIds, makeMainKey]);
 
   // 장바구니 뮤테이션
   const cartMutation = useMutation({
@@ -251,35 +135,10 @@ function OpenSearchTextContent() {
     setSearchParams({ q: query, page: String(page) });
   };
 
-  /**
-   * ★ 결과 내 검색 (within-search) 핵심 로직
-   * 항상 원본 메인 검색 ID를 기준으로 within_ids를 설정
-   */
-  const handleWithinSearch = useCallback(
-    async (wq: string, filtersOverride?: Partial<Filters>) => {
-      const searchId = ++withinSearchIdRef.current;
-      const currentFilters = filtersOverride ?? appliedFilters;
-      setWithinLoading(true);
-
-      try {
-        // ★ 핵심: 항상 원본 메인 검색 기준 ID를 가져옴 (within_ids 없이)
-        // prefetch가 완료되었으면 캐시 hit → 즉시 반환
-        const originalIds = await getOrFetchOriginalIds(query, currentFilters);
-
-        if (searchId !== withinSearchIdRef.current) return; // race condition 방지
-
-        setWithinIds(originalIds);
-        setWithinQuery(wq);
-      } catch (e) {
-        console.error('[within-search] fetch failed:', e);
-      } finally {
-        if (searchId === withinSearchIdRef.current) {
-          setWithinLoading(false);
-        }
-      }
-    },
-    [query, appliedFilters, getOrFetchOriginalIds],
-  );
+  const handleWithinSearch = (wq: string) => {
+    setWithinQuery(wq);
+    setSearchParams({ q: query, page: '1' });
+  };
 
   const renderPageButtons = () => {
     const maxButtons = 8;
@@ -340,30 +199,14 @@ function OpenSearchTextContent() {
         <div className="flex gap-6 items-start">
           <div className="sticky top-24 self-start">
           <SearchFilterSidebar
-            onApply={async (filters, wq) => {
-              // 필터 변경 시 원본 ID 캐시 무효화
-              const newKey = makeMainKey(query, filters);
-              if (originalMainKeyRef.current !== newKey) {
-                originalMainIdsRef.current = null;
-                originalMainKeyRef.current = '';
-              }
-
+            onApply={(filters, wq) => {
               setAppliedFilters(filters);
-
-              if (wq.trim()) {
-                await handleWithinSearch(wq.trim(), filters);
-              } else {
-                setWithinIds(null);
-                setWithinQuery('');
-                setSearchParams({ q: query, page: '1' });
-              }
+              setWithinQuery(wq.trim());
+              setSearchParams({ q: query, page: '1' });
             }}
             onReset={() => {
               setAppliedFilters({});
-              setWithinIds(null);
               setWithinQuery('');
-              originalMainIdsRef.current = null;
-              originalMainKeyRef.current = '';
               setSearchParams({ q: query, page: '1' });
             }}
             onWithinSearch={(wq) => handleWithinSearch(wq)}
@@ -376,23 +219,23 @@ function OpenSearchTextContent() {
               <p className="text-gray-500 text-center py-8">검색어를 입력해주세요.</p>
             )}
 
-            {(searchLoading || withinLoading) && (
+            {searchLoading && (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
             )}
 
-            {searchError && !withinLoading && (
+            {searchError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
                 {searchError}
               </div>
             )}
 
-            {!searchLoading && !withinLoading && !searchError && query && searchResults.length === 0 && (
+            {!searchLoading && !searchError && query && searchResults.length === 0 && (
               <p className="text-gray-500 text-center py-8">검색 결과가 없습니다.</p>
             )}
 
-            {!searchLoading && !withinLoading && !searchError && searchResults.length > 0 && (
+            {!searchLoading && !searchError && searchResults.length > 0 && (
               <div className="space-y-4">
                 {searchResults.map((result) => (
                   <div
@@ -529,7 +372,7 @@ function OpenSearchTextContent() {
             )}
 
             {/* 페이지네이션 */}
-            {!searchLoading && !withinLoading && !searchError && totalResults > 0 && totalPages > 1 && (
+            {!searchLoading && !searchError && totalResults > 0 && totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-8 pt-4">
                 <button
                   onClick={() => goToPage(currentPage - 1)}
