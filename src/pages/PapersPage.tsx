@@ -2,7 +2,18 @@ import { useState, Suspense, useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { osGetPaperById, OSPaperDetail } from '../api/opensearch-direct';
+import { getPaperDetail, PaperDetail } from '../api/search';
+
+type OSPaperDetail = PaperDetail & {
+  keywords_en?: string[];
+  publisher_name?: string;
+  pissn?: string;
+  eissn?: string;
+  total_pages?: number;
+  issue_number?: string;
+  source?: string;
+  indexing?: { kci?: string; kci_status?: number; index_info?: string };
+};
 import { getPayments } from '../api/payment';
 import { isAuthenticated } from '../lib/auth';
 import { addRecentPaper } from './mypage/MyPageRecentPage';
@@ -57,7 +68,7 @@ function PaperDetailContent() {
 
   const { data: paper, isLoading, error: fetchError } = useQuery<OSPaperDetail>({
     queryKey: ['paper', id],
-    queryFn: () => osGetPaperById(id!),
+    queryFn: () => getPaperDetail(id!) as Promise<OSPaperDetail>,
     enabled: !!id,
   });
 

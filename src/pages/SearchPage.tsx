@@ -2,10 +2,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
-import { osSearchText, osGetPaperById } from '@/api/opensearch-direct';
-import {
-  OpenSearchTextResultItem,
-} from '@/api/search';
+import { searchOpensearchText } from '@/api/search';
 import { addToCart } from '@/api/cart';
 import SearchFilterSidebar, { Filters } from '@/components/SearchFilterSidebar';
 
@@ -46,9 +43,8 @@ function OpenSearchTextContent() {
     queryFn: () => {
       const yearGte = appliedFilters.yearFrom ? parseInt(appliedFilters.yearFrom) : undefined;
       const yearLte = appliedFilters.yearTo ? parseInt(appliedFilters.yearTo) : undefined;
-      return osSearchText({
+      return searchOpensearchText({
         query: query.trim(),
-        within_query: withinQuery.trim() || undefined,
         limit: ITEMS_PER_PAGE,
         offset: (currentPage - 1) * ITEMS_PER_PAGE,
         sort: appliedFilters.sort,
@@ -60,8 +56,8 @@ function OpenSearchTextContent() {
     enabled: !!query.trim(),
   });
 
-  const searchResults = (data?.results as unknown as OpenSearchTextResultItem[]) ?? [];
-  const totalResults = data?.total ?? data?.count ?? 0;
+  const searchResults = data?.results ?? [];
+  const totalResults = data?.count ?? 0;
   const searchError =
     searchErr instanceof Error
       ? searchErr.message
@@ -75,7 +71,11 @@ function OpenSearchTextContent() {
   }, [query]);
 
   useEffect(() => {
-    if (data) console.log('[SearchPage] results:', { total: totalResults, count: searchResults.length, first: searchResults[0] });
+    if (data) {
+      console.log('[SearchPage] raw data:', data);
+      console.log('[SearchPage] results ids:', searchResults.map((r) => r.id));
+      console.log('[SearchPage] first result:', searchResults[0]);
+    }
     if (searchErr) console.error('[SearchPage] error:', searchErr);
   }, [data, searchErr]);
 
@@ -83,8 +83,7 @@ function OpenSearchTextContent() {
   // 장바구니 뮤테이션
   const cartMutation = useMutation({
     mutationFn: async (resultId: string) => {
-      const paper = await osGetPaperById(resultId);
-      await addToCart({ publication_id: paper.id });
+      await addToCart({ publication_id: resultId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -97,12 +96,12 @@ function OpenSearchTextContent() {
   // 바로구매 뮤테이션
   const buyNowMutation = useMutation({
     mutationFn: async (resultId: string) => {
-      const paper = await osGetPaperById(resultId);
+      const result = searchResults.find((r) => r.id === resultId);
       sessionStorage.setItem(
         'directBuyItem',
         JSON.stringify({
-          publication_id: paper.id,
-          title: paper.title,
+          publication_id: resultId,
+          title: result?.title ?? '',
           unit_price: 5000,
           quantity: 1,
         }),
@@ -291,10 +290,10 @@ function OpenSearchTextContent() {
                         )}
                         {/* 발행기관 > 저널명 > 권(호) > 페이지 */}
                         {(() => {
-                          const publisher = result.metadata.publisher as string | null;
+                          const publisher = result.metadata.publisher_name as string | null;
                           const journal = result.metadata.journal as string | null;
                           const volume = result.metadata.volume as string | null;
-                          const issue = result.metadata.issue as string | null;
+                          const issue = result.metadata.issue_number as string | null;
                           const pageStart = result.metadata.page_start as string | null;
                           const pageEnd = result.metadata.page_end as string | null;
                           const volumeIssue = volume || issue

@@ -765,6 +765,37 @@ export type OpenSearchTextFilters = {
   doi?: string;
 };
 
+export type OpenSearchResultMetadata = {
+  journal?: string | null;
+  doi?: string | null;
+  citation_count?: number;
+  view_count?: number;
+  download_count?: number;
+  h_index?: number | null;
+  impact_factor?: number | null;
+  keywords?: string | null;
+  keywords_en?: string | null;
+  pub_month?: number | null;
+  issue_number?: string | null;
+  page_start?: string | null;
+  page_end?: string | null;
+  total_pages?: number | null;
+  pissn?: string | null;
+  eissn?: string | null;
+  title_tran?: string | null;
+  publisher_name?: string | null;
+  source?: string | null;
+  indexing?: { kci?: string; kci_status?: number; index_info?: string; scopus?: string } | null;
+  authors_display?: string | null;
+  venue_name?: string | null;
+  volume?: number | string | null;
+  number?: number | string | null;
+  published_at?: string | null;
+  page_range?: string | null;
+  provider_name?: string | null;
+  subject_area?: string | null;
+};
+
 export type PostApiSearchOpensearchTextBody = {
   query: string;
   limit?: number;
@@ -773,6 +804,7 @@ export type PostApiSearchOpensearchTextBody = {
   min_score?: number;
   vector_weight?: number;
   text_weight?: number;
+  /** 결과 내 재검색용 publication UUID 목록 (최대 1000개) */
   within_ids?: string[];
   provider_id?: number;
   provider_name?: string;
@@ -787,17 +819,29 @@ export type OpenSearchTextResultItem = {
   authors: string[];
   year: number;
   score: number;
-  metadata: Record<string, unknown>;
+  metadata: OpenSearchResultMetadata;
+};
+
+export type OpenSearchProvider = {
+  id: number;
+  name: string;
+  abbr?: string;
 };
 
 export type PostApiSearchOpensearchText200 = {
   success: boolean;
   results: OpenSearchTextResultItem[];
   count: number;
-  total: number;
   has_more: boolean;
+  query: string;
   limit: number;
   offset: number;
+  sort?: string;
+  providers?: OpenSearchProvider[];
+  filter_context?: {
+    provider?: { id: number; name: string };
+    matched_publication_count?: number;
+  };
 };
 
 export type PostApiSearchOpensearchText400 = {
@@ -827,10 +871,13 @@ export type OpenSearchTextSearchResponse = {
   success: boolean;
   results: OpenSearchTextResultItem[];
   count: number;
-  total: number;
   has_more: boolean;
+  query: string;
   limit: number;
   offset: number;
+  sort?: string;
+  providers?: OpenSearchProvider[];
+  filter_context?: PostApiSearchOpensearchText200['filter_context'];
 };
 
 export async function searchOpensearchText(params: {
@@ -859,10 +906,13 @@ export async function searchOpensearchText(params: {
     success: data.success ?? false,
     results: data.results ?? [],
     count: data.count ?? 0,
-    total: data.total ?? data.count ?? 0,
     has_more: data.has_more ?? false,
+    query: data.query ?? '',
     limit: data.limit ?? 10,
     offset: data.offset ?? 0,
+    sort: data.sort,
+    providers: data.providers,
+    filter_context: data.filter_context,
   };
 }
 

@@ -42,7 +42,7 @@ export default function LoginPage() {
         throw new Error('로그인에 실패했습니다.');
       }
     } catch (err) {
-      if (err instanceof TypeError && err.message.includes('fetch')) {
+      if (err instanceof  TypeError && err.message.includes('fetch')) {
         setError('백엔드 서버 연결 실패\n\n가능한 원인:\n1. 백엔드 서버가 실행되지 않음\n');
       } else {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
