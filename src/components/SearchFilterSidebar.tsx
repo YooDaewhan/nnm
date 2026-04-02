@@ -8,6 +8,12 @@ export interface Filters {
   yearTo: string;
 }
 
+export interface ProviderOption {
+  id: number;
+  name: string;
+  abbr?: string;
+}
+
 const DEFAULT_FILTERS: Filters = {
   sort: 'relevance',
   providerName: '',
@@ -20,9 +26,10 @@ interface Props {
   onApply: (filters: Filters, withinQuery: string) => void;
   onReset: () => void;
   onWithinSearch: (withinQuery: string) => void;
+  providers?: ProviderOption[];
 }
 
-export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch }: Props) {
+export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, providers }: Props) {
   const [accordionOpen, setAccordionOpen] = useState({
     search: true,
     sort: true,
@@ -180,26 +187,26 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch }
             </button>
             {accordionOpen.venue && (
               <div className="pb-6 pt-2 space-y-3">
-                <div>
-                  <label className="block text-[15px] font-normal text-[#464C53] mb-1">학회명</label>
-                  <input
-                    type="text"
-                    value={filters.providerName}
-                    onChange={(e) => setFilters(prev => ({ ...prev, providerName: e.target.value }))}
-                    placeholder="예) 한국정보과학회"
-                    className="w-full h-10 px-4 border border-[#58616A] rounded-md text-[15px] placeholder:text-[#8A949E] focus:outline-none focus:border-[#256EF4]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[15px] font-normal text-[#464C53] mb-1">학술지명</label>
-                  <input
-                    type="text"
-                    value={filters.venueName}
-                    onChange={(e) => setFilters(prev => ({ ...prev, venueName: e.target.value }))}
-                    placeholder="예) 정보과학회논문지"
-                    className="w-full h-10 px-4 border border-[#58616A] rounded-md text-[15px] placeholder:text-[#8A949E] focus:outline-none focus:border-[#256EF4]"
-                  />
-                </div>
+                {providers && providers.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {providers.map((p) => {
+                      const isSelected = filters.providerName === p.name;
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => setFilters(prev => ({ ...prev, providerName: isSelected ? '' : p.name }))}
+                          className={`h-8 px-3 rounded-full text-[14px] font-normal transition-colors border ${
+                            isSelected
+                              ? 'bg-[#ECF2FE] text-[#0B50D0] border-[#256EF4]'
+                              : 'bg-white text-[#464C53] border-[#B1B8BE] hover:border-[#256EF4]'
+                          }`}
+                        >
+                          {p.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -209,6 +209,7 @@ function OpenSearchTextContent() {
               setSearchParams({ q: query, page: '1' });
             }}
             onWithinSearch={(wq) => handleWithinSearch(wq)}
+            providers={data?.providers}
           />
           </div>
 
