@@ -25,7 +25,7 @@ function OpenSearchTextContent() {
   const isLoggedIn = isAuthenticated();
 
   const [appliedFilters, setAppliedFilters] = useState<Partial<Filters>>({});
-  const [withinQuery, setWithinQuery] = useState<string>('');
+  const withinQuery = searchParams.get('within') || '';
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const toggleExpand = (e: React.MouseEvent, id: string) => {
@@ -57,7 +57,7 @@ function OpenSearchTextContent() {
   });
 
   const searchResults = data?.results ?? [];
-  const totalResults = data?.count ?? 0;
+  const totalResults = data?.total ?? 0;
   const searchError =
     searchErr instanceof Error
       ? searchErr.message
@@ -72,9 +72,7 @@ function OpenSearchTextContent() {
 
   useEffect(() => {
     if (data) {
-      console.log('[SearchPage] raw data:', data);
-      console.log('[SearchPage] results ids:', searchResults.map((r) => r.id));
-      console.log('[SearchPage] first result:', searchResults[0]);
+      console.log('[SearchPage] raw data:', JSON.parse(JSON.stringify(data)));
     }
     if (searchErr) console.error('[SearchPage] error:', searchErr);
   }, [data, searchErr]);
@@ -135,8 +133,7 @@ function OpenSearchTextContent() {
   };
 
   const handleWithinSearch = (wq: string) => {
-    setWithinQuery(wq);
-    setSearchParams({ q: query, page: '1' });
+    setSearchParams({ q: query, page: '1', ...(wq ? { within: wq } : {}) });
   };
 
   const renderPageButtons = () => {
@@ -200,12 +197,10 @@ function OpenSearchTextContent() {
           <SearchFilterSidebar
             onApply={(filters, wq) => {
               setAppliedFilters(filters);
-              setWithinQuery(wq.trim());
-              setSearchParams({ q: query, page: '1' });
+              setSearchParams({ q: query, page: '1', ...(wq.trim() ? { within: wq.trim() } : {}) });
             }}
             onReset={() => {
               setAppliedFilters({});
-              setWithinQuery('');
               setSearchParams({ q: query, page: '1' });
             }}
             onWithinSearch={(wq) => handleWithinSearch(wq)}

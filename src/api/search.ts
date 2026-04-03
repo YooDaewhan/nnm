@@ -871,6 +871,7 @@ export type OpenSearchTextSearchResponse = {
   success: boolean;
   results: OpenSearchTextResultItem[];
   count: number;
+  total?: number;
   has_more: boolean;
   query: string;
   limit: number;
@@ -906,6 +907,7 @@ export async function searchOpensearchText(params: {
     success: data.success ?? false,
     results: data.results ?? [],
     count: data.count ?? 0,
+    total: (data as any).total,
     has_more: data.has_more ?? false,
     query: data.query ?? '',
     limit: data.limit ?? 10,
