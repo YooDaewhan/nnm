@@ -150,14 +150,15 @@ export async function osSearchText(params: OsSearchTextParams): Promise<OpenSear
       publisher: hit._source.publisher ?? hit._source.publisher_name ?? null,
       volume: hit._source.volume != null ? String(hit._source.volume) : null,
       issue: hit._source.issue_no != null ? String(hit._source.issue_no) : (hit._source.issue_number ?? null),
-      page_start: hit._source.fpage ?? hit._source.page_start ?? null,
-      page_end: hit._source.lpage ?? hit._source.page_end ?? null,
+      page_start: (hit._source.fpage ?? hit._source.page_start) != null ? String(hit._source.fpage ?? hit._source.page_start) : null,
+      page_end: (hit._source.lpage ?? hit._source.page_end) != null ? String(hit._source.lpage ?? hit._source.page_end) : null,
     },
   }));
 
   const total = json.hits.total.value;
   return {
     success: true,
+    query,
     results,
     count: results.length,
     total,
