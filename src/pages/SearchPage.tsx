@@ -421,9 +421,9 @@ function SearchResultCard({
     const venue = (result.metadata.venue_name as string | null)?.trim();
     const journal = (result.metadata.journal as string | null)?.trim();
     if (provider && venue && journal) {
-      return `/papers/${encodeURIComponent(provider)}/${encodeURIComponent(venue)}/${encodeURIComponent(journal)}?id=${result.id}`;
+      return `/papers/${encodeURIComponent(provider)}/${encodeURIComponent(venue)}/${encodeURIComponent(journal)}/${result.id}`;
     }
-    return `/papers?id=${result.id}`;
+    return `/papers/${result.id}`;
   })();
 
   return (

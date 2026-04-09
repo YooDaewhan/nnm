@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node -e \"require('fs').copyFileSync('serve.json','dist/serve.json')\"",
+    "build": "tsc && vite build && node -e \"const fs=require('fs');fs.copyFileSync('serve.json','dist/serve.json');fs.copyFileSync('_worker.js','dist/_worker.js');\"",
     "preview": "vite preview",
     "lint": "eslint src",
     "generate-api": "orval"

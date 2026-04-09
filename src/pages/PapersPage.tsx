@@ -1,5 +1,5 @@
 import { useState, Suspense, useCallback, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
@@ -69,8 +69,7 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 function PaperDetailContent() {
-  const [searchParams] = useSearchParams();
-  const id = searchParams.get('id');
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [pdfOpen, setPdfOpen] = useState(false);
