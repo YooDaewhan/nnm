@@ -60,6 +60,13 @@ export default {
     }
 
     // 일반 유저 또는 봇 fallback → Cloudflare Pages 정적 파일
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+
+    // 파일 없으면 SPA용 index.html 반환 (_redirects 대체)
+    if (response.status === 404) {
+      return env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
+    }
+
+    return response;
   },
 };
