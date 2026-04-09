@@ -34,7 +34,7 @@ export default function OrderDetailModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#EEF2F7] rounded-xl p-10 flex flex-col gap-8 w-[520px] max-h-[90vh] overflow-y-auto"
+        className="bg-[#EEF2F7] rounded-xl p-6 md:p-10 flex flex-col gap-8 w-full max-w-[520px] mx-4 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* 모달 제목 */}

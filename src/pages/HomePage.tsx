@@ -186,11 +186,11 @@ export default function HomePage() {
         {/* Hero row */}
         <div className="max-w-[1280px] mx-auto px-4">
           <div
-            className="flex flex-row items-start gap-16"
-            style={{ paddingTop: 80, paddingBottom: 0 }}
+            className="flex flex-col md:flex-row items-start gap-8 md:gap-16"
+            style={{ paddingTop: 40, paddingBottom: 0 }}
           >
             {/* Left: title + search */}
-            <div className="flex flex-col justify-center gap-12 flex-shrink-0" style={{ width: 600 }}>
+            <div className="flex flex-col justify-center gap-8 md:gap-12 w-full md:w-[600px] md:flex-shrink-0">
               <div className="flex flex-col gap-4" style={{ paddingLeft: 8 }}>
                 <h1 style={{ fontFamily: ff, fontWeight: 800, fontSize: 56, lineHeight: '1.25em', color: '#1E2124', whiteSpace: 'pre-line' }}>
                   {`논문 검색\n더 쉬워졌습니다`}
@@ -203,8 +203,8 @@ export default function HomePage() {
               {/* Search bar */}
               <form onSubmit={handleSearch}>
                 <div
-                  className="flex flex-row items-center"
-                  style={{ width: 560, height: 80, background: '#1E2124', borderRadius: 14, paddingLeft: 40, paddingRight: 20 }}
+                  className="flex flex-row items-center w-full"
+                  style={{ height: 64, background: '#1E2124', borderRadius: 14, paddingLeft: 24, paddingRight: 16 }}
                 >
                   <input
                     type="text"
@@ -230,8 +230,8 @@ export default function HomePage() {
 
             {/* Right: trend card */}
             <div
-              className="flex-1 rounded-2xl overflow-hidden relative"
-              style={{ width: 600, height: 400, minHeight: 400, background: 'linear-gradient(135deg, #0a1628 0%, #1a3a5c 40%, #3b82f6 100%)' }}
+              className="hidden md:block flex-1 rounded-2xl overflow-hidden relative"
+              style={{ height: 400, minHeight: 400, background: 'linear-gradient(135deg, #0a1628 0%, #1a3a5c 40%, #3b82f6 100%)' }}
             >
               <img
                 src="/images/hero-main.png"

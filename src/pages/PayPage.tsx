@@ -11,14 +11,9 @@ declare global {
   }
 }
 
-// SDK 로드 함수
 const loadTossPaymentsScript = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (typeof window.TossPayments !== 'undefined') {
-      resolve();
-      return;
-    }
-
+    if (typeof window.TossPayments !== 'undefined') { resolve(); return; }
     const script = document.createElement('script');
     script.src = 'https://js.tosspayments.com/v2/standard';
     script.async = true;
@@ -30,13 +25,12 @@ const loadTossPaymentsScript = (): Promise<void> => {
 
 type PaymentMethod = 'CARD' | 'VIRTUAL_ACCOUNT' | 'TRANSFER';
 
-// 스텝 인디케이터
 function StepIndicator() {
   const steps = ['장바구니', '구매/결제', '결제완료'];
   const currentStep = 1;
 
   return (
-    <div className="flex items-center gap-0">
+    <div className="hidden sm:flex items-center gap-0">
       {steps.map((step, idx) => {
         const isCompleted = idx < currentStep;
         const isOngoing = idx === currentStep;
@@ -47,56 +41,31 @@ function StepIndicator() {
             <div className="flex flex-col items-center gap-2" style={{ width: 120 }}>
               <div className="flex items-center w-full" style={{ height: 20 }}>
                 {isCompleted ? (
-                  <div className="flex items-center w-full" style={{ gap: '-1px' }}>
-                    <div
-                      className="flex-shrink-0 flex items-center justify-center rounded-full"
-                      style={{ width: 20, height: 20, background: '#256EF4' }}
-                    >
+                  <div className="flex items-center w-full">
+                    <div className="flex-shrink-0 flex items-center justify-center rounded-full w-5 h-5 bg-[#256EF4]">
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                         <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    {!isLast && (
-                      <div className="flex-1" style={{ height: 1, background: '#CDD1D5' }} />
-                    )}
+                    {!isLast && <div className="flex-1 h-px bg-[#CDD1D5]" />}
                   </div>
                 ) : isOngoing ? (
-                  <div className="flex items-center w-full" style={{ gap: '-1px' }}>
-                    <div
-                      className="flex-shrink-0 flex items-center justify-center rounded-full"
-                      style={{ width: 20, height: 20, background: '#256EF4' }}
-                    >
-                      <div
-                        className="rounded-full"
-                        style={{ width: 14, height: 14, background: '#256EF4', border: '1.6px solid #FFFFFF' }}
-                      />
+                  <div className="flex items-center w-full">
+                    <div className="flex-shrink-0 flex items-center justify-center rounded-full w-5 h-5 bg-[#256EF4]">
+                      <div className="rounded-full w-3.5 h-3.5 bg-[#256EF4] border-[1.6px] border-white" />
                     </div>
-                    {!isLast && (
-                      <div className="flex-1" style={{ height: 1, background: '#CDD1D5' }} />
-                    )}
+                    {!isLast && <div className="flex-1 h-px bg-[#CDD1D5]" />}
                   </div>
                 ) : (
                   <div className="flex items-center w-full">
-                    <div
-                      className="flex-shrink-0 rounded-full"
-                      style={{ width: 20, height: 20, background: '#E6E8EA', border: '1px solid #CDD1D5' }}
-                    />
-                    {!isLast && (
-                      <div className="flex-1" style={{ height: 1, background: '#CDD1D5' }} />
-                    )}
+                    <div className="flex-shrink-0 rounded-full w-5 h-5 bg-[#E6E8EA] border border-[#CDD1D5]" />
+                    {!isLast && <div className="flex-1 h-px bg-[#CDD1D5]" />}
                   </div>
                 )}
               </div>
               <span
-                className="text-left w-full"
-                style={{
-                  fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                  fontWeight: 700,
-                  fontSize: 15,
-                  lineHeight: '1.5em',
-                  color: '#1E2124',
-                  paddingRight: 24,
-                }}
+                className="text-left w-full text-[15px] font-bold leading-[1.5em] text-[#1E2124]"
+                style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif', paddingRight: 24 }}
               >
                 {step}
               </span>
@@ -123,10 +92,7 @@ function PayPageContent() {
   const [termsModalOpen, setTermsModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate('/login?redirect=/pay');
-      return;
-    }
+    if (!isAuthenticated()) { navigate('/login?redirect=/pay'); return; }
     setAuthChecked(true);
   }, [navigate]);
 
@@ -149,9 +115,7 @@ function PayPageContent() {
     } else {
       getCart()
         .then((items) => {
-          if (items.length === 0) {
-            setError('장바구니가 비어있습니다.');
-          }
+          if (items.length === 0) setError('장바구니가 비어있습니다.');
           setCartItems(items);
         })
         .catch((err) => {
@@ -162,9 +126,7 @@ function PayPageContent() {
             setError(err.message || '장바구니 조회에 실패했습니다.');
           }
         })
-        .finally(() => {
-          setCartLoading(false);
-        });
+        .finally(() => setCartLoading(false));
     }
 
     loadTossPaymentsScript()
@@ -176,25 +138,12 @@ function PayPageContent() {
   }, [authChecked, navigate, isDirect]);
 
   const displayItems = cartItems;
-
-  const totalAmount = displayItems.reduce(
-    (sum, item) => sum + item.unit_price * item.quantity,
-    0
-  );
+  const totalAmount = displayItems.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
 
   const handlePayment = async () => {
-    if (displayItems.length === 0) {
-      setError('결제할 상품이 없습니다.');
-      return;
-    }
-    if (totalAmount === 0) {
-      setError('결제할 상품을 선택해주세요.');
-      return;
-    }
-    if (!sdkLoaded) {
-      setError('결제 시스템이 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
-      return;
-    }
+    if (displayItems.length === 0) { setError('결제할 상품이 없습니다.'); return; }
+    if (totalAmount === 0) { setError('결제할 상품을 선택해주세요.'); return; }
+    if (!sdkLoaded) { setError('결제 시스템이 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.'); return; }
 
     setLoading(true);
     setError(null);
@@ -224,10 +173,7 @@ function PayPageContent() {
       const customerKey = `customer_${Date.now()}`;
 
       if (!isDirect) {
-        sessionStorage.setItem(
-          'pendingCartItemIds',
-          JSON.stringify(displayItems.map((item) => item.id))
-        );
+        sessionStorage.setItem('pendingCartItemIds', JSON.stringify(displayItems.map((item) => item.id)));
       }
 
       const tossPayments = window.TossPayments(clientKey);
@@ -253,79 +199,56 @@ function PayPageContent() {
 
   if (!authChecked || cartLoading) {
     return (
-      <div className="min-h-screen" style={{ background: '#F8FAFC' }}>
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#256EF4' }}></div>
-            <p className="mt-4" style={{ color: '#464C53' }}>
-              {!authChecked ? '로그인 확인 중...' : '장바구니 불러오는 중...'}
-            </p>
-          </div>
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#256EF4] mx-auto" />
+          <p className="mt-4 text-[#464C53]">
+            {!authChecked ? '로그인 확인 중...' : '장바구니 불러오는 중...'}
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#F8FAFC' }}>
-      <main style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-        <div style={{ width: 1280, padding: '0 16px' }}>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <main className="flex justify-center py-6 sm:py-10 px-0">
+        <div className="w-full max-w-[1280px] px-4">
 
           {/* 브레드크럼 */}
-          <div style={{ paddingBottom: 32 }}>
-            <span style={{ fontSize: 14, color: '#8A949E' }}>홈</span>
-            <span style={{ fontSize: 14, color: '#8A949E', margin: '0 4px' }}>/</span>
-            <span style={{ fontSize: 14, color: '#131416', fontWeight: 600 }}>구매/결제</span>
+          <div className="pb-6 sm:pb-8">
+            <span className="text-sm text-[#8A949E]">홈</span>
+            <span className="text-sm text-[#8A949E] mx-1">/</span>
+            <span className="text-sm text-[#131416] font-semibold">구매/결제</span>
           </div>
 
           {/* 타이틀 + 스텝 인디케이터 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h1 style={{
-              fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-              fontWeight: 700,
-              fontSize: 40,
-              lineHeight: '1.5em',
-              color: '#131416',
-              margin: 0,
-            }}>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl sm:text-[40px] font-bold leading-[1.5em] text-[#131416] m-0"
+              style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
               구매/결제
             </h1>
             <StepIndicator />
           </div>
 
           {/* 메인 콘텐츠 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 items-stretch">
 
               {/* 좌측: 결제 논문 목록 */}
-              <div style={{ width: 756, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <h2 style={{
-                  fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                  fontWeight: 700,
-                  fontSize: 24,
-                  lineHeight: '1.5em',
-                  color: '#131416',
-                  margin: 0,
-                }}>
+              <div className="flex-1 flex flex-col gap-2">
+                <h2 className="text-xl sm:text-[24px] font-bold leading-[1.5em] text-[#131416] m-0"
+                  style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
                   결제 논문
                 </h2>
 
-                <div style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #CDD1D5',
-                  borderRadius: 12,
-                  padding: 32,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 24,
-                  minHeight: 362,
-                }}>
+                <div className="bg-white border border-[#CDD1D5] rounded-xl p-5 sm:p-8 flex flex-col gap-6 min-h-[200px] sm:min-h-[362px]">
                   {displayItems.length === 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 12 }}>
-                      <p style={{ color: '#8A949E', fontSize: 17 }}>장바구니가 비어있습니다.</p>
+                    <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                      <p className="text-[#8A949E] text-[17px]">장바구니가 비어있습니다.</p>
                       <button
                         onClick={() => navigate('/cart')}
-                        style={{ color: '#256EF4', fontSize: 15, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                        className="text-[#256EF4] text-[15px] font-semibold bg-transparent border-none cursor-pointer"
                       >
                         장바구니로 돌아가기
                       </button>
@@ -334,82 +257,55 @@ function PayPageContent() {
                     <>
                       {displayItems.map((item, idx) => (
                         <div key={item.id}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 80 }}>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <p style={{
-                                  fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                                  fontWeight: 700,
-                                  fontSize: 19,
-                                  lineHeight: '1.5em',
-                                  color: '#1E2124',
-                                  margin: 0,
-                                  flex: 1,
-                                }}>
-                                  {item.title}
-                                </p>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-20">
+                            <div className="flex-1 flex flex-col gap-1 min-w-0">
+                              <p className="text-base sm:text-[19px] font-bold leading-[1.5em] text-[#1E2124] m-0"
+                                style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
+                                {item.title}
+                              </p>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">저자</span>
+                                <span className="text-xs text-[#CDD1D5]">|</span>
+                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">{item.unit_price.toLocaleString()}원</span>
+                                <span className="text-xs text-[#CDD1D5] mx-0.5">|</span>
+                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">수량 {item.quantity}개</span>
                               </div>
-
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <span style={{ fontSize: 15, color: '#464C53', lineHeight: '1.5em' }}>저자</span>
-                                <span style={{ fontSize: 13, color: '#CDD1D5' }}>|</span>
-                                <span style={{ fontSize: 15, color: '#464C53', lineHeight: '1.5em' }}>{item.unit_price.toLocaleString()}원</span>
-                                <span style={{ fontSize: 13, color: '#CDD1D5', margin: '0 2px' }}>|</span>
-                                <span style={{ fontSize: 15, color: '#464C53', lineHeight: '1.5em' }}>수량 {item.quantity}개</span>
-                              </div>
-
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <span style={{ fontSize: 15, color: '#464C53', lineHeight: '1.5em' }}>발행기관</span>
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">발행기관</span>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                                   <path d="M6 12L10 8L6 4" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
-                                <span style={{ fontSize: 15, color: '#464C53', lineHeight: '1.5em' }}>저널명</span>
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">저널명</span>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                                   <path d="M6 12L10 8L6 4" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
-                                <span style={{ fontSize: 15, color: '#464C53', lineHeight: '1.5em' }}>KCI등재</span>
+                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">KCI등재</span>
                               </div>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                              <span style={{
-                                fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                                fontWeight: 700,
-                                fontSize: 17,
-                                lineHeight: '1.5em',
-                                color: '#131416',
-                                whiteSpace: 'nowrap',
-                              }}>
+                            <div className="flex items-center sm:flex-col sm:justify-center gap-2 self-end sm:self-auto">
+                              <span className="text-base sm:text-[17px] font-bold leading-[1.5em] text-[#131416] whitespace-nowrap"
+                                style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
                                 {(item.unit_price * item.quantity).toLocaleString()}원
                               </span>
                             </div>
                           </div>
 
                           {idx < displayItems.length - 1 && (
-                            <div style={{ borderTop: '1px dashed #8A949E', marginTop: 24 }} />
+                            <div className="border-t border-dashed border-[#8A949E] mt-6" />
                           )}
                         </div>
                       ))}
 
-                      <div style={{ borderTop: '1px dashed #8A949E' }} />
+                      <div className="border-t border-dashed border-[#8A949E]" />
 
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, padding: '10px' }}>
-                        <span style={{
-                          fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                          fontWeight: 700,
-                          fontSize: 19,
-                          lineHeight: '1.5em',
-                          color: '#131416',
-                        }}>
+                      <div className="flex justify-end items-center gap-2 px-2.5">
+                        <span className="text-base sm:text-[19px] font-bold leading-[1.5em] text-[#131416]"
+                          style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
                           총 결제금액
                         </span>
-                        <span style={{
-                          fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                          fontWeight: 700,
-                          fontSize: 19,
-                          lineHeight: '1.5em',
-                          color: '#131416',
-                        }}>
+                        <span className="text-base sm:text-[19px] font-bold leading-[1.5em] text-[#131416]"
+                          style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
                           {totalAmount.toLocaleString()}원
                         </span>
                       </div>
@@ -419,28 +315,14 @@ function PayPageContent() {
               </div>
 
               {/* 우측: 결제 수단 */}
-              <div style={{ width: 460, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <h2 style={{
-                  fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                  fontWeight: 700,
-                  fontSize: 24,
-                  lineHeight: '1.5em',
-                  color: '#131416',
-                  margin: 0,
-                }}>
+              <div className="w-full lg:w-[460px] flex flex-col gap-2 flex-shrink-0">
+                <h2 className="text-xl sm:text-[24px] font-bold leading-[1.5em] text-[#131416] m-0"
+                  style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
                   결제 수단
                 </h2>
 
-                <div style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #CDD1D5',
-                  borderRadius: 12,
-                  padding: 32,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 24,
-                }}>
-                  <div style={{ display: 'flex', gap: 0 }}>
+                <div className="bg-white border border-[#CDD1D5] rounded-xl p-5 sm:p-8 flex flex-col gap-6">
+                  <div className="flex gap-0">
                     {[
                       { label: '신용카드', value: 'CARD' as PaymentMethod },
                       { label: '가상계좌', value: 'VIRTUAL_ACCOUNT' as PaymentMethod },
@@ -451,22 +333,8 @@ function PayPageContent() {
                         <button
                           key={value}
                           onClick={() => setPaymentMethod(value)}
-                          style={{
-                            flex: 1,
-                            height: 48,
-                            padding: '0 16px',
-                            border: '1px solid #58616A',
-                            borderRadius: 6,
-                            margin: '0 4px',
-                            fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                            fontWeight: 400,
-                            fontSize: 17,
-                            lineHeight: '1.5em',
-                            color: '#1E2124',
-                            background: isActive ? '#F4F5F6' : 'transparent',
-                            cursor: 'pointer',
-                            transition: 'background 0.15s',
-                          }}
+                          className={`flex-1 h-12 px-2 sm:px-4 border border-[#58616A] rounded-md mx-1 text-sm sm:text-[17px] leading-[1.5em] text-[#1E2124] cursor-pointer transition-colors ${isActive ? 'bg-[#F4F5F6]' : 'bg-transparent'}`}
+                          style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}
                         >
                           {label}
                         </button>
@@ -475,19 +343,13 @@ function PayPageContent() {
                   </div>
 
                   {paymentMethod === 'CARD' && (
-                    <p style={{ fontSize: 15, color: '#8A949E', margin: 0, lineHeight: '1.5em' }}>
-                      신용카드 결제를 이용하여 결제할 수 있습니다.
-                    </p>
+                    <p className="text-sm sm:text-[15px] text-[#8A949E] m-0 leading-[1.5em]">신용카드 결제를 이용하여 결제할 수 있습니다.</p>
                   )}
                   {paymentMethod === 'VIRTUAL_ACCOUNT' && (
-                    <p style={{ fontSize: 15, color: '#8A949E', margin: 0, lineHeight: '1.5em' }}>
-                      가상계좌 결제를 이용하여 결제할 수 있습니다.
-                    </p>
+                    <p className="text-sm sm:text-[15px] text-[#8A949E] m-0 leading-[1.5em]">가상계좌 결제를 이용하여 결제할 수 있습니다.</p>
                   )}
                   {paymentMethod === 'TRANSFER' && (
-                    <p style={{ fontSize: 15, color: '#8A949E', margin: 0, lineHeight: '1.5em' }}>
-                      휴대폰 소액결제를 이용하여 결제할 수 있습니다.
-                    </p>
+                    <p className="text-sm sm:text-[15px] text-[#8A949E] m-0 leading-[1.5em]">휴대폰 소액결제를 이용하여 결제할 수 있습니다.</p>
                   )}
                 </div>
               </div>
@@ -495,106 +357,50 @@ function PayPageContent() {
 
             {/* 하단: 약관 동의 + 결제 버튼 */}
             {displayItems.length > 0 && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: '#FFFFFF',
-                border: '1px solid #CDD1D5',
-                borderRadius: 12,
-                padding: 32,
-                gap: 24,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer' }}>
-                  <button
-                    onClick={() => setAgreed(!agreed)}
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 4,
-                      background: agreed ? '#256EF4' : '#FFFFFF',
-                      border: agreed ? 'none' : '1.5px solid #CDD1D5',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      padding: 2,
-                    }}
-                  >
-                    {agreed && (
-                      <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                        <path d="M1.5 5L5.5 9L12.5 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </button>
-                  <span style={{
-                    fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                    fontWeight: 700,
-                    fontSize: 19,
-                    lineHeight: '1.5em',
-                    color: '#131416',
-                  }}>
-                    주문 상품정보 및 결제대행 서비스 이용약관에 모두 동의하십니까?
-                  </span>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white border border-[#CDD1D5] rounded-xl p-5 sm:p-8 gap-4 sm:gap-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <label className="flex items-start sm:items-center gap-3 sm:gap-4 cursor-pointer">
+                    <button
+                      onClick={() => setAgreed(!agreed)}
+                      className={`w-6 h-6 rounded flex items-center justify-center cursor-pointer flex-shrink-0 p-0.5 border ${agreed ? 'bg-[#256EF4] border-transparent' : 'bg-white border-[#CDD1D5]'}`}
+                      style={{ borderWidth: agreed ? 0 : 1.5 }}
+                    >
+                      {agreed && (
+                        <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+                          <path d="M1.5 5L5.5 9L12.5 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                    <span className="text-sm sm:text-[19px] font-bold leading-[1.5em] text-[#131416]"
+                      style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
+                      주문 상품정보 및 결제대행 서비스 이용약관에 모두 동의하십니까?
+                    </span>
                   </label>
                   <span
                     onClick={() => setTermsModalOpen(true)}
-                    style={{
-                      fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                      fontWeight: 400,
-                      fontSize: 17,
-                      lineHeight: '1.5em',
-                      color: '#131416',
-                      textDecoration: 'underline',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}>
+                    className="text-sm sm:text-[17px] leading-[1.5em] text-[#131416] underline cursor-pointer whitespace-nowrap flex-shrink-0"
+                    style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}
+                  >
                     약관보기
                   </span>
                 </div>
 
                 {error && (
-                  <div style={{
-                    background: '#FEF2F2',
-                    border: '1px solid #FECACA',
-                    borderRadius: 8,
-                    padding: '12px 16px',
-                  }}>
-                    <p style={{ color: '#991B1B', fontSize: 15, margin: 0 }}>{error}</p>
+                  <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 w-full sm:w-auto">
+                    <p className="text-red-800 text-[15px] m-0">{error}</p>
                   </div>
                 )}
 
                 <button
                   onClick={() => {
-                    if (!agreed) {
-                      alert('상품정보 및 서비스 이용약관에 동의해주세요.');
-                      return;
-                    }
+                    if (!agreed) { alert('상품정보 및 서비스 이용약관에 동의해주세요.'); return; }
                     handlePayment();
                   }}
                   disabled={loading || totalAmount === 0}
-                  style={{
-                    width: 300,
-                    height: 64,
-                    borderRadius: 8,
-                    background: loading || totalAmount === 0 || !agreed ? '#CDD1D5' : '#256EF4',
-                    border: 'none',
-                    cursor: loading || totalAmount === 0 || !agreed ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
+                  className={`w-full sm:w-[300px] h-14 sm:h-16 rounded-lg border-none flex items-center justify-center flex-shrink-0 transition-colors ${loading || totalAmount === 0 || !agreed ? 'bg-[#CDD1D5] cursor-not-allowed' : 'bg-[#256EF4] cursor-pointer'}`}
                 >
-                  <span style={{
-                    fontFamily: 'Pretendard GOV, Pretendard, sans-serif',
-                    fontWeight: 700,
-                    fontSize: 24,
-                    lineHeight: '1.5em',
-                    color: '#FFFFFF',
-                  }}>
+                  <span className="text-lg sm:text-[24px] font-bold leading-[1.5em] text-white"
+                    style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}>
                     {loading ? '처리 중...' : `${totalAmount.toLocaleString()}원 결제하기`}
                   </span>
                 </button>
@@ -604,13 +410,8 @@ function PayPageContent() {
             <TermsModal isOpen={termsModalOpen} onClose={() => setTermsModalOpen(false)} />
 
             {displayItems.length === 0 && error && (
-              <div style={{
-                background: '#FEF2F2',
-                border: '1px solid #FECACA',
-                borderRadius: 8,
-                padding: '16px',
-              }}>
-                <p style={{ color: '#991B1B', margin: 0 }}>{error}</p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800 m-0">{error}</p>
               </div>
             )}
           </div>
@@ -624,7 +425,7 @@ export default function PayPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: '#256EF4' }}></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#256EF4]" />
       </div>
     }>
       <PayPageContent />

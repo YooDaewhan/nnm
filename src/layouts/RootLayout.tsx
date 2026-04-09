@@ -9,7 +9,7 @@ export default function RootLayout() {
   const hideChrome = NO_CHROME_PATHS.some(p => location.pathname.startsWith(p));
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {!hideChrome && <Header />}
       <div className="flex flex-col flex-1">
         <Outlet />

@@ -78,9 +78,9 @@ export default function MyPageQnaPage() {
 
   return (
     <MypageLayout onLogout={handleLogout}>
-      <div className="bg-white rounded-xl border border-[#D6E0EB] p-8">
+      <div className="bg-white rounded-xl border border-[#D6E0EB] p-4 sm:p-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[22px] font-bold text-[#1E2124]">Q&amp;A</h2>
+          <h2 className="text-lg sm:text-[22px] font-bold text-[#1E2124]">Q&amp;A</h2>
           <button onClick={() => setShowForm(!showForm)}
             className="px-4 py-2 text-[14px] bg-[#256EF4] text-white rounded-lg hover:bg-[#1a5cd8] transition">
             {showForm ? '취소' : '문의하기'}
@@ -89,7 +89,7 @@ export default function MyPageQnaPage() {
 
         {/* 문의 작성 폼 */}
         {showForm && (
-          <div className="bg-[#F8FAFC] rounded-xl border border-[#D6E0EB] p-6 mb-6 flex flex-col gap-3">
+          <div className="bg-[#F8FAFC] rounded-xl border border-[#D6E0EB] p-4 sm:p-6 mb-6 flex flex-col gap-3">
             <input type="text" value={qTitle} onChange={e => setQTitle(e.target.value)} placeholder="제목"
               className="w-full px-4 py-3 bg-white border border-[#CDD1D5] rounded-lg text-[16px] outline-none focus:border-[#256EF4]" />
             <textarea value={qContent} onChange={e => setQContent(e.target.value)} placeholder="문의 내용을 입력해주세요." rows={5}
@@ -117,14 +117,14 @@ export default function MyPageQnaPage() {
                 <button
                   className="w-full text-left py-4 px-3 hover:bg-[#F8FAFC] rounded-lg transition"
                   onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[16px] font-medium text-[#1E2124]">{item.title}</span>
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[16px] font-medium text-[#1E2124] flex-1 min-w-0">{item.title}</span>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <span className={`text-[12px] px-2 py-0.5 rounded-full ${
                         item.status === 'answered' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
                         {statusLabel[item.status] ?? item.status}
                       </span>
-                      <span className="text-[13px] text-[#9CA3AF]">{new Date(item.created_at).toLocaleDateString('ko-KR')}</span>
+                      <span className="hidden sm:inline text-[13px] text-[#9CA3AF]">{new Date(item.created_at).toLocaleDateString('ko-KR')}</span>
                     </div>
                   </div>
                 </button>

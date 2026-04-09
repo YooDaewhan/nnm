@@ -69,22 +69,22 @@ export default function MyPageInfoPage() {
         </div>
       )}
       {!isLoading && (<>
-      <div className="bg-white rounded-xl border border-[#D6E0EB] p-8">
-        <h2 className="text-[22px] font-bold text-[#1E2124] mb-6">회원정보</h2>
+      <div className="bg-white rounded-xl border border-[#D6E0EB] p-4 sm:p-8">
+        <h2 className="text-lg sm:text-[22px] font-bold text-[#1E2124] mb-6">회원정보</h2>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-row items-center gap-4 py-4 border-b border-[#F3F4F6]">
-            <span className="w-28 text-[15px] text-[#6B7280] shrink-0">이름</span>
-            <span className="text-[16px] text-[#1E2124]">{user?.name ?? '-'}</span>
+            <span className="w-24 sm:w-28 text-[14px] sm:text-[15px] text-[#6B7280] shrink-0">이름</span>
+            <span className="text-[15px] sm:text-[16px] text-[#1E2124]">{user?.name ?? '-'}</span>
           </div>
           <div className="flex flex-row items-center gap-4 py-4 border-b border-[#F3F4F6]">
-            <span className="w-28 text-[15px] text-[#6B7280] shrink-0">이메일</span>
-            <span className="text-[16px] text-[#1E2124]">{user?.email ?? '-'}</span>
+            <span className="w-24 sm:w-28 text-[14px] sm:text-[15px] text-[#6B7280] shrink-0">이메일</span>
+            <span className="text-[15px] sm:text-[16px] text-[#1E2124] break-all">{user?.email ?? '-'}</span>
           </div>
           <div className="flex flex-row items-center gap-4 py-4 border-b border-[#F3F4F6]">
-            <span className="w-28 text-[15px] text-[#6B7280] shrink-0">비밀번호</span>
+            <span className="w-24 sm:w-28 text-[14px] sm:text-[15px] text-[#6B7280] shrink-0">비밀번호</span>
             <button onClick={() => setShowPasswordModal(true)}
-              className="px-4 py-2 text-[14px] border border-[#256EF4] text-[#256EF4] rounded-lg hover:bg-[#EFF4FF] transition">
+              className="px-3 sm:px-4 py-2 text-[13px] sm:text-[14px] border border-[#256EF4] text-[#256EF4] rounded-lg hover:bg-[#EFF4FF] transition">
               비밀번호 변경
             </button>
           </div>
@@ -92,7 +92,7 @@ export default function MyPageInfoPage() {
 
         <div className="mt-8 flex justify-end">
           <button onClick={() => setShowWithdrawModal(true)}
-            className="text-[14px] text-[#9CA3AF] hover:text-red-500 transition underline">
+            className="text-[13px] sm:text-[14px] text-[#9CA3AF] hover:text-red-500 transition underline">
             회원탈퇴
           </button>
         </div>
@@ -100,9 +100,9 @@ export default function MyPageInfoPage() {
 
       {/* 비밀번호 변경 모달 */}
       {showPasswordModal && (
-        <div onClick={() => setShowPasswordModal(false)} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div onClick={e => e.stopPropagation()} className="bg-white rounded-xl p-8 w-[440px] flex flex-col gap-4">
-            <h3 className="text-[20px] font-bold text-[#1E2124]">비밀번호 변경</h3>
+        <div onClick={() => setShowPasswordModal(false)} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div onClick={e => e.stopPropagation()} className="bg-white rounded-xl p-6 sm:p-8 w-full max-w-[440px] flex flex-col gap-4">
+            <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E2124]">비밀번호 변경</h3>
             <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="현재 비밀번호"
               className="w-full px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-lg text-[16px] outline-none" />
             <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="새 비밀번호"
@@ -124,10 +124,10 @@ export default function MyPageInfoPage() {
 
       {/* 회원탈퇴 모달 */}
       {showWithdrawModal && (
-        <div onClick={() => setShowWithdrawModal(false)} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div onClick={e => e.stopPropagation()} className="bg-white rounded-xl p-8 w-[440px] flex flex-col gap-4">
-            <h3 className="text-[20px] font-bold text-[#1E2124]">회원탈퇴</h3>
-            <p className="text-[15px] text-[#6B7280]">탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다. 비밀번호를 입력하여 확인해주세요.</p>
+        <div onClick={() => setShowWithdrawModal(false)} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div onClick={e => e.stopPropagation()} className="bg-white rounded-xl p-6 sm:p-8 w-full max-w-[440px] flex flex-col gap-4">
+            <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E2124]">회원탈퇴</h3>
+            <p className="text-[14px] sm:text-[15px] text-[#6B7280]">탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다. 비밀번호를 입력하여 확인해주세요.</p>
             <input type="password" value={withdrawPw} onChange={e => setWithdrawPw(e.target.value)} placeholder="비밀번호"
               className="w-full px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-lg text-[16px] outline-none" />
             {withdrawError && <p className="text-red-500 text-[14px]">{withdrawError}</p>}

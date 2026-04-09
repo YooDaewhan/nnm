@@ -126,18 +126,18 @@ export default function MyPageOrdersPage() {
       <div className="flex flex-col gap-8">
 
         {/* ── Title Section ── */}
-        <div className="bg-white rounded-xl p-8 flex flex-col gap-4">
+        <div className="bg-white rounded-xl p-4 sm:p-8 flex flex-col gap-4">
           <div className="flex justify-between items-end gap-4">
-            <h1 className="text-[32px] font-bold leading-[1.5em] tracking-[0.03125em] text-[#1E2124] shrink-0">
+            <h1 className="text-xl sm:text-[32px] font-bold leading-[1.5em] tracking-[0.03125em] text-[#1E2124] shrink-0">
               구매 내역
             </h1>
-            <p className="text-[19px] leading-[1.5em] text-[#1E2124]">
+            <p className="hidden sm:block text-[19px] leading-[1.5em] text-[#1E2124]">
               구매하신 논문은 결제일로부터 5일간 다운로드하실 수 있습니다.
             </p>
           </div>
           <div className="border-t-2 border-[#1E2124]" />
           <div className="flex gap-[10px]">
-            <div className="relative w-[150px]">
+            <div className="relative w-full sm:w-[150px]">
               <select
                 value={statusFilter}
                 onChange={e => { setStatusFilter(e.target.value as GetPaymentsParams['status'] | ''); setCurrentPage(1); }}
@@ -196,14 +196,14 @@ export default function MyPageOrdersPage() {
 
                   {/* 헤더 영역 - 클릭 시 결제 상세 모달 */}
                   <div
-                    className="flex items-center justify-between gap-6 px-8 py-5 cursor-pointer hover:bg-[#F9FAFB] transition-colors"
+                    className="flex items-center justify-between gap-6 px-4 sm:px-8 py-4 sm:py-5 cursor-pointer hover:bg-[#F9FAFB] transition-colors"
                     onClick={() => order.latest_payment?.payment_key && openDetailModal(order.latest_payment.payment_key)}
                   >
                     <div className="flex flex-col gap-1">
                       <p className="text-[19px] font-bold leading-[1.5em] text-[#131416]">
                         {new Date(order.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')}
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="hidden sm:flex items-center gap-2">
                         <span className="text-[15px] leading-[1.5em] text-[#464C53]">구매번호</span>
                         <span className="text-[15px] leading-[1.5em] text-[#464C53]">{order.order_id}</span>
                         <button
@@ -227,10 +227,10 @@ export default function MyPageOrdersPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-[#CDD1D5] mx-8" />
+                  <div className="border-t border-[#CDD1D5] mx-4 sm:mx-8" />
 
                   {/* 논문 목록 영역 */}
-                  <div className="px-8 py-5 flex flex-col gap-0">
+                  <div className="px-4 sm:px-8 py-4 sm:py-5 flex flex-col gap-0">
                     {items.length > 0 ? (
                       items.map((item: any, i: number) => (
                         <div key={i}>
@@ -283,12 +283,12 @@ export default function MyPageOrdersPage() {
       {/* ── 주문 상세 모달 ── */}
       {(selectedPaymentKey) && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
           style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
           onClick={closeModal}
         >
           <div
-            className="bg-[#EEF2F7] rounded-xl p-10 flex flex-col gap-8 w-[520px] max-h-[90vh] overflow-y-auto"
+            className="bg-[#EEF2F7] rounded-xl p-6 sm:p-10 flex flex-col gap-6 sm:gap-8 w-full max-w-[520px] max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* 모달 제목 */}
@@ -466,7 +466,7 @@ function ArticleRow({ title, paperId, authors, publishDate, kci, publisher, jour
   };
 
   return (
-    <div className="flex items-center gap-20">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-20">
       <div
         className={`flex-1 flex flex-col gap-1 min-w-0 ${paperId ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}`}
         onClick={paperId ? handleMetaClick : undefined}
@@ -488,25 +488,27 @@ function ArticleRow({ title, paperId, authors, publishDate, kci, publisher, jour
           </div>
         )}
       </div>
-      {price !== undefined && (
-        <span className="shrink-0 text-[17px] font-bold leading-[1.5em] text-[#131416]">{price.toLocaleString()}원</span>
-      )}
-      <div className="shrink-0">
-        <button
-          onClick={handleDownload}
-          disabled={downloading || !paperId}
-          className="w-8 h-8 border border-[#CDD1D5] rounded-[6px] flex items-center justify-center hover:bg-[#F4F5F6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          title="다운로드"
-        >
-          {downloading ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#1E2124]" />
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 2v10M5 8l4 4 4-4" stroke="#1E2124" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 15h14" stroke="#1E2124" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          )}
-        </button>
+      <div className="flex items-center gap-3 self-end sm:self-auto">
+        {price !== undefined && (
+          <span className="shrink-0 text-[17px] font-bold leading-[1.5em] text-[#131416]">{price.toLocaleString()}원</span>
+        )}
+        <div className="shrink-0">
+          <button
+            onClick={handleDownload}
+            disabled={downloading || !paperId}
+            className="w-8 h-8 border border-[#CDD1D5] rounded-[6px] flex items-center justify-center hover:bg-[#F4F5F6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title="다운로드"
+          >
+            {downloading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#1E2124]" />
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M9 2v10M5 8l4 4 4-4" stroke="#1E2124" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 15h14" stroke="#1E2124" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

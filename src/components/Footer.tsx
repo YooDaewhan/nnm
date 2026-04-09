@@ -53,10 +53,10 @@ export default function Footer() {
 
       {/* Surface */}
       <div className="w-full flex flex-col items-center gap-4 py-8">
-        <div className="flex flex-col gap-6 w-full max-w-[1248px] px-0">
+        <div className="flex flex-col gap-6 w-full max-w-[1248px] px-4 md:px-0">
 
           {/* Row: company-info (left, fill) + external-link (right) */}
-          <div className="flex flex-row justify-end items-end gap-6 w-full">
+          <div className="flex flex-col md:flex-row md:justify-end md:items-end gap-4 md:gap-6 w-full">
 
             {/* company-info */}
             <div className="flex flex-col gap-2 flex-1">
@@ -176,7 +176,7 @@ export default function Footer() {
           <div className="w-full border-t border-[#CDD1D5]" />
 
           {/* footer-copyright row */}
-          <div className="flex flex-row justify-between items-center w-[1248px]">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 w-full">
             {/* terms-link */}
             <div className="flex flex-row gap-4">
               <button

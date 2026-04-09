@@ -28,7 +28,6 @@ export default function RegisterPage() {
     if (isAuthenticated()) navigate('/');
   }, [navigate]);
 
-  // 이메일 변경 시 인증 초기화
   const handleEmailChange = (value: string) => {
     setEmail(value);
     setOtpSent(false);
@@ -39,10 +38,7 @@ export default function RegisterPage() {
   };
 
   const handleSendOtp = async () => {
-    if (!email) {
-      setOtpError('이메일을 입력해주세요.');
-      return;
-    }
+    if (!email) { setOtpError('이메일을 입력해주세요.'); return; }
     setOtpLoading(true);
     setOtpError(null);
     try {
@@ -70,10 +66,7 @@ export default function RegisterPage() {
   };
 
   const handleVerifyOtp = async () => {
-    if (!otp) {
-      setOtpError('인증 코드를 입력해주세요.');
-      return;
-    }
+    if (!otp) { setOtpError('인증 코드를 입력해주세요.'); return; }
     setOtpLoading(true);
     setOtpError(null);
     try {
@@ -101,22 +94,13 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpVerified || !verificationToken) {
-      setError('이메일 인증을 완료해주세요.');
-      return;
-    }
-    if (password !== passwordConfirmation) {
-      setError('비밀번호가 일치하지 않습니다.');
-      return;
-    }
+    if (!otpVerified || !verificationToken) { setError('이메일 인증을 완료해주세요.'); return; }
+    if (password !== passwordConfirmation) { setError('비밀번호가 일치하지 않습니다.'); return; }
     setLoading(true);
     setError(null);
-
     try {
       const registerData = {
-        name,
-        email,
-        password,
+        name, email, password,
         password_confirmation: passwordConfirmation,
         verification_token: verificationToken,
       } as PostApiAuthRegisterBody;
@@ -124,8 +108,7 @@ export default function RegisterPage() {
       const response = await postApiAuthRegister(registerData, { credentials: 'include' });
 
       if (response.status === 201 && 'access_token' in response.data) {
-        const data = response.data;
-        if (data.access_token) {
+        if (response.data.access_token) {
           navigate('/register/complete');
         } else {
           throw new Error('토큰을 받지 못했습니다.');
@@ -145,33 +128,6 @@ export default function RegisterPage() {
     }
   };
 
-  /* ── 공통 스타일 ── */
-  const inputBox: React.CSSProperties = {
-    display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px',
-    padding: '8px 16px', backgroundColor: '#F4F5F6',
-    border: '1px solid #CDD1D5', borderRadius: '6px',
-    width: '100%', boxSizing: 'border-box',
-  };
-  const inputStyle: React.CSSProperties = {
-    flex: 1, background: 'transparent', border: 'none', outline: 'none',
-    fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '17px',
-    lineHeight: '1.5', color: '#1E2124',
-  };
-  const hintStyle: React.CSSProperties = {
-    fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '13px',
-    lineHeight: '1.5', color: '#464C53', marginTop: '4px',
-  };
-  const actionBtnStyle = (active: boolean, disabled: boolean): React.CSSProperties => ({
-    height: '48px', padding: '0 16px',
-    backgroundColor: active ? '#039BE5' : '#8E90A6',
-    borderRadius: '6px', border: 'none',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.6 : 1,
-    fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '17px',
-    lineHeight: '1.5', color: '#FFFFFF', whiteSpace: 'nowrap',
-    alignSelf: 'flex-start', flexShrink: 0,
-  });
-
   const eyeIcon = (visible: boolean) =>
     visible ? (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -183,183 +139,178 @@ export default function RegisterPage() {
       </svg>
     );
 
-  return (
-    <div style={{ backgroundColor: '#FAFAFC', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '40px 0' }}>
+  const inputCls = "flex-1 min-w-0 bg-transparent border-none outline-none text-base sm:text-[17px] text-[#1E2124]";
+  const fontStyle = { fontFamily: 'Pretendard GOV, sans-serif' };
 
-      {/* 약관 및 정책 모달 */}
+  return (
+    <div className="bg-[#FAFAFC] min-h-screen flex justify-center items-start">
+
+      {/* 약관 모달 */}
       {showTermsModal && (
-        <div onClick={() => setShowTermsModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', padding: '40px', width: '480px', maxWidth: '90vw', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <span style={{ fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 700, fontSize: '20px', color: '#1E2124' }}>약관 및 정책</span>
-            <span style={{ fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '16px', color: '#464C53', textAlign: 'center', padding: '40px 0' }}>준비중입니다.</span>
-            <button type="button" onClick={() => setShowTermsModal(false)} style={{ height: '48px', backgroundColor: '#039BE5', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '17px', color: '#FFFFFF' }}>닫기</button>
+        <div onClick={() => setShowTermsModal(false)} className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] px-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl p-8 w-full max-w-md flex flex-col gap-6">
+            <span className="font-bold text-xl text-[#1E2124]" style={fontStyle}>약관 및 정책</span>
+            <span className="text-base text-[#464C53] text-center py-10" style={fontStyle}>준비중입니다.</span>
+            <button type="button" onClick={() => setShowTermsModal(false)} className="h-12 bg-[#039BE5] rounded-lg border-none cursor-pointer text-white text-lg" style={fontStyle}>닫기</button>
           </div>
         </div>
       )}
 
-      {/* wrap-600 */}
-      <div style={{ width: '600px', display: 'flex', flexDirection: 'column', gap: '32px', padding: '40px', backgroundColor: '#FFFFFF' }}>
+      <div className="w-full sm:w-[600px] flex flex-col gap-8 px-5 py-8 sm:px-10 sm:py-10 bg-white min-h-screen sm:min-h-0">
 
         {/* 로고 */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '520px' }}>
-          <img src="/icons/logo__pc.svg" alt="logo" style={{ width: '165px', height: '32px', cursor: 'pointer', objectFit: 'contain' }} onClick={() => navigate('/')} />
+        <div className="flex justify-center items-center">
+          <img src="/icons/logo__pc.svg" alt="logo" className="w-36 sm:w-[165px] h-8 cursor-pointer object-contain" onClick={() => navigate('/')} />
         </div>
 
-        {/* top */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', padding: '0 0 40px 0' }}>
+        <div className="flex flex-col gap-8 pb-10">
 
-          {/* title */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 700, fontSize: '32px', lineHeight: '1.5', letterSpacing: '0.03125em', color: '#1E2124' }}>회원가입</span>
-            <span style={{ fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '17px', lineHeight: '1.5', color: '#464C53' }}>본인 확인을 위해 필요한 정보입니다. 정확하게 입력해주세요.</span>
+          {/* 타이틀 */}
+          <div className="flex flex-col gap-2">
+            <span className="font-bold text-2xl sm:text-[32px] leading-snug tracking-wide text-[#1E2124]" style={fontStyle}>회원가입</span>
+            <span className="text-sm sm:text-[17px] leading-relaxed text-[#464C53]" style={fontStyle}>본인 확인을 위해 필요한 정보입니다. 정확하게 입력해주세요.</span>
           </div>
 
-          {/* contents */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-
-            {/* inputs */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
 
               {/* 이름 */}
-              <div style={inputBox}>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="이름" disabled={loading} style={inputStyle} />
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-md">
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="이름" disabled={loading} className={inputCls} style={fontStyle} />
               </div>
 
               {/* 이메일 + 인증요청 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'stretch' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={inputBox}>
-                      <input
-                        type="email" value={email}
-                        onChange={(e) => handleEmailChange(e.target.value)}
-                        placeholder="이메일" disabled={loading || otpVerified} style={inputStyle}
-                      />
-                    </div>
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-row gap-2 items-stretch">
+                  <div className="flex-1 min-w-0 flex items-center gap-2 px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-md overflow-hidden">
+                    <input
+                      type="email" value={email}
+                      onChange={(e) => handleEmailChange(e.target.value)}
+                      placeholder="이메일" disabled={loading || otpVerified}
+                      className={inputCls} style={fontStyle}
+                    />
                   </div>
                   <button
                     type="button" onClick={handleSendOtp}
                     disabled={otpLoading || otpVerified || !email}
-                    style={actionBtnStyle(otpVerified, (otpLoading || !email) && !otpVerified)}
+                    className={`h-12 px-3 sm:px-4 rounded-md border-none text-white text-sm sm:text-[17px] whitespace-nowrap flex-shrink-0 ${otpVerified ? 'bg-[#8E90A6]' : 'bg-[#039BE5]'} disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer`}
+                    style={fontStyle}
                   >
                     {otpVerified ? '인증완료' : otpLoading ? '발송중...' : otpSent ? '재발송' : '인증요청'}
                   </button>
                 </div>
-                <span style={hintStyle}>비밀번호 분실 시 확인 가능한 이메일을 입력해 주세요.</span>
+                <span className="text-xs sm:text-[13px] text-[#464C53]" style={fontStyle}>비밀번호 분실 시 확인 가능한 이메일을 입력해 주세요.</span>
               </div>
 
               {/* OTP 입력 */}
               {otpSent && !otpVerified && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'stretch' }}>
-                    <div style={inputBox}>
+                <div className="flex flex-col gap-1">
+                  <div className="flex flex-row gap-2 items-stretch">
+                    <div className="flex-1 min-w-0 flex items-center gap-2 px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-md overflow-hidden">
                       <input
                         type="text" value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         placeholder="인증 코드 6자리" maxLength={6} disabled={otpLoading}
-                        style={{ ...inputStyle, letterSpacing: '0.2em' }}
+                        className={`${inputCls} tracking-[0.2em]`} style={fontStyle}
                       />
                     </div>
                     <button
                       type="button" onClick={handleVerifyOtp}
                       disabled={otpLoading || otp.length !== 6}
-                      style={{
-                        height: '48px', padding: '0 16px', backgroundColor: '#039BE5',
-                        borderRadius: '6px', border: 'none',
-                        cursor: (otpLoading || otp.length !== 6) ? 'not-allowed' : 'pointer',
-                        opacity: (otpLoading || otp.length !== 6) ? 0.5 : 1,
-                        fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '17px',
-                        lineHeight: '1.5', color: '#FFFFFF', whiteSpace: 'nowrap',
-                        alignSelf: 'flex-start', flexShrink: 0,
-                      }}
+                      className="h-12 px-3 sm:px-4 bg-[#039BE5] rounded-md border-none text-white text-sm sm:text-[17px] whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      style={fontStyle}
                     >
                       {otpLoading ? '확인중...' : '인증확인'}
                     </button>
                   </div>
-                  <span style={hintStyle}>이메일로 발송된 6자리 코드를 입력해주세요. (유효시간 10분)</span>
+                  <span className="text-xs sm:text-[13px] text-[#464C53]" style={fontStyle}>이메일로 발송된 6자리 코드를 입력해주세요. (유효시간 10분)</span>
                 </div>
               )}
 
               {/* OTP 에러 */}
               {otpError && (
-                <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', padding: '12px 16px', borderRadius: '8px', fontSize: '14px' }}>
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                   {otpError}
                 </div>
               )}
 
               {/* 인증 성공 */}
               {otpVerified && (
-                <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#15803D', padding: '12px 16px', borderRadius: '8px', fontSize: '14px' }}>
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
                   이메일 인증이 완료되었습니다.
                 </div>
               )}
 
               {/* 비밀번호 */}
-              <div style={inputBox}>
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-md overflow-hidden">
                 <input
                   type={showPassword ? 'text' : 'password'} value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="비밀번호 (8자 이상)" disabled={loading} minLength={8} style={inputStyle}
+                  placeholder="비밀번호 (8자 이상)" disabled={loading} minLength={8}
+                  className={inputCls} style={fontStyle}
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="bg-transparent border-none cursor-pointer p-0 flex items-center flex-shrink-0">
                   {eyeIcon(showPassword)}
                 </button>
               </div>
 
               {/* 비밀번호 확인 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={inputBox}>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-md overflow-hidden">
                   <input
                     type={showPassword ? 'text' : 'password'} value={passwordConfirmation}
                     onChange={(e) => setPasswordConfirmation(e.target.value)}
-                    placeholder="비밀번호 확인" disabled={loading} style={inputStyle}
+                    placeholder="비밀번호 확인" disabled={loading}
+                    className={inputCls} style={fontStyle}
                   />
                 </div>
-                <span style={hintStyle}>8~16자리의 영문 대소문자, 숫자, 특수문자를 조합하여 설정해 주세요.</span>
+                <span className="text-xs sm:text-[13px] text-[#464C53]" style={fontStyle}>8~16자리의 영문 대소문자, 숫자, 특수문자를 조합하여 설정해 주세요.</span>
               </div>
             </div>
 
             {/* 에러 */}
             {error && (
-              <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', padding: '12px 16px', borderRadius: '8px', fontSize: '14px', whiteSpace: 'pre-line' }}>
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm whitespace-pre-line">
                 {error}
               </div>
             )}
 
             {/* 약관 동의 */}
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px' }}>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px', flex: 1 }}>
-                <input type="checkbox" id="agreeAll" checked={agreeAll} onChange={(e) => setAgreeAll(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#256EF4', cursor: 'pointer', flexShrink: 0 }} />
-                <label htmlFor="agreeAll" style={{ fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#464C53', cursor: 'pointer' }}>모든 약관에 동의합니다.</label>
+            <div className="flex flex-row items-center gap-1">
+              <div className="flex flex-row items-center gap-1 flex-1">
+                <input type="checkbox" id="agreeAll" checked={agreeAll} onChange={(e) => setAgreeAll(e.target.checked)} className="w-4 h-4 accent-[#256EF4] cursor-pointer flex-shrink-0" />
+                <label htmlFor="agreeAll" className="text-sm sm:text-[15px] leading-relaxed text-[#464C53] cursor-pointer" style={fontStyle}>모든 약관에 동의합니다.</label>
               </div>
-              <button type="button" onClick={() => setShowTermsModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#BD2C0F' }}>약관 및 정책</button>
+              <button type="button" onClick={() => setShowTermsModal(true)} className="bg-transparent border-none cursor-pointer px-0.5 text-sm sm:text-[15px] leading-relaxed text-[#BD2C0F]" style={fontStyle}>약관 및 정책</button>
             </div>
           </div>
 
           {/* 버튼 영역 */}
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
+          <div className="flex flex-row gap-4">
             <button type="button" onClick={() => navigate('/login')} disabled={loading}
-              style={{ flex: 1, height: '56px', backgroundColor: '#555770', borderRadius: '8px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1, fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '19px', lineHeight: '1.5', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              className="flex-1 h-14 bg-[#555770] rounded-lg border-none text-white text-lg sm:text-[19px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              style={fontStyle}>
               취소
             </button>
             <button type="button" onClick={handleRegister as any} disabled={loading || !otpVerified}
-              style={{ flex: 1, height: '56px', backgroundColor: '#039BE5', borderRadius: '8px', border: 'none', cursor: (loading || !otpVerified) ? 'not-allowed' : 'pointer', opacity: (loading || !otpVerified) ? 0.5 : 1, fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '19px', lineHeight: '1.5', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              className="flex-1 h-14 bg-[#039BE5] rounded-lg border-none text-white text-lg sm:text-[19px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              style={fontStyle}>
               {loading ? '처리 중...' : '가입'}
             </button>
           </div>
         </div>
 
-        {/* bottom */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #CDD1D5', margin: 0 }} />
-          <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#464C53' }}>이미 계정이 있습니까?</span>
-              <button type="button" onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#BD2C0F' }}>로그인</button>
+        {/* 하단 푸터 */}
+        <div className="flex flex-col gap-4 mt-auto">
+          <hr className="w-full border-none border-t border-[#CDD1D5]" />
+          <div className="flex flex-row justify-between items-center flex-wrap gap-2">
+            <div className="flex flex-row gap-2 items-center">
+              <span className="text-sm sm:text-[15px] leading-relaxed text-[#464C53]" style={fontStyle}>이미 계정이 있습니까?</span>
+              <button type="button" onClick={() => navigate('/login')} className="bg-transparent border-none cursor-pointer px-0.5 text-sm sm:text-[15px] leading-relaxed text-[#BD2C0F]" style={fontStyle}>로그인</button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '16px' }}>
-              <button type="button" onClick={() => setShowTermsModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#464C53' }}>약관 및 정책</button>
-              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'Pretendard GOV, sans-serif', fontWeight: 400, fontSize: '15px', lineHeight: '1.5', color: '#464C53' }}>고객센터</button>
+            <div className="flex flex-row items-center gap-4">
+              <button type="button" onClick={() => setShowTermsModal(true)} className="bg-transparent border-none cursor-pointer px-0.5 text-sm sm:text-[15px] leading-relaxed text-[#464C53]" style={fontStyle}>약관 및 정책</button>
+              <button type="button" className="bg-transparent border-none cursor-pointer px-0.5 text-sm sm:text-[15px] leading-relaxed text-[#464C53]" style={fontStyle}>고객센터</button>
             </div>
           </div>
         </div>

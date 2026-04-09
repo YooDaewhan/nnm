@@ -66,7 +66,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-[#F4F5F6]">
       <div className="flex justify-center py-10">
-        <div className="w-[1280px] px-4">
+        <div className="w-full max-w-[1280px] px-4">
       {/* 장바구니 영역 */}
       <div className="space-y-8">
         {/* 타이틀 + 스텝 인디케이터 */}
@@ -76,7 +76,7 @@ export default function CartPage() {
               장바구니
             </h1>
             {/* 스텝 인디케이터 */}
-            <div className="flex gap-0">
+            <div className="hidden md:flex gap-0">
               <div className="w-[120px]">
                 <div className="flex items-center">
                   <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#256EF4]">

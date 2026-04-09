@@ -826,6 +826,7 @@ export type GetApiPapersId200 = {
   venue?: GetApiPapersId200Venue;
   provider?: GetApiPapersId200Provider;
   references?: unknown[];
+  table_of_contents?: string;
   citation_count?: string;
   view_count?: string;
   download_count?: string;

@@ -32,12 +32,12 @@ export default function MyPageLibraryPage() {
       <div className="flex flex-col gap-8">
 
         {/* ── Title Section ── */}
-        <div className="bg-white rounded-xl p-8 flex flex-col gap-4">
+        <div className="bg-white rounded-xl p-4 sm:p-8 flex flex-col gap-4">
           <div className="flex justify-between items-end gap-4">
-            <h1 className="text-[32px] font-bold leading-[1.5em] tracking-[0.03125em] text-[#1E2124] shrink-0">
+            <h1 className="text-xl sm:text-[32px] font-bold leading-[1.5em] tracking-[0.03125em] text-[#1E2124] shrink-0">
               보관함
             </h1>
-            <p className="text-[19px] leading-[1.5em] text-[#1E2124]">
+            <p className="hidden sm:block text-[19px] leading-[1.5em] text-[#1E2124]">
               구매하신 논문은 결제일로부터 5일간 다운로드하실 수 있습니다.
             </p>
           </div>
@@ -62,8 +62,8 @@ export default function MyPageLibraryPage() {
           <div className="flex flex-col gap-0 bg-white rounded-xl overflow-hidden">
             {items.map((item, i) => (
               <div key={item.id}>
-                {i > 0 && <div className="border-t border-[#F3F4F6] mx-8" />}
-                <div className="px-8 py-5">
+                {i > 0 && <div className="border-t border-[#F3F4F6] mx-4 sm:mx-8" />}
+                <div className="px-4 sm:px-8 py-4 sm:py-5">
                   <LibraryRow item={item} />
                 </div>
               </div>
@@ -148,7 +148,7 @@ function LibraryRow({ item }: { item: PurchaseLibraryItem }) {
   };
 
   return (
-    <div className="flex items-center gap-20">
+    <div className="flex items-start gap-4 sm:gap-20">
       <div
         className="flex-1 flex flex-col gap-1 min-w-0 cursor-pointer hover:opacity-70 transition-opacity"
         onClick={handleNavigate}

@@ -58,9 +58,9 @@ export default function MyPageRecentPage() {
     <MypageLayout onLogout={handleLogout}>
       <div className="flex flex-col gap-4">
         {/* 헤더 카드 */}
-        <div className="bg-white rounded-xl p-8 flex flex-col gap-4">
+        <div className="bg-white rounded-xl p-4 sm:p-8 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-[32px] font-bold leading-[1.5em] tracking-[0.03em] text-[#1E2124]">
+            <h1 className="text-xl sm:text-[32px] font-bold leading-[1.5em] tracking-[0.03em] text-[#1E2124]">
               최근 본 논문
             </h1>
             {papers.length > 0 && (
@@ -89,12 +89,12 @@ export default function MyPageRecentPage() {
               <div
                 key={paper.id}
                 onClick={() => navigate(`/papers?id=${paper.id}`)}
-                className="flex flex-col gap-1 px-8 py-5 hover:bg-[#FAFAFC] transition-colors cursor-pointer"
+                className="flex flex-col gap-1 px-4 sm:px-8 py-4 sm:py-5 hover:bg-[#FAFAFC] transition-colors cursor-pointer"
               >
                 <p className="text-[17px] font-bold leading-[1.5em] text-[#1E2124] line-clamp-2">
                   {paper.title}
                 </p>
-                <div className="flex items-center gap-2 text-[15px] text-[#8A949E]">
+                <div className="flex items-center flex-wrap gap-2 text-[15px] text-[#8A949E]">
                   {paper.authors.length > 0 && (
                     <span>
                       {paper.authors.slice(0, 3).join(', ')}
