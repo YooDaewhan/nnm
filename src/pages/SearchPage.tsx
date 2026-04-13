@@ -92,8 +92,9 @@ function OpenSearchTextContent() {
     queryFn: () => {
       const yearGte = appliedFilters.yearFrom ? parseInt(appliedFilters.yearFrom) : undefined;
       const yearLte = appliedFilters.yearTo ? parseInt(appliedFilters.yearTo) : undefined;
+      const effectiveQuery = withinQuery.trim() ? `${query.trim()} ${withinQuery.trim()}` : query.trim();
       return searchOpensearchText({
-        query: query.trim(),
+        query: effectiveQuery,
         limit: ITEMS_PER_PAGE,
         offset: (currentPage - 1) * ITEMS_PER_PAGE,
         sort: appliedFilters.sort,
@@ -189,7 +190,7 @@ function OpenSearchTextContent() {
   };
 
   const goToPage = (page: number) => {
-    setSearchParams({ q: query, page: String(page) });
+    setSearchParams({ q: query, page: String(page), ...(withinQuery ? { within: withinQuery } : {}) });
   };
 
   const handleWithinSearch = (wq: string) => {
