@@ -47,7 +47,7 @@
 일반 유저
   └─ 어떤 경로든 접근
        └─ _worker.js 통과
-            └─ Cloudflare Pages → index.html 반환
+            └─ Cloudflare Pages → index.html 반환  
                  └─ 리액트 라우터가 URL 읽어서 렌더링
 ```
 

@@ -286,8 +286,8 @@ function OpenSearchTextContent() {
           </div>
         )}
 
-        <div className="flex gap-6 items-start">
-          <div className="hidden md:block md:sticky top-24 md:self-start">
+        <div className="flex flex-col md:flex-row gap-6 items-start">
+          <div className="w-full md:w-auto md:sticky top-24 md:self-start">
           <SearchFilterSidebar
             onApply={(filters, wq) => {
               setAppliedFilters(filters);

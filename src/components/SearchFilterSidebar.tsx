@@ -31,8 +31,8 @@ interface Props {
 
 export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, providers }: Props) {
   const [accordionOpen, setAccordionOpen] = useState({
-    search: true,
-    sort: true,
+    search: false,
+    sort: false,
     year: false,
     venue: false,
   });
@@ -52,7 +52,7 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
   );
 
   return (
-    <aside className="w-[340px] flex-shrink-0">
+    <aside className="w-full md:w-[340px] flex-shrink-0">
       <div className="bg-white rounded-xl border border-[#D6E0EB]">
         <div className="px-8 pt-8 pb-8 space-y-0">
 

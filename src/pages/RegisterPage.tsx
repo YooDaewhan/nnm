@@ -23,6 +23,13 @@ export default function RegisterPage() {
   const [verificationToken, setVerificationToken] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpTimer, setOtpTimer] = useState(0);
+
+  useEffect(() => {
+    if (otpTimer <= 0) return;
+    const id = setTimeout(() => setOtpTimer(t => t - 1), 1000);
+    return () => clearTimeout(id);
+  }, [otpTimer]);
 
   useEffect(() => {
     if (isAuthenticated()) navigate('/');
@@ -50,6 +57,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (res.status === 200) {
         setOtpSent(true);
+        setOtpTimer(180);
       } else if (res.status === 422) {
         const msgs = data.errors ? Object.values(data.errors as Record<string, string[]>).flat().join('\n') : data.message;
         setOtpError(msgs || '이메일 발송에 실패했습니다.');
@@ -223,7 +231,11 @@ export default function RegisterPage() {
                       {otpLoading ? '확인중...' : '인증확인'}
                     </button>
                   </div>
-                  <span className="text-xs sm:text-[13px] text-[#464C53]" style={fontStyle}>이메일로 발송된 6자리 코드를 입력해주세요. (유효시간 10분)</span>
+                  <span className={`text-xs sm:text-[13px] ${otpTimer > 0 ? 'text-[#464C53]' : 'text-red-500'}`} style={fontStyle}>
+                    {otpTimer > 0
+                      ? `이메일로 발송된 6자리 코드를 입력해주세요. (${String(Math.floor(otpTimer / 60)).padStart(2, '0')}:${String(otpTimer % 60).padStart(2, '0')})`
+                      : '인증 코드가 만료되었습니다. 재발송해 주세요.'}
+                  </span>
                 </div>
               )}
 
