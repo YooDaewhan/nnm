@@ -1,59 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+/* ───────────────────────────────────────────
+   반응형 훅
+   ─────────────────────────────────────────── */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 /* ───────────────────────────────────────────
    Static data
    ─────────────────────────────────────────── */
-
 const SUBJECTS = [
-  { id: '1-1', label: '인문학', icon: '/icons/1-1 인문학 1.png' },
-  { id: '1-2', label: '사회과학', icon: '/icons/1-2 사회과학 1.png' },
-  { id: '1-3', label: '자연과학', icon: '/icons/1-3 자연과학 1.png' },
-  { id: '1-4', label: '공학', icon: '/icons/1-4 공학 1.png' },
-  { id: '1-5', label: '의약학', icon: '/icons/1-5 의약학 1.png' },
+  { id: '1-1', label: '인문학',     icon: '/icons/1-1 인문학 1.png' },
+  { id: '1-2', label: '사회과학',   icon: '/icons/1-2 사회과학 1.png' },
+  { id: '1-3', label: '자연과학',   icon: '/icons/1-3 자연과학 1.png' },
+  { id: '1-4', label: '공학',       icon: '/icons/1-4 공학 1.png' },
+  { id: '1-5', label: '의약학',     icon: '/icons/1-5 의약학 1.png' },
   { id: '1-6', label: '농수해양학', icon: '/icons/1-6 농수해양학 1.png' },
   { id: '1-7', label: '예술체육학', icon: '/icons/1-7 예술체육학 1.png' },
-  { id: '1-8', label: '교육학', icon: '/icons/1-8 교육학 1.png' },
-  { id: '1-9', label: '복합학', icon: '/icons/1-9 복합학 1.png' },
+  { id: '1-8', label: '교육학',     icon: '/icons/1-8 교육학 1.png' },
+  { id: '1-9', label: '복합학',     icon: '/icons/1-9 복합학 1.png' },
 ];
 
 const POPULAR_KEYWORDS = [
   '인공지능', '머신러닝', '딥러닝', '생성형 AI', 'LLM',
   '학술 데이터', '딥페이크', '반도체', '에너지 전환', '개인정보',
-  '소형모듈원전', '가스터빈', 'AI 데이터센터', 'HBMA', 'AMD',
-];
-
-const TREND_TAGS = [
-  '#AI Agent', '#추론형 LLM', '#RAG',
-  '#Hallucination', '#sLLM', '#생성형 인공지능',
-  '#딥러닝', '#윤리적 AI',
+  '소형모듈원전', '가스터빈', 'AI 데이터센터', 'HBM4', 'AMD',
 ];
 
 const RECENT_PAPERS = [
-  {
-    title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰',
-    author: '김아림(Kim, Ahrim)',
-    publisher: '한국언어학회',
-    year: '2018',
-  },
-  {
-    title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰',
-    author: '김아림(Kim, Ahrim)',
-    publisher: '한국언어학회',
-    year: '2018',
-  },
-  {
-    title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰',
-    author: '김아림(Kim, Ahrim)',
-    publisher: '한국언어학회',
-    year: '2018',
-  },
-  {
-    title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰',
-    author: '김아림(Kim, Ahrim)',
-    publisher: '한국언어학회',
-    year: '2018',
-  },
+  { title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰', author: '김아림(Kim, Ahrim)', publisher: '한국언어학회', year: '2018' },
+  { title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰', author: '김아림(Kim, Ahrim)', publisher: '한국언어학회', year: '2018' },
+  { title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰', author: '김아림(Kim, Ahrim)', publisher: '한국언어학회', year: '2018' },
+  { title: '부끄러움/창피함/쑥스러움/수치스러움/수줍음간의 관계 고찰', author: '김아림(Kim, Ahrim)', publisher: '한국언어학회', year: '2018' },
 ];
 
 type Paper = { title: string; author: string; publisher: string; year: string };
@@ -124,7 +110,7 @@ const JOURNAL_CARDS = [
     description: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
     kciIf: '1.33',
     citations: '36',
-    badges: ['벤저', '벤저'],
+    badges: ['뱃지', '뱃지'],
   },
   {
     title: '저널 타이틀',
@@ -134,7 +120,7 @@ const JOURNAL_CARDS = [
     description: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
     kciIf: '0.00',
     citations: '00',
-    badges: ['벤저', '벤저'],
+    badges: ['뱃지', '뱃지'],
   },
   {
     title: '저널 타이틀',
@@ -144,20 +130,100 @@ const JOURNAL_CARDS = [
     description: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다. 간단한 설명이 들어가는 영역입니다. 간단한 설명이 들어가는 영역입니다.',
     kciIf: '0.00',
     citations: '00',
-    badges: ['벤저', '벤저'],
+    badges: ['뱃지', '뱃지'],
   },
 ];
 
-/* ───────────────────────────────────────────
-   Shared font helper
-   ─────────────────────────────────────────── */
 const ff = 'Pretendard GOV, Pretendard, sans-serif';
 
+const COVER_GRADIENTS = [
+  'linear-gradient(145deg,#C8D6E5,#8FAFC8)',
+  'linear-gradient(145deg,#E5E8EB,#C8CDD2)',
+  'linear-gradient(145deg,#E5E8EB,#C8CDD2)',
+];
+
 /* ───────────────────────────────────────────
-   Component
+   저널 카드 컴포넌트
+   ─────────────────────────────────────────── */
+function JournalCard({ card, idx, isMobile }: { card: typeof JOURNAL_CARDS[0]; idx: number; isMobile: boolean }) {
+  return (
+    <div
+      style={{
+        background: '#FFFFFF',
+        border: '1px solid #E4E7EA',
+        borderRadius: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        cursor: 'pointer',
+      }}
+    >
+      {/* 뱃지 + 액션 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: isMobile ? '16px 16px 0' : '20px 20px 0' }}>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {card.badges.map((b, bi) => (
+            <span key={bi} style={{ fontSize: 11, fontWeight: 600, color: '#58616A', background: '#F4F5F6', borderRadius: 4, padding: '2px 8px', lineHeight: '20px' }}>
+              {b}
+            </span>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 2 }}>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M15 7a2 2 0 100-4 2 2 0 000 4zM5 12a2 2 0 100-4 2 2 0 000 4zM15 17a2 2 0 100-4 2 2 0 000 4zM7 11l6 3M13 6l-6 3" stroke="#8A949E" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          </button>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 17s-7-4.35-7-8.5A3.5 3.5 0 0110 5.96 3.5 3.5 0 0117 8.5C17 12.65 10 17 10 17z" stroke="#8A949E" strokeWidth="1.5" /></svg>
+          </button>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M6 6h12l-1.5 7H7.5L6 6zM8 17a1 1 0 100-2 1 1 0 000 2zM15 17a1 1 0 100-2 1 1 0 000 2z" stroke="#8A949E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        </div>
+      </div>
+
+      {/* 커버 + 메타 */}
+      <div style={{ display: 'flex', gap: 14, padding: isMobile ? '12px 16px 0' : '14px 20px 0' }}>
+        <div style={{ width: isMobile ? 60 : 72, height: isMobile ? 80 : 96, borderRadius: 4, flexShrink: 0, overflow: 'hidden', background: COVER_GRADIENTS[idx % 3] }}>
+          {card.cover && <img src={card.cover} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+        </div>
+        <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>
+          <p style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: '#1E2124', marginBottom: 8, lineHeight: 1.4 }}>{card.title}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: '#8A949E', flexShrink: 0 }}>ISSN</span>
+              <span style={{ fontSize: 12, color: '#58616A' }}>{card.issn}</span>
+            </div>
+            <span style={{ fontSize: 12, color: '#58616A' }}>{card.publisher}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 설명 + 통계 */}
+      <div style={{ padding: isMobile ? '12px 16px 16px' : '14px 20px 20px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+        <p style={{ fontSize: 13, color: '#8A949E', lineHeight: '1.65em', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>
+          {card.description}
+        </p>
+        <div style={{ borderTop: '1px solid #F0F1F2', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: '#8A949E' }}>KCI IF (2년)</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#5B5FC7' }}>{card.kciIf}</span>
+          </div>
+          <div style={{ borderTop: '1px solid #F0F1F2' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: '#8A949E' }}>피인용 횟수</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#5B5FC7' }}>{card.citations}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────
+   메인 컴포넌트
    ─────────────────────────────────────────── */
 export default function HomePage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [query, setQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
@@ -175,123 +241,227 @@ export default function HomePage() {
     ? (PAPERS_BY_SUBJECT[selectedSubject] ?? RECENT_PAPERS)
     : RECENT_PAPERS;
 
+  /* ─ 패딩 헬퍼 ─ */
+  const px = isMobile ? '16px' : '40px';
+  const sectionPy = isMobile ? '32px 0' : '64px 0';
+
   return (
-    <div className="bg-white flex flex-col flex-1">
+    <div style={{ fontFamily: ff, backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', flex: 1 }}>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          1. HERO + SHORTCUT + PAPER LIST
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="w-full bg-white">
+      {/* ════════════════════════════════════════
+          1. HERO
+      ════════════════════════════════════════ */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #2D3560 0%, #3A4A80 55%, #4A5AA0 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* 배경 장식 */}
+        {!isMobile && (
+          <>
+            <div style={{ position: 'absolute', top: -60, right: '22%', width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: -40, left: '40%', width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
+          </>
+        )}
 
-        {/* Hero row */}
-        <div className="max-w-[1280px] mx-auto px-4">
-          <div
-            className="flex flex-col md:flex-row items-start gap-8 md:gap-16"
-            style={{ paddingTop: 40, paddingBottom: 0 }}
-          >
-            {/* Left: title + search */}
-            <div className="flex flex-col justify-center gap-8 md:gap-12 w-full md:w-[600px] md:flex-shrink-0">
-              <div className="flex flex-col gap-4" style={{ paddingLeft: 8 }}>
-                <h1 style={{ fontFamily: ff, fontWeight: 800, fontSize: 56, lineHeight: '1.25em', color: '#1E2124', whiteSpace: 'pre-line' }}>
-                  {`논문 검색\n더 쉬워졌습니다`}
-                </h1>
-                <p style={{ fontFamily: ff, fontWeight: 500, fontSize: 20, lineHeight: '1.6em', color: '#464C53' }}>
-                  복잡한 절차 없이 핵심 논문을 빠르게 찾아보세요
-                </p>
-              </div>
-
-              {/* Search bar */}
-              <form onSubmit={handleSearch}>
-                <div
-                  className="flex flex-row items-center w-full"
-                  style={{ height: 64, background: '#1E2124', borderRadius: 14, paddingLeft: 24, paddingRight: 16 }}
-                >
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="검색어를 입력해주세요"
-                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontFamily: ff, fontWeight: 700, fontSize: 20, color: '#FFFFFF' }}
-                    className="placeholder-white/40"
-                  />
-                  <button
-                    type="submit"
-                    className="flex items-center justify-center shrink-0 rounded-full transition-opacity hover:opacity-70"
-                    style={{ width: 40, height: 40, background: 'transparent', border: 'none', cursor: 'pointer' }}
-                  >
-                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                      <circle cx="17" cy="17" r="9" stroke="#FFFFFF" strokeWidth="2.2" />
-                      <path d="M24 24L32 32" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Right: trend card */}
-            <div
-              className="hidden md:block flex-1 rounded-2xl overflow-hidden relative"
-              style={{ height: 400, minHeight: 400, background: 'linear-gradient(135deg, #0a1628 0%, #1a3a5c 40%, #3b82f6 100%)' }}
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: '0 auto',
+            padding: isMobile ? '40px 16px 36px' : '64px 40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 40,
+          }}
+        >
+          {/* 좌측: 텍스트 + 검색 */}
+          <div style={{ flex: 1, maxWidth: isMobile ? '100%' : 560 }}>
+            <h1
+              style={{
+                fontSize: isMobile ? 28 : 40,
+                fontWeight: 800,
+                color: '#FFFFFF',
+                marginBottom: isMobile ? 8 : 12,
+                lineHeight: 1.25,
+                letterSpacing: '-0.5px',
+              }}
             >
-              <img
-                src="/images/hero-main.png"
-                alt=""
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
-              />
-              <div className="relative z-10 flex flex-col gap-2" style={{ padding: '60px' }}>
-                <span
+              생각은 깊게, 검색은 빠르게
+            </h1>
+            <p
+              style={{
+                fontSize: isMobile ? 14 : 16,
+                color: 'rgba(255,255,255,0.72)',
+                marginBottom: isMobile ? 24 : 36,
+                fontWeight: 400,
+                lineHeight: 1.5,
+              }}
+            >
+              복잡한 절차 없이 핵심 논문을 빠르게 찾아보세요.
+            </p>
+
+            {/* 검색 바 */}
+            <form onSubmit={handleSearch}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: '#FFFFFF',
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  width: '100%',
+                  maxWidth: isMobile ? '100%' : 500,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                }}
+              >
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={isMobile ? '키워드를 입력하세요' : '찾고 싶은 논문, 저자, 키워드를 입력하세요'}
                   style={{
-                    display: 'inline-block', width: 'fit-content',
-                    padding: '0 8px', borderRadius: 4,
-                    background: 'rgba(255,255,255,0.15)',
-                    fontFamily: ff, fontWeight: 700, fontSize: 13, color: '#FFFFFF', lineHeight: '20px',
+                    flex: 1,
+                    padding: isMobile ? '14px 16px' : '16px 20px',
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: isMobile ? 14 : 14,
+                    color: '#1E2124',
+                    background: 'transparent',
+                    fontFamily: ff,
+                  }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    width: isMobile ? 48 : 56,
+                    height: isMobile ? 48 : 56,
+                    background: '#2D3560',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  TREND
-                </span>
-                <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 36, color: '#FFFFFF', lineHeight: '1.4em', marginTop: 2 }}>
-                  AI 에이전트
-                </h2>
-                <div className="flex flex-wrap gap-x-4 gap-y-1" style={{ marginTop: 8 }}>
-                  {TREND_TAGS.map((tag) => (
-                    <span key={tag} style={{ fontFamily: ff, fontWeight: 400, fontSize: 15, color: 'rgba(255,255,255,0.75)', lineHeight: '26px' }}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                  <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                    <circle cx="10" cy="10" r="7" stroke="white" strokeWidth="2" />
+                    <line x1="15.5" y1="15.5" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
               </div>
-            </div>
+            </form>
           </div>
-        </div>
 
-        {/* Shortcut + divider + paper list */}
-        <div className="max-w-[1280px] mx-auto px-4" style={{ paddingBottom: 0 }}>
+          {/* 우측: 일러스트 (PC only) */}
+          {!isMobile && (
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', maxWidth: 520 }}>
+              <svg width="460" height="300" viewBox="0 0 460 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="290" cy="150" rx="160" ry="130" fill="rgba(255,255,255,0.04)" />
+                <rect x="50" y="70" width="130" height="170" rx="8" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+                <rect x="62" y="88" width="76" height="8" rx="4" fill="rgba(255,255,255,0.35)" />
+                <rect x="62" y="104" width="96" height="5" rx="2.5" fill="rgba(255,255,255,0.15)" />
+                <rect x="62" y="116" width="86" height="5" rx="2.5" fill="rgba(255,255,255,0.15)" />
+                <rect x="62" y="128" width="92" height="5" rx="2.5" fill="rgba(255,255,255,0.15)" />
+                <rect x="62" y="148" width="64" height="4" rx="2" fill="rgba(255,255,255,0.1)" />
+                <rect x="62" y="160" width="78" height="4" rx="2" fill="rgba(255,255,255,0.1)" />
+                <rect x="200" y="44" width="140" height="180" rx="8" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+                <rect x="214" y="64" width="84" height="8" rx="4" fill="rgba(255,255,255,0.45)" />
+                <rect x="214" y="82" width="108" height="5" rx="2.5" fill="rgba(255,255,255,0.22)" />
+                <rect x="214" y="94" width="98" height="5" rx="2.5" fill="rgba(255,255,255,0.22)" />
+                <rect x="214" y="106" width="102" height="5" rx="2.5" fill="rgba(255,255,255,0.22)" />
+                <rect x="214" y="126" width="68" height="4" rx="2" fill="rgba(255,255,255,0.13)" />
+                <rect x="214" y="138" width="84" height="4" rx="2" fill="rgba(255,255,255,0.13)" />
+                <circle cx="370" cy="100" r="46" stroke="#A78BFA" strokeWidth="5" fill="rgba(167,139,250,0.1)" />
+                <circle cx="370" cy="100" r="32" stroke="rgba(167,139,250,0.25)" strokeWidth="1" fill="none" />
+                <line x1="404" y1="134" x2="430" y2="160" stroke="#A78BFA" strokeWidth="7" strokeLinecap="round" />
+                <rect x="354" y="91" width="32" height="5" rx="2.5" fill="rgba(255,255,255,0.65)" />
+                <rect x="354" y="102" width="24" height="5" rx="2.5" fill="rgba(255,255,255,0.4)" />
+                <rect x="354" y="113" width="28" height="5" rx="2.5" fill="rgba(255,255,255,0.4)" />
+                <rect x="158" y="108" width="52" height="76" rx="10" fill="#FF6B6B" opacity="0.9" />
+                <circle cx="184" cy="97" r="24" fill="#FFD93D" opacity="0.95" />
+                <path d="M210 132 L338 112" stroke="#FF6B6B" strokeWidth="11" strokeLinecap="round" opacity="0.65" />
+                <rect x="24" y="24" width="96" height="38" rx="8" fill="rgba(255,255,255,0.1)" />
+                <text x="72" y="48" textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize="12" fontWeight="600" fontFamily="sans-serif">논문 검색</text>
+                <rect x="310" y="200" width="110" height="38" rx="8" fill="rgba(255,255,255,0.1)" />
+                <text x="365" y="224" textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize="12" fontWeight="600" fontFamily="sans-serif">빠른 찾기</text>
+                <circle cx="38" cy="210" r="8" fill="#4ADE80" opacity="0.7" />
+                <circle cx="420" cy="38" r="10" fill="#60A5FA" opacity="0.7" />
+                <circle cx="110" cy="268" r="6" fill="#F472B6" opacity="0.7" />
+                <circle cx="390" cy="258" r="5" fill="#FBBF24" opacity="0.6" />
+              </svg>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════
+          2. 카테고리 + 논문 목록
+      ════════════════════════════════════════ */}
+      <section style={{ backgroundColor: '#F4F5F6', padding: isMobile ? '24px 0' : '48px 0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: `0 ${px}` }}>
           <div
-            className="rounded-2xl"
-            style={{ background: '#FFFFFF', border: '1px solid #E4E7EA', marginTop: 0, padding: '48px' }}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: isMobile ? 12 : 16,
+              padding: isMobile ? '24px 16px' : '40px 48px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            }}
           >
-            {/* Subject shortcut grid */}
-            <div className="flex flex-row items-center justify-between" style={{ gap: 12 }}>
+            {/* 카테고리 아이콘 그리드 */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(9, 1fr)',
+                gap: isMobile ? 12 : 8,
+                marginBottom: isMobile ? 24 : 32,
+              }}
+            >
               {SUBJECTS.map((s) => {
                 const isSelected = selectedSubject === s.label;
                 return (
                   <button
                     key={s.id}
                     onClick={() => handleSubjectClick(s.label)}
-                    className="flex flex-col items-center gap-3 transition-all hover:opacity-70"
                     style={{
-                      background: isSelected ? '#F0F4FF' : 'transparent',
-                      border: isSelected ? '2px solid #4C6EF5' : '2px solid transparent',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: isMobile ? 6 : 8,
+                      background: isSelected ? '#EEF2FF' : 'none',
+                      border: isSelected ? '2px solid #5B5FC7' : '2px solid transparent',
                       borderRadius: 12,
                       cursor: 'pointer',
-                      flex: 1,
-                      padding: '8px 4px',
+                      padding: isMobile ? '10px 4px' : '12px 4px',
+                      transition: 'all 0.15s',
                     }}
                   >
-                    <div className="flex items-center justify-center" style={{ width: 80, height: 80 }}>
-                      <img src={s.icon} alt={s.label} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+                    <div
+                      style={{
+                        width: isMobile ? 52 : 60,
+                        height: isMobile ? 52 : 60,
+                        borderRadius: 12,
+                        background: '#F4F5F6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <img src={s.icon} alt={s.label} style={{ width: isMobile ? 40 : 48, height: isMobile ? 40 : 48, objectFit: 'contain' }} />
                     </div>
-                    <span style={{ fontFamily: ff, fontWeight: 700, fontSize: 14, color: isSelected ? '#4C6EF5' : '#1E2124', lineHeight: '1.5em', whiteSpace: 'nowrap' }}>
+                    <span
+                      style={{
+                        fontSize: isMobile ? 11 : 12,
+                        fontWeight: isSelected ? 700 : 500,
+                        color: isSelected ? '#5B5FC7' : '#1E2124',
+                        textAlign: 'center',
+                        lineHeight: 1.3,
+                      }}
+                    >
                       {s.label}
                     </span>
                   </button>
@@ -299,32 +469,56 @@ export default function HomePage() {
               })}
             </div>
 
-            {/* Divider */}
-            <div style={{ height: 1, background: '#E4E7EA', margin: '40px 0' }} />
+            {/* 구분선 */}
+            <div style={{ borderTop: '1px solid #F0F1F2', marginBottom: isMobile ? 16 : 24 }} />
 
-            {/* Recent paper list (2×2) */}
+            {/* 논문 목록 — 모바일 1열 / PC 2열 */}
             <div
-              className="grid"
-              style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px', columnGap: '32px', rowGap: '16px' }}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gap: isMobile ? 0 : '0 32px',
+              }}
             >
               {displayedPapers.map((p, i) => (
                 <button
                   key={i}
-                  className="flex flex-col gap-1 text-left transition-colors hover:bg-gray-50 rounded-lg"
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 0' }}
                   onClick={() => navigate(`/search?q=${encodeURIComponent(p.title)}`)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                    padding: isMobile ? '12px 0' : '14px 0',
+                    borderBottom: '1px solid #F0F1F2',
+                    background: 'none',
+                    border: 'none',
+                    borderBottomWidth: 1,
+                    borderBottomStyle: 'solid',
+                    borderBottomColor: '#F0F1F2',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
                 >
                   <span
-                    style={{ fontFamily: ff, fontWeight: 600, fontSize: 16, color: '#1E2124', lineHeight: '29px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: 560 }}
+                    style={{
+                      fontSize: isMobile ? 13 : 14,
+                      fontWeight: 600,
+                      color: '#1E2124',
+                      lineHeight: 1.4,
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      display: 'block',
+                    }}
                   >
                     {p.title}
                   </span>
-                  <div className="flex items-center gap-0" style={{ lineHeight: '26px' }}>
-                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{p.author}</span>
-                    <span style={{ margin: '0 8px', width: 1, height: 14, background: '#CDD1D5', display: 'inline-block' }} />
-                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{p.publisher}</span>
-                    <span style={{ margin: '0 8px', width: 1, height: 14, background: '#CDD1D5', display: 'inline-block' }} />
-                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 14, color: '#8A949E' }}>{p.year}</span>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: isMobile ? 11 : 12, color: '#8A949E' }}>{p.author}</span>
+                    <span style={{ width: 1, height: 10, background: '#CDD1D5', margin: '0 6px', display: 'inline-block', flexShrink: 0 }} />
+                    <span style={{ fontSize: isMobile ? 11 : 12, color: '#8A949E' }}>{p.publisher}</span>
+                    <span style={{ width: 1, height: 10, background: '#CDD1D5', margin: '0 6px', display: 'inline-block', flexShrink: 0 }} />
+                    <span style={{ fontSize: isMobile ? 11 : 12, color: '#8A949E' }}>{p.year}</span>
                   </div>
                 </button>
               ))}
@@ -333,28 +527,33 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          2. 인기 검색 키워드
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="w-full bg-white" style={{ paddingTop: 80, paddingBottom: 80 }}>
-        <div className="max-w-[1280px] mx-auto px-4">
-          <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 32, color: '#1E2124', lineHeight: '48px', marginBottom: 32, paddingLeft: 16 }}>
+      {/* ════════════════════════════════════════
+          3. 인기 검색 키워드
+      ════════════════════════════════════════ */}
+      <section style={{ backgroundColor: '#FFFFFF', padding: sectionPy }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: `0 ${px}` }}>
+          <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, color: '#1E2124', marginBottom: isMobile ? 16 : 24 }}>
             인기 검색 키워드
           </h2>
-          <div className="flex flex-wrap gap-3" style={{ paddingLeft: 16 }}>
-            {POPULAR_KEYWORDS.map((kw) => (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 6 : 8 }}>
+            {POPULAR_KEYWORDS.map((kw, i) => (
               <button
-                key={kw}
-                onClick={() => {
-                  setQuery(kw);
-                  navigate(`/search?q=${encodeURIComponent(kw)}`);
-                }}
-                className="flex items-center justify-center transition-colors hover:bg-[#E8EAEC]"
+                key={i}
+                onClick={() => { setQuery(kw); navigate(`/search?q=${encodeURIComponent(kw)}`); }}
                 style={{
-                  height: 46, padding: '0 24px', borderRadius: 1000,
-                  background: '#F4F5F6', border: '1px solid #E4E7EA',
-                  cursor: 'pointer', fontFamily: ff, fontSize: 15, fontWeight: 500, color: '#1E2124',
+                  padding: isMobile ? '6px 14px' : '9px 20px',
+                  borderRadius: 100,
+                  border: '1px solid #CDD1D5',
+                  background: '#FFFFFF',
+                  fontSize: isMobile ? 13 : 14,
+                  fontWeight: 500,
+                  color: '#464C53',
+                  cursor: 'pointer',
+                  fontFamily: ff,
+                  transition: 'all 0.15s',
                 }}
+                onMouseEnter={(e) => { const b = e.currentTarget; b.style.background = '#2D3560'; b.style.color = '#FFFFFF'; b.style.borderColor = '#2D3560'; }}
+                onMouseLeave={(e) => { const b = e.currentTarget; b.style.background = '#FFFFFF'; b.style.color = '#464C53'; b.style.borderColor = '#CDD1D5'; }}
               >
                 {kw}
               </button>
@@ -363,144 +562,85 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          3. SIMS 배너
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="w-full" style={{ background: 'linear-gradient(135deg, #2a1a4e 0%, #4a3a8e 40%, #6b5ce7 100%)', overflow: 'hidden' }}>
-        <div className="max-w-[1280px] mx-auto px-4">
-          <a
-            href="https://sims.newnonmun.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center text-center"
-            style={{ padding: '40px 0', minHeight: 200, cursor: 'pointer', textDecoration: 'none' }}
-          >
-            <p style={{ fontFamily: ff, fontWeight: 500, fontSize: 17, color: 'rgba(255,255,255,0.7)', lineHeight: '36px' }}>
-              효율적인 학회 운영 관리
-            </p>
-            <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 32, color: '#FFFFFF', lineHeight: '48px' }}>
-              학회통합관리시스템 SIMS로 해결하세요!
-            </h2>
-          </a>
-        </div>
+      {/* ════════════════════════════════════════
+          4. SIMS 배너
+      ════════════════════════════════════════ */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #2a1a4e 0%, #4a3a8e 40%, #6b5ce7 100%)',
+          padding: isMobile ? '48px 16px' : '64px 40px',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {!isMobile && (
+          <>
+            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 360, background: 'linear-gradient(135deg, transparent 30%, rgba(91,111,191,0.35) 100%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', right: 80, top: '50%', transform: 'translateY(-50%)', width: 220, height: 150, background: 'rgba(255,255,255,0.05)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)' }} />
+          </>
+        )}
+        <a
+          href="https://sims.newnonmun.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', display: 'inline-block', position: 'relative', zIndex: 1 }}
+        >
+          <p style={{ fontSize: isMobile ? 13 : 15, fontWeight: 600, color: '#F5C842', marginBottom: isMobile ? 8 : 12, letterSpacing: '0.02em' }}>
+            효율적인 학회 운영 관리
+          </p>
+          <h2 style={{ fontSize: isMobile ? 20 : 32, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.3px', lineHeight: 1.35 }}>
+            학회통합관리시스템 SIMS로 해결하세요!
+          </h2>
+        </a>
       </section>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          4. 신규 업데이트 저널
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="w-full bg-white" style={{ paddingTop: 80, paddingBottom: 80 }}>
-        <div className="max-w-[1280px] mx-auto px-4">
-          {/* Section header */}
-          <div className="flex items-center justify-between" style={{ marginBottom: 32, paddingLeft: 16, paddingRight: 16 }}>
-            <h2 style={{ fontFamily: ff, fontWeight: 800, fontSize: 32, color: '#1E2124', lineHeight: '48px' }}>
-              신규 업데이트 저널
-            </h2>
-            <span style={{ fontFamily: ff, fontWeight: 500, fontSize: 15, color: '#8A949E' }}>
-              1 / 8
-            </span>
+      {/* ════════════════════════════════════════
+          5. 신규 업데이트 저널
+      ════════════════════════════════════════ */}
+      <section style={{ backgroundColor: '#FFFFFF', padding: isMobile ? '40px 0 48px' : '64px 0 80px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: `0 ${px}` }}>
+          {/* 헤더 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 16 : 28 }}>
+            <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, color: '#1E2124' }}>신규 업데이트 저널</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 14, color: '#8A949E', fontWeight: 600 }}>1 / 8</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {['‹', '›'].map((arrow, idx) => (
+                  <button
+                    key={idx}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 6,
+                      border: '1px solid #E4E7EA',
+                      background: '#FFFFFF',
+                      cursor: 'pointer',
+                      fontSize: 18,
+                      color: '#8A949E',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {arrow}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Journal cards grid */}
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, paddingLeft: 16, paddingRight: 16 }}>
+          {/* 카드 — 모바일 1열 / PC 3열 */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gap: isMobile ? 16 : 24,
+            }}
+          >
             {JOURNAL_CARDS.map((card, i) => (
-              <div
-                key={i}
-                className="flex flex-col rounded-2xl overflow-hidden transition-shadow hover:shadow-lg"
-                style={{ background: '#FFFFFF', border: '1px solid #E4E7EA' }}
-              >
-                {/* Row 1: badges + action buttons */}
-                <div className="flex items-center justify-between" style={{ padding: '24px 24px 0' }}>
-                  <div className="flex gap-1">
-                    {card.badges.map((b, bi) => (
-                      <span
-                        key={bi}
-                        style={{
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          height: 24, padding: '0 8px', borderRadius: 4,
-                          background: '#F4F5F6', fontFamily: ff, fontSize: 12, fontWeight: 600, color: '#58616A',
-                        }}
-                      >
-                        {b}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* Share */}
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 7a2 2 0 100-4 2 2 0 000 4zM5 12a2 2 0 100-4 2 2 0 000 4zM15 17a2 2 0 100-4 2 2 0 000 4zM7 11l6 3M13 6l-6 3" stroke="#8A949E" strokeWidth="1.5" strokeLinecap="round" /></svg>
-                    </button>
-                    {/* Heart */}
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17s-7-4.35-7-8.5A3.5 3.5 0 0110 5.96 3.5 3.5 0 0117 8.5C17 12.65 10 17 10 17z" stroke="#8A949E" strokeWidth="1.5" /></svg>
-                    </button>
-                    {/* Cart */}
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M6 6h12l-1.5 7H7.5L6 6zM8 17a1 1 0 100-2 1 1 0 000 2zM15 17a1 1 0 100-2 1 1 0 000 2z" stroke="#8A949E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Contents: image + meta */}
-                <div className="flex gap-4" style={{ padding: '16px 24px 0' }}>
-                  {/* Cover image */}
-                  <div
-                    className="shrink-0 rounded overflow-hidden"
-                    style={{ width: 90, height: 125, background: '#F4F5F6' }}
-                  >
-                    {card.cover ? (
-                      <img src={card.cover} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div
-                        className="flex flex-col items-center justify-center w-full h-full gap-2"
-                        style={{
-                          background: [
-                            'linear-gradient(145deg, #E8F0FE 0%, #C2D4F8 100%)',
-                            'linear-gradient(145deg, #E6F4EA 0%, #B7DFC0 100%)',
-                            'linear-gradient(145deg, #FEF3E2 0%, #F7D59C 100%)',
-                          ][i % 3],
-                        }}
-                      >
-                        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                          <rect x="7" y="3" width="16" height="22" rx="2" fill="white" fillOpacity="0.7" />
-                          <rect x="11" y="7" width="16" height="22" rx="2" fill="white" fillOpacity="0.5" stroke={['#6B9BF4','#4CAF72','#E6A020'][i % 3]} strokeWidth="1.2" />
-                          <path d="M15 13h8M15 17h8M15 21h5" stroke={['#6B9BF4','#4CAF72','#E6A020'][i % 3]} strokeWidth="1.4" strokeLinecap="round" />
-                        </svg>
-                        <span style={{ fontSize: 9, fontWeight: 600, color: ['#4A7CF0','#2E8B4A','#C07800'][i % 3], letterSpacing: '0.03em' }}>JOURNAL</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Meta */}
-                  <div className="flex flex-col justify-start" style={{ paddingTop: 8 }}>
-                    <h3 style={{ fontFamily: ff, fontWeight: 700, fontSize: 18, color: '#1E2124', lineHeight: '29px', marginBottom: 16 }}>
-                      {card.title}
-                    </h3>
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span style={{ fontFamily: ff, fontWeight: 500, fontSize: 13, color: '#8A949E' }}>ISSN</span>
-                        <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 13, color: '#58616A' }}>{card.issn}</span>
-                      </div>
-                      <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 13, color: '#58616A' }}>{card.publisher}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description + stats */}
-                <div className="flex flex-col" style={{ padding: '16px 24px 24px' }}>
-                  <p style={{ fontFamily: ff, fontWeight: 400, fontSize: 14, color: '#58616A', lineHeight: '23px', marginBottom: 12, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {card.description}
-                  </p>
-                  <div style={{ height: 1, background: '#E4E7EA', marginBottom: 10 }} />
-                  <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 13, color: '#8A949E' }}>KCI IF (2년)</span>
-                    <span style={{ fontFamily: ff, fontWeight: 600, fontSize: 13, color: '#1E2124' }}>{card.kciIf}</span>
-                  </div>
-                  <div style={{ height: 1, background: '#E4E7EA', marginBottom: 10 }} />
-                  <div className="flex items-center justify-between">
-                    <span style={{ fontFamily: ff, fontWeight: 400, fontSize: 13, color: '#8A949E' }}>피인용 횟수</span>
-                    <span style={{ fontFamily: ff, fontWeight: 600, fontSize: 13, color: '#1E2124' }}>{card.citations}</span>
-                  </div>
-                </div>
-              </div>
+              <JournalCard key={i} card={card} idx={i} isMobile={isMobile} />
             ))}
           </div>
         </div>
