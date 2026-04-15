@@ -13,11 +13,24 @@ const IconSearch = () => (
   </svg>
 );
 
-const ITEMS_PER_PAGE = 10;
 const MAX_QUERY_DISPLAY = 25;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 function truncateQuery(query: string) {
   return query.length > MAX_QUERY_DISPLAY ? query.slice(0, MAX_QUERY_DISPLAY) + '...' : query;
+}
+
+function highlightText(text: string, terms: string[]): React.ReactNode {
+  const words = terms.flatMap(t => t.trim().split(/\s+/)).filter(Boolean);
+  if (words.length === 0) return text;
+  const escaped = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    i % 2 === 1
+      ? <span key={i} className="text-[#E32929] font-bold">{part}</span>
+      : part
+  );
 }
 
 
@@ -32,6 +45,8 @@ function OpenSearchTextContent() {
   const isLoggedIn = isAuthenticated();
 
   const [appliedFilters, setAppliedFilters] = useState<Partial<Filters>>({});
+  const [topSort, setTopSort] = useState<'latest' | 'popularity' | undefined>(undefined);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const withinQuery = searchParams.get('within') || '';
 
   const [localSearchQuery, setLocalSearchQuery] = useState(query);
@@ -88,16 +103,16 @@ function OpenSearchTextContent() {
 
   // 검색 쿼리 (TanStack Query)
   const { data, isLoading: searchLoading, error: searchErr } = useQuery({
-    queryKey: ['search', query, currentPage, appliedFilters, withinQuery],
+    queryKey: ['search', query, currentPage, appliedFilters, withinQuery, topSort, itemsPerPage],
     queryFn: () => {
       const yearGte = appliedFilters.yearFrom ? parseInt(appliedFilters.yearFrom) : undefined;
       const yearLte = appliedFilters.yearTo ? parseInt(appliedFilters.yearTo) : undefined;
       const effectiveQuery = withinQuery.trim() ? `${query.trim()} ${withinQuery.trim()}` : query.trim();
       return searchOpensearchText({
         query: effectiveQuery,
-        limit: ITEMS_PER_PAGE,
-        offset: (currentPage - 1) * ITEMS_PER_PAGE,
-        sort: appliedFilters.sort,
+        limit: itemsPerPage,
+        offset: (currentPage - 1) * itemsPerPage,
+        sort: topSort ?? appliedFilters.sort,
         provider_name: appliedFilters.providerName || undefined,
         venue_name: appliedFilters.venueName || undefined,
         filters: yearGte || yearLte ? { year: { gte: yearGte, lte: yearLte } } : undefined,
@@ -114,7 +129,17 @@ function OpenSearchTextContent() {
       : searchErr
         ? '검색 중 오류가 발생했습니다.'
         : null;
-  const totalPages = Math.ceil(totalResults / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalResults / itemsPerPage);
+
+  const handleTopSortChange = (sort: 'latest' | 'popularity') => {
+    setTopSort(prev => prev === sort ? undefined : sort);
+    setSearchParams(prev => { prev.set('page', '1'); return prev; });
+  };
+
+  const handleItemsPerPageChange = (size: number) => {
+    setItemsPerPage(size);
+    setSearchParams(prev => { prev.set('page', '1'); return prev; });
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -305,6 +330,44 @@ function OpenSearchTextContent() {
 
           {/* 결과 목록 */}
           <div className="flex-1 min-w-0 w-full overflow-hidden">
+            {/* 정렬 + 개수 컨트롤 */}
+            {query && (
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleTopSortChange('latest')}
+                    className={`h-8 px-4 rounded-md text-[14px] font-medium transition-colors border ${
+                      topSort === 'latest'
+                        ? 'bg-[#063A74] text-white border-[#063A74]'
+                        : 'bg-white text-[#464C53] border-[#CDD1D5] hover:bg-gray-50'
+                    }`}
+                  >
+                    최신순
+                  </button>
+                  <button
+                    onClick={() => handleTopSortChange('popularity')}
+                    className={`h-8 px-4 rounded-md text-[14px] font-medium transition-colors border ${
+                      topSort === 'popularity'
+                        ? 'bg-[#063A74] text-white border-[#063A74]'
+                        : 'bg-white text-[#464C53] border-[#CDD1D5] hover:bg-gray-50'
+                    }`}
+                  >
+                    인기순
+                  </button>
+                </div>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="h-8 px-2 pr-6 rounded-md text-[14px] text-[#464C53] border border-[#CDD1D5] bg-white appearance-none cursor-pointer hover:bg-gray-50 focus:outline-none"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23464C53' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
+                >
+                  {PAGE_SIZE_OPTIONS.map(size => (
+                    <option key={size} value={size}>{size}개씩</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {!query && (
               <p className="text-gray-500 text-center py-8">검색어를 입력해주세요.</p>
             )}
@@ -335,6 +398,7 @@ function OpenSearchTextContent() {
                     onBuyNow={handleBuyNow}
                     cartLoading={cartMutation.isPending && cartMutation.variables === result.id}
                     buyLoading={buyNowMutation.isPending && buyNowMutation.variables === result.id}
+                    highlightTerms={[query, withinQuery].filter(Boolean)}
                   />
                 ))}
               </div>
@@ -407,12 +471,14 @@ function SearchResultCard({
   onBuyNow,
   cartLoading,
   buyLoading,
+  highlightTerms = [],
 }: {
   result: OpenSearchTextResultItem;
   onAddToCart: (e: React.MouseEvent, id: string) => void;
   onBuyNow: (e: React.MouseEvent, id: string) => void;
   cartLoading: boolean;
   buyLoading: boolean;
+  highlightTerms?: string[];
 }) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
@@ -459,12 +525,12 @@ function SearchResultCard({
       <div className="flex flex-col md:flex-row items-start gap-4 md:gap-6">
         <div className="flex-1 flex flex-col gap-2 min-w-0">
           <h4 className="text-[19px] font-bold text-[#1E2124] leading-[1.5em]">
-            {result.title || '제목 없음'}
+            {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
           </h4>
           {result.abstract && (
             <>
               {expanded && (
-                <p className="text-[15px] text-[#464C53] leading-[1.5em]">{result.abstract}</p>
+                <p className="text-[15px] text-[#464C53] leading-[1.5em]">{highlightText(result.abstract, highlightTerms)}</p>
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
@@ -508,18 +574,18 @@ function SearchResultCard({
         </div>
 
         {/* 우측 버튼 */}
-        <div className="flex flex-row md:flex-col items-stretch gap-2 w-full md:w-[100px] md:self-stretch">
+        <div className="flex flex-row md:flex-col items-stretch gap-2 w-full md:w-[120px] md:self-start">
           <button
             onClick={(e) => onBuyNow(e, result.id)}
             disabled={buyLoading}
-            className="flex-1 h-10 flex items-center justify-center bg-white text-[#AB2B36] text-[15px] font-bold rounded-md border border-[#CDD1D5] hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="flex-1 md:flex-none md:w-full h-10 md:h-14 flex items-center justify-center bg-white text-[#AB2B36] text-[15px] md:text-[16px] font-bold rounded-md border border-[#CDD1D5] hover:bg-gray-50 transition-colors disabled:opacity-50 px-3"
           >
             ￦ 5,000
           </button>
           <button
             onClick={(e) => onBuyNow(e, result.id)}
             disabled={buyLoading}
-            className="flex-1 h-10 flex items-center justify-center bg-[#ECF2FE] text-[#0B50D0] text-[15px] font-normal rounded-md border border-[#256EF4] hover:bg-[#dce7fd] transition-colors disabled:opacity-50"
+            className="flex-1 md:flex-none md:w-full h-10 md:h-14 flex items-center justify-center bg-[#ECF2FE] text-[#0B50D0] text-[15px] md:text-[16px] font-normal rounded-md border border-[#256EF4] hover:bg-[#dce7fd] transition-colors disabled:opacity-50 px-3"
           >
             {buyLoading ? '처리 중...' : '구매하기'}
           </button>
