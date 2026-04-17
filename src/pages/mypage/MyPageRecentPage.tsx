@@ -44,7 +44,7 @@ export default function MyPageRecentPage() {
 
   useEffect(() => {
     if (!isAuthenticated()) { navigate('/login'); return; }
-    setPapers(getRecentPapers().filter((p) => p.id.startsWith('hnm_')));
+    setPapers(getRecentPapers());
   }, [navigate]);
 
   const handleLogout = async () => { await logout(); navigate('/login'); };
@@ -88,7 +88,7 @@ export default function MyPageRecentPage() {
             {papers.map((paper) => (
               <div
                 key={paper.id}
-                onClick={() => navigate(`/papers?id=${paper.id}`)}
+                onClick={() => navigate(`/papers/${paper.id}`)}
                 className="flex flex-col gap-1 px-4 sm:px-8 py-4 sm:py-5 hover:bg-[#FAFAFC] transition-colors cursor-pointer"
               >
                 <p className="text-[17px] font-bold leading-[1.5em] text-[#1E2124] line-clamp-2">

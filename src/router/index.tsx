@@ -18,6 +18,7 @@ import MyPageInfoPage from '@/pages/mypage/MyPageInfoPage';
 import MyPageOrdersPage from '@/pages/mypage/MyPageOrdersPage';
 import MyPageLibraryPage from '@/pages/mypage/MyPageLibraryPage';
 import MyPageRecentPage from '@/pages/mypage/MyPageRecentPage';
+import MyPageScrapPage from '@/pages/mypage/MyPageScrapPage';
 import MyPageQnaPage from '@/pages/mypage/MyPageQnaPage';
 
 export const router = createBrowserRouter([
@@ -27,8 +28,7 @@ export const router = createBrowserRouter([
       { path: '/',                    element: <HomePage /> },
       { path: '/search',              element: <SearchPage /> },
       { path: '/library',             element: <LibraryPage /> },
-      { path: '/papers/:id',                               element: <PapersPage /> },
-      { path: '/papers/:provider/:venue/:journal/:id',     element: <PapersPage /> },
+      { path: '/papers/:id',          element: <PapersPage /> },
       { path: '/providers',           element: <ProvidersPage /> },
       { path: '/providers/detail',    element: <ProvidersDetailPage /> },
       { path: '/cart',                element: <CartPage /> },
@@ -38,6 +38,7 @@ export const router = createBrowserRouter([
       { path: '/mypage',              element: <MyPageInfoPage /> },
       { path: '/mypage/orders',       element: <MyPageOrdersPage /> },
       { path: '/mypage/library',      element: <MyPageLibraryPage /> },
+      { path: '/mypage/scraps',       element: <MyPageScrapPage /> },
       { path: '/mypage/recent',       element: <MyPageRecentPage /> },
       { path: '/mypage/qna',          element: <MyPageQnaPage /> },
       { path: '/login',               element: <LoginPage /> },

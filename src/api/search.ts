@@ -1123,3 +1123,100 @@ export async function searchHybrid(params: {
     offset: data.offset ?? 0,
   };
 }
+
+// ===== 상세 검색 API (OpenSearch) =====
+
+export type DetailedSearchField = 'title' | 'author' | 'abstract' | 'keyword' | 'doi' | 'full_text';
+export type DetailedSearchOperator = 'AND' | 'OR' | 'NOT';
+
+export type DetailedSearchCondition = {
+  field: DetailedSearchField;
+  keyword: string;
+  operator: DetailedSearchOperator;
+};
+
+export type DetailedSearchFilters = {
+  year_from?: number;
+  year_to?: number;
+  journal?: string;
+};
+
+export type PostApiSearchOpensearchDetailedBody = {
+  conditions: DetailedSearchCondition[];
+  filters?: DetailedSearchFilters;
+  page?: number;
+  size?: number;
+  sort?: 'relevance' | 'latest';
+};
+
+export type PostApiSearchOpensearchDetailed200 = {
+  success: boolean;
+  results: OpenSearchTextResultItem[];
+  count: number;
+  total?: number;
+  has_more: boolean;
+  page: number;
+  size: number;
+  sort?: string;
+};
+
+export type PostApiSearchOpensearchDetailed400 = {
+  error_code?: string;
+  message?: string;
+};
+
+export type postApiSearchOpensearchDetailedResponse =
+  | { data: PostApiSearchOpensearchDetailed200; status: 200; headers: Headers }
+  | { data: PostApiSearchOpensearchDetailed400; status: number; headers: Headers };
+
+export const getPostApiSearchOpensearchDetailedUrl = () => `/api/search/opensearch/detailed`;
+
+export const postApiSearchOpensearchDetailed = async (
+  body: PostApiSearchOpensearchDetailedBody,
+  options?: RequestInit
+): Promise<postApiSearchOpensearchDetailedResponse> => {
+  return customFetch<postApiSearchOpensearchDetailedResponse>(getPostApiSearchOpensearchDetailedUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', ...options?.headers },
+    body: JSON.stringify(body),
+  });
+};
+
+export type DetailedSearchResponse = {
+  success: boolean;
+  results: OpenSearchTextResultItem[];
+  count: number;
+  total?: number;
+  has_more: boolean;
+  page: number;
+  size: number;
+  sort?: string;
+};
+
+export async function searchOpensearchDetailed(params: {
+  conditions: DetailedSearchCondition[];
+  filters?: DetailedSearchFilters;
+  page?: number;
+  size?: number;
+  sort?: 'relevance' | 'latest';
+}): Promise<DetailedSearchResponse> {
+  const response = await postApiSearchOpensearchDetailed(params);
+
+  if (response.status !== 200) {
+    const errorData = response.data as PostApiSearchOpensearchDetailed400;
+    throw new Error(errorData.message || '검색에 실패했습니다.');
+  }
+
+  const data = response.data as PostApiSearchOpensearchDetailed200;
+  return {
+    success: data.success ?? false,
+    results: data.results ?? [],
+    count: data.count ?? 0,
+    total: data.total,
+    has_more: data.has_more ?? false,
+    page: data.page ?? 1,
+    size: data.size ?? 10,
+    sort: data.sort,
+  };
+}

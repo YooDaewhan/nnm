@@ -102,6 +102,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreeAll) { setError('약관에 동의해주세요.'); return; }
     if (!otpVerified || !verificationToken) { setError('이메일 인증을 완료해주세요.'); return; }
     if (password !== passwordConfirmation) { setError('비밀번호가 일치하지 않습니다.'); return; }
     setLoading(true);
@@ -304,7 +305,7 @@ export default function RegisterPage() {
               style={fontStyle}>
               취소
             </button>
-            <button type="button" onClick={handleRegister as any} disabled={loading || !otpVerified}
+            <button type="button" onClick={handleRegister as any} disabled={loading || !otpVerified || !agreeAll}
               className="flex-1 h-14 bg-[#039BE5] rounded-lg border-none text-white text-lg sm:text-[19px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               style={fontStyle}>
               {loading ? '처리 중...' : '가입'}

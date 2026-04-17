@@ -1,24 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
-import { searchOpensearchText, OpenSearchTextResultItem, searchAutocomplete, AutocompleteResultItem } from '@/api/search';
+import { OpenSearchTextResultItem, searchOpensearchDetailed, DetailedSearchCondition } from '@/api/search';
 import { addToCart } from '@/api/cart';
+import { addScrap, addScrapBatch, checkScrap, checkScrapBatch, deleteScrap } from '@/api/scraps';
+import { addToCart as addToCartApi } from '@/api/cart';
 import SearchFilterSidebar, { Filters } from '@/components/SearchFilterSidebar';
 
 const IconSearch = () => (
-  <svg className="w-5 h-5 md:w-8 md:h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg className="w-5 h-5" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="14.67" cy="14.67" r="8" stroke="#1E2124" strokeWidth="2"/>
     <path d="M21.33 21.33L26.67 26.67" stroke="#1E2124" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
 
-const MAX_QUERY_DISPLAY = 25;
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
-
-function truncateQuery(query: string) {
-  return query.length > MAX_QUERY_DISPLAY ? query.slice(0, MAX_QUERY_DISPLAY) + '...' : query;
-}
 
 function highlightText(text: string, terms: string[]): React.ReactNode {
   const words = terms.flatMap(t => t.trim().split(/\s+/)).filter(Boolean);
@@ -38,133 +35,211 @@ function OpenSearchTextContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = searchParams.get('q') || '';
   const pageParam = searchParams.get('page');
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
 
   const isLoggedIn = isAuthenticated();
 
   const [appliedFilters, setAppliedFilters] = useState<Partial<Filters>>({});
-  const [topSort, setTopSort] = useState<'latest' | 'popularity' | undefined>(undefined);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const withinQuery = searchParams.get('within') || '';
 
-  const [localSearchQuery, setLocalSearchQuery] = useState(query);
-  const [autocompleteResults, setAutocompleteResults] = useState<AutocompleteResultItem[]>([]);
-  const [showAutocomplete, setShowAutocomplete] = useState(false);
-  const autocompleteRef = useRef<HTMLDivElement | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => { setLocalSearchQuery(query); }, [query]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (autocompleteRef.current && !autocompleteRef.current.contains(e.target as Node)) {
-        setShowAutocomplete(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalSearchQuery(value);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (!value.trim()) { setAutocompleteResults([]); setShowAutocomplete(false); return; }
-    timerRef.current = setTimeout(async () => {
-      try {
-        const results = await searchAutocomplete({ query: value.trim(), limit: 8 });
-        setAutocompleteResults(results);
-        setShowAutocomplete(results.length > 0);
-      } catch {
-        setAutocompleteResults([]);
-        setShowAutocomplete(false);
-      }
-    }, 250);
-  };
-
-  const handleSearch = () => {
-    if (localSearchQuery.trim()) {
-      setShowAutocomplete(false);
-      setSearchParams({ q: localSearchQuery.trim(), page: '1' });
-    }
-  };
-
-  const handleAutocompleteSelect = (text: string) => {
-    setShowAutocomplete(false);
-    setLocalSearchQuery(text);
-    setSearchParams({ q: text, page: '1' });
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSearch();
-  };
-
-  // 검색 쿼리 (TanStack Query)
-  const { data, isLoading: searchLoading, error: searchErr } = useQuery({
-    queryKey: ['search', query, currentPage, appliedFilters, withinQuery, topSort, itemsPerPage],
-    queryFn: () => {
-      const yearGte = appliedFilters.yearFrom ? parseInt(appliedFilters.yearFrom) : undefined;
-      const yearLte = appliedFilters.yearTo ? parseInt(appliedFilters.yearTo) : undefined;
-      const effectiveQuery = withinQuery.trim() ? `${query.trim()} ${withinQuery.trim()}` : query.trim();
-      return searchOpensearchText({
-        query: effectiveQuery,
-        limit: itemsPerPage,
-        offset: (currentPage - 1) * itemsPerPage,
-        sort: topSort ?? appliedFilters.sort,
-        provider_name: appliedFilters.providerName || undefined,
-        venue_name: appliedFilters.venueName || undefined,
-        filters: yearGte || yearLte ? { year: { gte: yearGte, lte: yearLte } } : undefined,
-      });
-    },
-    enabled: !!query.trim(),
+  const [conditions, setConditions] = useState<DetailedSearchCondition[]>(() => {
+    try {
+      const saved = sessionStorage.getItem('search_conditions');
+      return saved ? JSON.parse(saved) : [{ field: 'title', keyword: '', operator: 'AND' }];
+    } catch { return [{ field: 'title', keyword: '', operator: 'AND' }]; }
+  });
+  const [submittedState, setSubmittedState] = useState<{
+    conditions: DetailedSearchCondition[];
+    sort: 'relevance' | 'latest';
+    filters: { year_from?: number; year_to?: number };
+  } | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('search_submitted');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const [detailedSort, setDetailedSort] = useState<'relevance' | 'latest'>(() => {
+    try {
+      const saved = sessionStorage.getItem('search_submitted');
+      if (saved) return JSON.parse(saved).sort ?? 'relevance';
+    } catch {}
+    return 'relevance';
   });
 
-  const searchResults = data?.results ?? [];
-  const totalResults = data?.total ?? 0;
-  const searchError =
-    searchErr instanceof Error
-      ? searchErr.message
-      : searchErr
-        ? '검색 중 오류가 발생했습니다.'
-        : null;
-  const totalPages = Math.ceil(totalResults / itemsPerPage);
+  // 홈 검색창에서 넘어올 때 URL의 q 파라미터로 자동 검색
+  const qParam = searchParams.get('q');
+  useEffect(() => {
+    if (!qParam) return;
+    const newConditions: DetailedSearchCondition[] = [{ field: 'title', keyword: qParam, operator: 'AND' }];
+    setConditions(newConditions);
+    setSubmittedState({
+      conditions: newConditions,
+      sort: 'relevance',
+      filters: {},
+    });
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete('q');
+      next.set('page', '1');
+      return next;
+    }, { replace: true });
+  }, [qParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleTopSortChange = (sort: 'latest' | 'popularity') => {
-    setTopSort(prev => prev === sort ? undefined : sort);
-    setSearchParams(prev => { prev.set('page', '1'); return prev; });
+  useEffect(() => {
+    sessionStorage.setItem('search_conditions', JSON.stringify(conditions));
+  }, [conditions]);
+
+  useEffect(() => {
+    if (submittedState) sessionStorage.setItem('search_submitted', JSON.stringify(submittedState));
+    else sessionStorage.removeItem('search_submitted');
+  }, [submittedState]);
+
+  // 상세검색 쿼리
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['detailed-search', submittedState, currentPage, itemsPerPage],
+    queryFn: () => searchOpensearchDetailed({
+      conditions: submittedState!.conditions,
+      page: currentPage,
+      size: itemsPerPage,
+      sort: submittedState!.sort,
+      filters: (submittedState!.filters.year_from || submittedState!.filters.year_to)
+        ? submittedState!.filters
+        : undefined,
+    }),
+    enabled: submittedState !== null,
+  });
+
+  const handleDetailedSearch = () => {
+    const valid = conditions.filter(c => c.keyword.trim());
+    if (valid.length === 0) return;
+    const yearFrom = appliedFilters.yearFrom ? parseInt(appliedFilters.yearFrom) : undefined;
+    const yearTo = appliedFilters.yearTo ? parseInt(appliedFilters.yearTo) : undefined;
+    setSubmittedState({
+      conditions: valid,
+      sort: detailedSort,
+      filters: { ...(yearFrom && { year_from: yearFrom }), ...(yearTo && { year_to: yearTo }) },
+    });
+    setSearchParams({ page: '1' });
   };
+
+  const addCondition = () => {
+    if (conditions.length >= 10) return;
+    setConditions(prev => [...prev, { field: 'title', keyword: '', operator: 'AND' }]);
+  };
+
+  const removeCondition = (idx: number) => {
+    setConditions(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateCondition = (idx: number, patch: Partial<DetailedSearchCondition>) => {
+    setConditions(prev => prev.map((c, i) => i === idx ? { ...c, ...patch } : c));
+  };
+
+  const searchResults = data?.results ?? [];
+  const totalResults = data?.total ?? data?.count ?? 0;
+  const searchError = error instanceof Error ? error.message : error ? '검색 중 오류가 발생했습니다.' : null;
+  const totalPages = Math.ceil(totalResults / itemsPerPage);
 
   const handleItemsPerPageChange = (size: number) => {
     setItemsPerPage(size);
     setSearchParams(prev => { prev.set('page', '1'); return prev; });
   };
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [query]);
+  // 선택 상태
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCartLoading, setBulkCartLoading] = useState(false);
+  const [bulkScrapLoading, setBulkScrapLoading] = useState(false);
 
   useEffect(() => {
-    console.log('[SearchPage] params:', { query, currentPage, appliedFilters, withinQuery });
-  }, [query, currentPage, appliedFilters, withinQuery]);
+    setSelectedIds(new Set());
+  }, [data]);
 
+  // 검색 결과 로드 시 스크랩 상태 일괄 확인 → 개별 카드의 checkScrap 쿼리가 캐시를 즉시 사용
   useEffect(() => {
-    console.log('[SearchPage] loading:', searchLoading);
-  }, [searchLoading]);
+    if (!isLoggedIn || !data?.results?.length) return;
+    const ids = data.results.map(r => r.id);
+    checkScrapBatch(ids).then(scrappedSet => {
+      ids.forEach(id => {
+        queryClient.setQueryData(['scrap-check', id], scrappedSet.has(id));
+      });
+    });
+  }, [data, isLoggedIn, queryClient]);
 
-  useEffect(() => {
-    if (data) {
-      console.log('[SearchPage] raw data:', JSON.parse(JSON.stringify(data)));
-      console.log('[SearchPage] results:', data.results);
-      console.log('[SearchPage] total:', data.total);
-      console.log('[SearchPage] providers:', data.providers);
+  const handleToggleSelect = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === searchResults.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(searchResults.map(r => r.id)));
     }
-    if (searchErr) console.error('[SearchPage] error:', searchErr);
-  }, [data, searchErr]);
+  };
 
+  const handleBulkCart = async () => {
+    if (!isLoggedIn) { navigate('/login'); return; }
+    setBulkCartLoading(true);
+    const ids = [...selectedIds];
+    const results = await Promise.allSettled(ids.map(id => addToCartApi({ publication_id: id })));
+    setBulkCartLoading(false);
+    queryClient.invalidateQueries({ queryKey: ['cart'] });
+    const failed = results.filter(r => r.status === 'rejected').length;
+    const succeeded = ids.length - failed;
+    alert(failed === 0 ? `${succeeded}개를 장바구니에 추가했습니다.` : `${succeeded}개 추가, ${failed}개 실패했습니다.`);
+  };
 
-  // 장바구니 뮤테이션
+  const handleBulkShare = async () => {
+    const urls = searchResults
+      .filter(r => selectedIds.has(r.id))
+      .map(r => {
+        const provider = (r.metadata.provider_name as string | null)?.trim();
+        const venue = (r.metadata.venue_name as string | null)?.trim();
+        const journal = (r.metadata.journal as string | null)?.trim();
+        const path = provider && venue && journal
+          ? `/papers/${encodeURIComponent(provider)}/${encodeURIComponent(venue)}/${encodeURIComponent(journal)}/${r.id}`
+          : `/papers/${r.id}`;
+        return window.location.origin + path;
+      })
+      .join('\n');
+    try {
+      await navigator.clipboard.writeText(urls);
+    } catch (e) {
+      console.error('복사 실패', e);
+    }
+  };
+
+  const handleBulkScrap = async () => {
+    if (!isLoggedIn) { navigate('/login'); return; }
+    setBulkScrapLoading(true);
+    const ids = [...selectedIds];
+    try {
+      await addScrapBatch(ids);
+      ids.forEach(id => queryClient.setQueryData(['scrap-check', id], true));
+      alert(`${ids.length}개를 스크랩에 추가했습니다.`);
+    } catch {
+      // batch 실패(일부 ID 유효성 오류 등) → 개별 요청으로 폴백
+      const results = await Promise.allSettled(ids.map(id => addScrap({ publication_id: id })));
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled') queryClient.setQueryData(['scrap-check', ids[i]], true);
+      });
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed = ids.length - succeeded;
+      alert(failed === 0
+        ? `${succeeded}개를 스크랩에 추가했습니다.`
+        : `${succeeded}개 추가, ${failed}개는 추가할 수 없습니다.`);
+    } finally {
+      setBulkScrapLoading(false);
+    }
+  };
+
   const cartMutation = useMutation({
     mutationFn: async (resultId: string) => {
       await addToCart({ publication_id: resultId });
@@ -177,7 +252,6 @@ function OpenSearchTextContent() {
       alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
   });
 
-  // 바로구매 뮤테이션
   const buyNowMutation = useMutation({
     mutationFn: async (resultId: string) => {
       const result = searchResults.find((r) => r.id === resultId);
@@ -198,28 +272,18 @@ function OpenSearchTextContent() {
 
   const handleAddToCart = (e: React.MouseEvent, resultId: string) => {
     e.stopPropagation();
-    if (!isLoggedIn) {
-      navigate('/login');
-      return;
-    }
+    if (!isLoggedIn) { navigate('/login'); return; }
     cartMutation.mutate(resultId);
   };
 
   const handleBuyNow = (e: React.MouseEvent, resultId: string) => {
     e.stopPropagation();
-    if (!isLoggedIn) {
-      navigate('/login');
-      return;
-    }
+    if (!isLoggedIn) { navigate('/login'); return; }
     buyNowMutation.mutate(resultId);
   };
 
   const goToPage = (page: number) => {
-    setSearchParams({ q: query, page: String(page), ...(withinQuery ? { within: withinQuery } : {}) });
-  };
-
-  const handleWithinSearch = (wq: string) => {
-    setSearchParams({ q: query, page: '1', ...(wq ? { within: wq } : {}) });
+    setSearchParams({ page: String(page) });
   };
 
   const renderPageButtons = () => {
@@ -246,114 +310,141 @@ function OpenSearchTextContent() {
     );
   };
 
+  const highlightTerms = submittedState?.conditions.map(c => c.keyword).filter(Boolean) ?? [];
+
   return (
     <div className="min-h-screen bg-[#FAFAFC]">
       <main className="max-w-[1280px] mx-auto px-4 py-10">
-        {/* 검색바 */}
-        <div ref={autocompleteRef} className="relative w-full mb-6">
-          <div className="flex items-center gap-2 md:gap-4 h-10 md:h-14 border border-[#58616A] rounded-[10px] px-3 md:px-6 w-full overflow-hidden">
-            <input
-              type="text"
-              value={localSearchQuery}
-              onChange={handleInputChange}
-              onKeyDown={handleSearchKeyDown}
-              placeholder="검색어를 입력하세요"
-              className="flex-1 bg-transparent outline-none border-none text-[19px] font-bold leading-[1.5] text-[#1E2124] placeholder-[#8A949E]"
-            />
+        {/* 상세검색 조건 빌더 */}
+        <div className="mb-6 space-y-2">
+          {conditions.map((cond, idx) => (
+            <div key={idx} className="flex gap-2 items-center">
+              {idx === 0 ? (
+                <div className="w-[72px] shrink-0" />
+              ) : (
+                <select
+                  value={cond.operator}
+                  onChange={(e) => updateCondition(idx, { operator: e.target.value as DetailedSearchCondition['operator'] })}
+                  className="w-[72px] h-10 px-2 border border-[#58616A] rounded-md text-[14px] text-[#1E2124] bg-white focus:outline-none focus:border-[#256EF4] shrink-0"
+                >
+                  <option value="AND">AND</option>
+                  <option value="OR">OR</option>
+                  <option value="NOT">NOT</option>
+                </select>
+              )}
+              <select
+                value={cond.field}
+                onChange={(e) => updateCondition(idx, { field: e.target.value as DetailedSearchCondition['field'] })}
+                className="w-24 h-10 px-2 border border-[#58616A] rounded-md text-[14px] text-[#1E2124] bg-white focus:outline-none focus:border-[#256EF4] shrink-0"
+              >
+                <option value="title">제목</option>
+                <option value="author">저자</option>
+                <option value="abstract">초록</option>
+                <option value="keyword">키워드</option>
+                <option value="doi">DOI</option>
+                <option value="full_text">전문</option>
+              </select>
+              <input
+                type="text"
+                value={cond.keyword}
+                onChange={(e) => updateCondition(idx, { keyword: e.target.value })}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleDetailedSearch(); }}
+                placeholder="검색어를 입력하세요"
+                className="flex-1 h-10 px-4 border border-[#58616A] rounded-md text-[15px] text-[#1E2124] placeholder:text-[#8A949E] focus:outline-none focus:border-[#256EF4]"
+              />
+              {idx > 0 ? (
+                <button
+                  onClick={() => removeCondition(idx)}
+                  className="w-10 h-10 flex items-center justify-center text-[#8A949E] hover:text-[#E32929] transition-colors shrink-0"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              ) : (
+                <div className="w-10 shrink-0" />
+              )}
+            </div>
+          ))}
+          <div className="flex items-center gap-2 pt-1">
+            {conditions.length < 10 && (
+              <button
+                onClick={addCondition}
+                className="h-9 px-4 text-[14px] text-[#256EF4] border border-[#256EF4] rounded-md hover:bg-[#ECF2FE] transition-colors"
+              >
+                + 조건 추가
+              </button>
+            )}
             <button
-              onClick={handleSearch}
-              className="flex items-center justify-center shrink-0 hover:opacity-70 transition-opacity"
-              aria-label="검색"
+              onClick={handleDetailedSearch}
+              className="h-9 px-5 bg-[#063A74] text-white text-[14px] font-medium rounded-md hover:bg-[#052d5c] transition-colors flex items-center gap-2"
             >
               <IconSearch />
+              검색
             </button>
           </div>
-          {showAutocomplete && autocompleteResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-50 bg-white border border-[#CDD1D5] rounded-xl shadow-lg mt-1 overflow-hidden">
-              {autocompleteResults.map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleAutocompleteSelect(item.text)}
-                  className="w-full text-left px-6 py-3 text-[15px] text-[#1E2124] hover:bg-[#F4F5F6] transition-colors border-b border-[#F4F5F6] last:border-0"
-                >
-                  {item.text}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* 검색 결과 요약 */}
-        {query && (
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3 flex-wrap gap-y-1">
-              <span className="text-[15px] md:text-[19px] font-bold text-[#1E2124]">
-                적용된 검색어{' '}
-                <span className="text-[#256EF4]">
-                  &apos;{truncateQuery(query)}&apos;
-                </span>
-              </span>
-              {withinQuery && (
-                <>
-                  <div className="w-px h-5 bg-[#CDD1D5]"></div>
-                  <span className="text-[15px] md:text-[19px] font-bold text-[#1E2124]">
-                    결과 내 검색{' '}
-                    <span className="text-[#256EF4]">
-                      &apos;{truncateQuery(withinQuery)}&apos;
-                    </span>
-                  </span>
-                </>
-              )}
-              <div className="w-px h-5 bg-[#CDD1D5]"></div>
-              <span className="text-[15px] md:text-[19px] font-bold text-[#1E2124]">
-                검색 결과 {totalResults.toLocaleString()}개
-              </span>
-            </div>
+        {submittedState !== null && (
+          <div className="flex items-center mb-4">
+            <span className="text-[15px] md:text-[19px] font-bold text-[#1E2124]">
+              검색 결과 {totalResults.toLocaleString()}개
+            </span>
           </div>
         )}
 
         <div className="flex flex-col md:flex-row gap-6 items-start">
           <div className="w-full md:w-auto md:sticky top-24 md:self-start">
-          <SearchFilterSidebar
-            onApply={(filters, wq) => {
-              setAppliedFilters(filters);
-              setSearchParams({ q: query, page: '1', ...(wq.trim() ? { within: wq.trim() } : {}) });
-            }}
-            onReset={() => {
-              setAppliedFilters({});
-              setSearchParams({ q: query, page: '1' });
-            }}
-            onWithinSearch={(wq) => handleWithinSearch(wq)}
-            providers={data?.providers}
-          />
+            <SearchFilterSidebar
+              onApply={(filters) => {
+                setAppliedFilters(filters);
+                const newSort = filters.sort === 'popularity' ? 'relevance' : filters.sort as 'relevance' | 'latest';
+                setDetailedSort(newSort);
+                if (submittedState) {
+                  const yearFrom = filters.yearFrom ? parseInt(filters.yearFrom) : undefined;
+                  const yearTo = filters.yearTo ? parseInt(filters.yearTo) : undefined;
+                  setSubmittedState(prev => prev ? {
+                    ...prev,
+                    sort: newSort,
+                    filters: { ...(yearFrom && { year_from: yearFrom }), ...(yearTo && { year_to: yearTo }) },
+                  } : prev);
+                  setSearchParams({ page: '1' });
+                }
+              }}
+              onReset={() => {
+                setAppliedFilters({});
+                setDetailedSort('relevance');
+              }}
+              onWithinSearch={() => {}}
+            />
           </div>
 
           {/* 결과 목록 */}
           <div className="flex-1 min-w-0 w-full overflow-hidden">
             {/* 정렬 + 개수 컨트롤 */}
-            {query && (
+            {submittedState !== null && (
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleTopSortChange('latest')}
-                    className={`h-8 px-4 rounded-md text-[14px] font-medium transition-colors border ${
-                      topSort === 'latest'
-                        ? 'bg-[#063A74] text-white border-[#063A74]'
-                        : 'bg-white text-[#464C53] border-[#CDD1D5] hover:bg-gray-50'
-                    }`}
-                  >
-                    최신순
-                  </button>
-                  <button
-                    onClick={() => handleTopSortChange('popularity')}
-                    className={`h-8 px-4 rounded-md text-[14px] font-medium transition-colors border ${
-                      topSort === 'popularity'
-                        ? 'bg-[#063A74] text-white border-[#063A74]'
-                        : 'bg-white text-[#464C53] border-[#CDD1D5] hover:bg-gray-50'
-                    }`}
-                  >
-                    인기순
-                  </button>
+                  {(['relevance', 'latest'] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => {
+                        setDetailedSort(s);
+                        if (submittedState) {
+                          setSubmittedState(prev => prev ? { ...prev, sort: s } : prev);
+                          setSearchParams(prev => { prev.set('page', '1'); return prev; });
+                        }
+                      }}
+                      className={`h-8 px-4 rounded-md text-[14px] font-medium transition-colors border ${
+                        detailedSort === s
+                          ? 'bg-[#063A74] text-white border-[#063A74]'
+                          : 'bg-white text-[#464C53] border-[#CDD1D5] hover:bg-gray-50'
+                      }`}
+                    >
+                      {s === 'relevance' ? '관련성순' : '최신순'}
+                    </button>
+                  ))}
                 </div>
                 <select
                   value={itemsPerPage}
@@ -368,11 +459,11 @@ function OpenSearchTextContent() {
               </div>
             )}
 
-            {!query && (
-              <p className="text-gray-500 text-center py-8">검색어를 입력해주세요.</p>
+            {submittedState === null && (
+              <p className="text-gray-500 text-center py-8">조건을 입력하고 검색을 실행하세요.</p>
             )}
 
-            {searchLoading && (
+            {isLoading && (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
@@ -384,28 +475,110 @@ function OpenSearchTextContent() {
               </div>
             )}
 
-            {!searchLoading && !searchError && query && searchResults.length === 0 && (
+            {!isLoading && !searchError && submittedState !== null && searchResults.length === 0 && (
               <p className="text-gray-500 text-center py-8">검색 결과가 없습니다.</p>
             )}
 
-            {!searchLoading && !searchError && searchResults.length > 0 && (
+            {!isLoading && !searchError && searchResults.length > 0 && (
               <div className="space-y-4">
+                {/* 전체선택 헤더 */}
+                <div className="flex items-center gap-3 px-1">
+                  <button
+                    onClick={handleSelectAll}
+                    className="flex items-center gap-2 text-[15px] text-[#464C53] hover:text-[#1E2124] transition-colors"
+                  >
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
+                      ${selectedIds.size === searchResults.length && searchResults.length > 0
+                        ? 'bg-[#256EF4] border-[#256EF4]'
+                        : selectedIds.size > 0
+                          ? 'bg-[#256EF4]/20 border-[#256EF4]'
+                          : 'border-[#CDD1D5] bg-white'}`}
+                    >
+                      {selectedIds.size === searchResults.length && searchResults.length > 0 && (
+                        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                          <path d="M1 5L4.5 8.5L11 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                      {selectedIds.size > 0 && selectedIds.size < searchResults.length && (
+                        <div className="w-2.5 h-0.5 bg-[#256EF4] rounded" />
+                      )}
+                    </div>
+                    전체선택
+                  </button>
+                  {selectedIds.size > 0 && (
+                    <span className="text-[14px] text-[#8A949E]">{selectedIds.size}개 선택됨</span>
+                  )}
+                </div>
+
                 {searchResults.map((result) => (
                   <SearchResultCard
                     key={result.id}
                     result={result}
                     onAddToCart={handleAddToCart}
                     onBuyNow={handleBuyNow}
+                    isLoggedIn={isLoggedIn}
+                    isSelected={selectedIds.has(result.id)}
+                    onToggleSelect={(e) => handleToggleSelect(e, result.id)}
                     cartLoading={cartMutation.isPending && cartMutation.variables === result.id}
                     buyLoading={buyNowMutation.isPending && buyNowMutation.variables === result.id}
-                    highlightTerms={[query, withinQuery].filter(Boolean)}
+                    highlightTerms={highlightTerms}
                   />
                 ))}
               </div>
             )}
 
+            {/* 일괄 액션 바 */}
+            {selectedIds.size > 0 && (
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-[#1E2124] text-white rounded-2xl px-5 py-3 shadow-2xl">
+                <span className="text-[15px] font-medium whitespace-nowrap">{selectedIds.size}개 선택</span>
+                <div className="w-px h-5 bg-white/20 mx-1" />
+                <button
+                  onClick={handleBulkScrap}
+                  disabled={bulkScrapLoading}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#256EF4] rounded-xl text-[14px] font-medium hover:bg-[#1a5cd4] disabled:opacity-50 transition-colors whitespace-nowrap"
+                >
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                    <path d="M5 3H15C15.5523 3 16 3.44772 16 4V18L10 14.5L4 18V4C4 3.44772 4.44772 3 5 3Z" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
+                  </svg>
+                  {bulkScrapLoading ? '추가 중...' : '스크랩 추가'}
+                </button>
+                <button
+                  onClick={handleBulkCart}
+                  disabled={bulkCartLoading}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-white/10 rounded-xl text-[14px] font-medium hover:bg-white/20 disabled:opacity-50 transition-colors whitespace-nowrap"
+                >
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                    <path d="M3.5 6.5H16.5L15 15H5L3.5 6.5Z" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
+                    <path d="M7.5 6.5C7.5 4.6 8.7 3 10 3C11.3 3 12.5 4.6 12.5 6.5" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                  {bulkCartLoading ? '추가 중...' : '장바구니 담기'}
+                </button>
+                <button
+                  onClick={handleBulkShare}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-white/10 rounded-xl text-[14px] font-medium hover:bg-white/20 transition-colors whitespace-nowrap"
+                >
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                    <circle cx="15" cy="4" r="2" stroke="white" strokeWidth="1.4"/>
+                    <circle cx="15" cy="16" r="2" stroke="white" strokeWidth="1.4"/>
+                    <circle cx="5" cy="10" r="2" stroke="white" strokeWidth="1.4"/>
+                    <path d="M7 9L13 5M7 11L13 15" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                  공유
+                </button>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="ml-1 p-1 text-white/50 hover:text-white transition-colors"
+                  title="선택 해제"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+
             {/* 페이지네이션 */}
-            {!searchLoading && !searchError && totalResults > 0 && totalPages > 1 && (
+            {!isLoading && !searchError && totalResults > 0 && totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-8 pt-4">
                 <button
                   onClick={() => goToPage(currentPage - 1)}
@@ -469,6 +642,9 @@ function SearchResultCard({
   result,
   onAddToCart,
   onBuyNow,
+  isLoggedIn,
+  isSelected,
+  onToggleSelect,
   cartLoading,
   buyLoading,
   highlightTerms = [],
@@ -476,12 +652,75 @@ function SearchResultCard({
   result: OpenSearchTextResultItem;
   onAddToCart: (e: React.MouseEvent, id: string) => void;
   onBuyNow: (e: React.MouseEvent, id: string) => void;
+  isLoggedIn: boolean;
+  isSelected: boolean;
+  onToggleSelect: (e: React.MouseEvent) => void;
   cartLoading: boolean;
   buyLoading: boolean;
   highlightTerms?: string[];
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const { data: isScraped = false } = useQuery({
+    queryKey: ['scrap-check', result.id],
+    queryFn: () => checkScrap(result.id),
+    enabled: isLoggedIn,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const scrapMutation = useMutation({
+    mutationFn: () =>
+      isScraped
+        ? deleteScrap(result.id)
+        : addScrap({ publication_id: result.id }),
+    onSuccess: () => {
+      queryClient.setQueryData(['scrap-check', result.id], !isScraped);
+    },
+    onError: (err) =>
+      alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.'),
+  });
+
+  const handleScrap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isLoggedIn) { navigate('/login'); return; }
+    scrapMutation.mutate();
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const url = window.location.origin + paperUrl;
+    const doCopy = () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 500);
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(doCopy).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        doCopy();
+      });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      doCopy();
+    }
+  };
 
   const paperUrl = (() => {
     const provider = (result.metadata.provider_name as string | null)?.trim();
@@ -494,10 +733,30 @@ function SearchResultCard({
   })();
 
   return (
-    <div
-      onClick={() => navigate(paperUrl)}
-      className="bg-white border border-[#CDD1D5] rounded-xl p-4 md:p-8 cursor-pointer hover:shadow-md transition-shadow"
+    <div className={`bg-white border rounded-xl hover:shadow-md transition-shadow flex items-stretch
+      ${isSelected ? 'border-[#256EF4]' : 'border-[#CDD1D5]'}`}
     >
+      {/* 체크박스 영역 */}
+      <div
+        onClick={onToggleSelect}
+        className="flex items-start justify-center pt-5 px-3 md:px-4 shrink-0 cursor-pointer"
+      >
+        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
+          ${isSelected ? 'bg-[#256EF4] border-[#256EF4]' : 'border-[#CDD1D5] bg-white hover:border-[#256EF4]'}`}
+        >
+          {isSelected && (
+            <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+              <path d="M1 5L4.5 8.5L11 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </div>
+      </div>
+
+      {/* 콘텐츠 영역 */}
+      <div
+        onClick={() => navigate(paperUrl)}
+        className="flex-1 min-w-0 p-4 md:p-8 pl-0 cursor-pointer"
+      >
       {/* row-1: 배지 + 아이콘 버튼 */}
       <div className="flex items-start justify-between gap-4 mb-2">
         <div className="flex items-center gap-2 flex-wrap">
@@ -508,17 +767,61 @@ function SearchResultCard({
             KCI등재
           </span>
         </div>
-        <button
-          onClick={(e) => onAddToCart(e, result.id)}
-          disabled={cartLoading}
-          className="text-[#33363D] hover:text-[#1E2124] transition-colors disabled:opacity-50"
-          title="장바구니 담기"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M3.5 6.5H16.5L15 15H5L3.5 6.5Z" stroke="#33363D" strokeWidth="1.4" strokeLinejoin="round" />
-            <path d="M7.5 6.5C7.5 4.6 8.7 3 10 3C11.3 3 12.5 4.6 12.5 6.5" stroke="#33363D" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleScrap}
+            disabled={scrapMutation.isPending}
+            className="transition-colors disabled:opacity-50"
+            title={isScraped ? '스크랩 해제' : '스크랩'}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M5 3H15C15.5523 3 16 3.44772 16 4V18L10 14.5L4 18V4C4 3.44772 4.44772 3 5 3Z"
+                stroke={isScraped ? '#256EF4' : '#33363D'}
+                fill={isScraped ? '#256EF4' : 'none'}
+                strokeWidth="1.4"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => onAddToCart(e, result.id)}
+            disabled={cartLoading}
+            className="text-[#33363D] hover:text-[#1E2124] transition-colors disabled:opacity-50"
+            title="장바구니 담기"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M3.5 6.5H16.5L15 15H5L3.5 6.5Z" stroke="#33363D" strokeWidth="1.4" strokeLinejoin="round" />
+              <path d="M7.5 6.5C7.5 4.6 8.7 3 10 3C11.3 3 12.5 4.6 12.5 6.5" stroke="#33363D" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="p-1 text-[#33363D] hover:text-[#1E2124] transition-colors"
+              title="링크 복사"
+            >
+              {copied ? (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M4 10L8.5 14.5L16 6" stroke="#256EF4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="15" cy="4" r="2" stroke="#33363D" strokeWidth="1.4"/>
+                  <circle cx="15" cy="16" r="2" stroke="#33363D" strokeWidth="1.4"/>
+                  <circle cx="5" cy="10" r="2" stroke="#33363D" strokeWidth="1.4"/>
+                  <path d="M7 9L13 5M7 11L13 15" stroke="#33363D" strokeWidth="1.4" strokeLinecap="round"/>
+                </svg>
+              )}
+            </button>
+            {copied && (
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">
+                복사됨
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* row-2: 본문 + 버튼 */}
@@ -590,6 +893,7 @@ function SearchResultCard({
             {buyLoading ? '처리 중...' : '구매하기'}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
