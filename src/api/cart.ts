@@ -86,6 +86,33 @@ export const addToCart = async (data: AddToCartRequest): Promise<void> => {
 };
 
 /**
+ * 여러 논문을 장바구니에 일괄 추가합니다. (최대 50건)
+ */
+export const addToCartBatch = async (publicationIds: string[]): Promise<void> => {
+  const token = getToken();
+  if (!token) throw new Error('인증되지 않았습니다.');
+
+  const response = await fetch(`${API_BASE_URL}/api/cart/batch`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ publication_ids: publicationIds }),
+  });
+
+  if (response.status === 200 || response.status === 201) return;
+  if (response.status === 401) { handleAuthExpired(); throw new Error('인증이 필요합니다.'); }
+  if (response.status === 422) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || '유효성 검사에 실패했습니다.');
+  }
+  throw new Error('장바구니 일괄 추가에 실패했습니다.');
+};
+
+/**
  * 장바구니 항목을 삭제합니다.
  */
 export const removeFromCart = async (id: number): Promise<void> => {

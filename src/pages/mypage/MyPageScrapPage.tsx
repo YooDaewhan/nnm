@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
@@ -28,7 +28,8 @@ async function fetchScrapsWithTitles(page: number) {
 export default function MyPageScrapPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
 
   const handleLogout = async () => { await logout(); navigate('/login'); };
 
@@ -36,11 +37,12 @@ export default function MyPageScrapPage() {
     if (!isAuthenticated()) { navigate('/login'); }
   }, [navigate]);
 
-  const { data, isLoading, error: fetchError } = useQuery({
+  const { data, isLoading, isFetching, error: fetchError } = useQuery({
     queryKey: ['scraps', currentPage],
     queryFn: () => fetchScrapsWithTitles(currentPage),
     enabled: isAuthenticated(),
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
   });
 
   const scraps = data?.data ?? [];
@@ -60,7 +62,7 @@ export default function MyPageScrapPage() {
   });
 
   const goToPage = (page: number) => {
-    setCurrentPage(page);
+    setSearchParams({ page: String(page) });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -77,7 +79,10 @@ export default function MyPageScrapPage() {
           <div className="border-t-2 border-[#1E2124]" />
         </div>
 
-        {/* 로딩 */}
+        {/* 로딩 (최초 로드만 전체 스피너, 페이지 전환은 상단 바로 표시) */}
+        {isFetching && !isLoading && (
+          <div className="h-0.5 bg-[#256EF4] rounded-full animate-pulse" />
+        )}
         {isLoading && (
           <div className="bg-white rounded-xl p-8 text-center">
             <p className="text-[17px] text-[#464C53]">불러오는 중...</p>

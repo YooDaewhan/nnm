@@ -4,6 +4,7 @@ import { isAuthenticated } from '../lib/auth';
 import { createOrder } from '../api/payment';
 import { getCart, type CartItem } from '../api/cart';
 import TermsModal from '../components/pay/TermsModal';
+import PhoneVerifyModal from '../components/pay/PhoneVerifyModal';
 
 declare global {
   interface Window {
@@ -90,6 +91,7 @@ function PayPageContent() {
   const [authChecked, setAuthChecked] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [phoneVerifyModalOpen, setPhoneVerifyModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) { navigate('/login?redirect=/pay'); return; }
@@ -394,7 +396,7 @@ function PayPageContent() {
                 <button
                   onClick={() => {
                     if (!agreed) { alert('상품정보 및 서비스 이용약관에 동의해주세요.'); return; }
-                    handlePayment();
+                    setPhoneVerifyModalOpen(true);
                   }}
                   disabled={loading || totalAmount === 0}
                   className={`w-full sm:w-[300px] h-14 sm:h-16 rounded-lg border-none flex items-center justify-center flex-shrink-0 transition-colors ${loading || totalAmount === 0 || !agreed ? 'bg-[#CDD1D5] cursor-not-allowed' : 'bg-[#256EF4] cursor-pointer'}`}
@@ -408,6 +410,14 @@ function PayPageContent() {
             )}
 
             <TermsModal isOpen={termsModalOpen} onClose={() => setTermsModalOpen(false)} />
+            <PhoneVerifyModal
+              isOpen={phoneVerifyModalOpen}
+              onClose={() => setPhoneVerifyModalOpen(false)}
+              onVerified={() => {
+                setPhoneVerifyModalOpen(false);
+                handlePayment();
+              }}
+            />
 
             {displayItems.length === 0 && error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">

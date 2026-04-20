@@ -3,9 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
 import { OpenSearchTextResultItem, searchOpensearchDetailed, DetailedSearchCondition } from '@/api/search';
-import { addToCart } from '@/api/cart';
+import { addToCart, addToCartBatch } from '@/api/cart';
 import { addScrap, addScrapBatch, checkScrap, checkScrapBatch, deleteScrap } from '@/api/scraps';
-import { addToCart as addToCartApi } from '@/api/cart';
 import SearchFilterSidebar, { Filters } from '@/components/SearchFilterSidebar';
 
 const IconSearch = () => (
@@ -188,12 +187,19 @@ function OpenSearchTextContent() {
     if (!isLoggedIn) { navigate('/login'); return; }
     setBulkCartLoading(true);
     const ids = [...selectedIds];
-    const results = await Promise.allSettled(ids.map(id => addToCartApi({ publication_id: id })));
-    setBulkCartLoading(false);
-    queryClient.invalidateQueries({ queryKey: ['cart'] });
-    const failed = results.filter(r => r.status === 'rejected').length;
-    const succeeded = ids.length - failed;
-    alert(failed === 0 ? `${succeeded}개를 장바구니에 추가했습니다.` : `${succeeded}개 추가, ${failed}개 실패했습니다.`);
+    try {
+      await addToCartBatch(ids);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      alert(`${ids.length}개를 장바구니에 추가했습니다.`);
+    } catch {
+      const results = await Promise.allSettled(ids.map(id => addToCart({ publication_id: id })));
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      const failed = results.filter(r => r.status === 'rejected').length;
+      const succeeded = ids.length - failed;
+      alert(failed === 0 ? `${succeeded}개를 장바구니에 추가했습니다.` : `${succeeded}개 추가, ${failed}개 실패했습니다.`);
+    } finally {
+      setBulkCartLoading(false);
+    }
   };
 
   const handleBulkShare = async () => {

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command 'Get-ChildItem '\\\\''c:\\\\Users\\\\user\\\\newnonmun_front-rv\\\\src'\\\\'' -Recurse -Include '\\\\''*.ts'\\\\'','\\\\''*.tsx'\\\\'','\\\\''*.css'\\\\'' | ForEach-Object { $bytes = [System.IO.File]::ReadAllBytes\\($_.FullName\\); if \\($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF\\) { '\\\\''UTF-8 BOM: '\\\\'' + $_.Name } elseif \\($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE\\) { '\\\\''UTF-16 LE: '\\\\'' + $_.Name } elseif \\($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF\\) { '\\\\''UTF-16 BE: '\\\\'' + $_.Name } else { '\\\\''UTF-8 \\(no BOM\\): '\\\\'' + $_.Name } } | Group-Object { $_ -replace '\\\\'':.*'\\\\'','\\\\'''\\\\'' } | Select-Object Count, Name')"
+    ]
+  }
+}
