@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { DetailedSearchCondition } from '@/api/search';
 
 /* ───────────────────────────────────────────
    반응형 훅
@@ -226,11 +227,37 @@ export default function HomePage() {
   const isMobile = useIsMobile();
   const [query, setQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [showDetailedSearch, setShowDetailedSearch] = useState(false);
+  const [conditions, setConditions] = useState<DetailedSearchCondition[]>([
+    { field: 'title', keyword: '', operator: 'AND' },
+  ]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
     navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+  };
+
+  const addCondition = () => {
+    if (conditions.length >= 10) return;
+    setConditions(prev => [...prev, { field: 'title', keyword: '', operator: 'AND' }]);
+  };
+
+  const removeCondition = (idx: number) => {
+    setConditions(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateCondition = (idx: number, patch: Partial<DetailedSearchCondition>) => {
+    setConditions(prev => prev.map((c, i) => i === idx ? { ...c, ...patch } : c));
+  };
+
+  const handleDetailedSearch = () => {
+    const valid = conditions.filter(c => c.keyword.trim());
+    if (valid.length === 0) return;
+    const submittedState = { conditions: valid, sort: 'relevance' as const, filters: {} };
+    sessionStorage.setItem('search_conditions', JSON.stringify(valid));
+    sessionStorage.setItem('search_submitted', JSON.stringify(submittedState));
+    navigate('/search');
   };
 
   const handleSubjectClick = (label: string) => {
@@ -255,15 +282,14 @@ export default function HomePage() {
         style={{
           background: 'linear-gradient(135deg, #2D3560 0%, #3A4A80 55%, #4A5AA0 100%)',
           position: 'relative',
-          overflow: 'hidden',
         }}
       >
-        {/* 배경 장식 */}
+        {/* 배경 장식 — overflow:hidden을 이 wrapper에만 적용 */}
         {!isMobile && (
-          <>
-            <div style={{ position: 'absolute', top: -60, right: '22%', width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: -40, left: '40%', width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
-          </>
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', top: -60, right: '22%', width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
+            <div style={{ position: 'absolute', bottom: -40, left: '40%', width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
+          </div>
         )}
 
         <div
@@ -303,57 +329,215 @@ export default function HomePage() {
               복잡한 절차 없이 핵심 논문을 빠르게 찾아보세요.
             </p>
 
-            {/* 검색 바 */}
-            <form onSubmit={handleSearch}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  background: '#FFFFFF',
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                  width: '100%',
-                  maxWidth: isMobile ? '100%' : 500,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-                }}
-              >
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={isMobile ? '키워드를 입력하세요' : '찾고 싶은 논문, 저자, 키워드를 입력하세요'}
+            {/* 검색 바 + 상세검색 팝업 */}
+            <div style={{ position: 'relative', width: '100%', maxWidth: isMobile ? '100%' : 500 }}>
+              <form onSubmit={handleSearch}>
+                <div
                   style={{
-                    flex: 1,
-                    padding: isMobile ? '14px 16px' : '16px 20px',
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: isMobile ? 14 : 14,
-                    color: '#1E2124',
-                    background: 'transparent',
-                    fontFamily: ff,
-                  }}
-                />
-                <button
-                  type="submit"
-                  style={{
-                    width: isMobile ? 48 : 56,
-                    height: isMobile ? 48 : 56,
-                    background: '#2D3560',
-                    border: 'none',
-                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    background: '#FFFFFF',
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                    width: '100%',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
                   }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
-                    <circle cx="10" cy="10" r="7" stroke="white" strokeWidth="2" />
-                    <line x1="15.5" y1="15.5" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
-            </form>
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={isMobile ? '키워드를 입력하세요' : '찾고 싶은 논문, 저자, 키워드를 입력하세요'}
+                    style={{
+                      flex: 1,
+                      padding: isMobile ? '14px 16px' : '16px 20px',
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: 14,
+                      color: '#1E2124',
+                      background: 'transparent',
+                      fontFamily: ff,
+                    }}
+                  />
+                  {/* ... 상세검색 토글 버튼 */}
+                  <button
+                    type="button"
+                    onClick={() => setShowDetailedSearch(v => !v)}
+                    title="상세 검색"
+                    style={{
+                      width: 40,
+                      height: isMobile ? 48 : 56,
+                      background: showDetailedSearch ? '#F0F4FF' : 'transparent',
+                      border: 'none',
+                      borderLeft: '1px solid #E4E7EA',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      color: showDetailedSearch ? '#256EF4' : '#8A949E',
+                      transition: 'background 0.15s, color 0.15s',
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                      <circle cx="4" cy="10" r="1.5" fill="currentColor"/>
+                      <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
+                      <circle cx="16" cy="10" r="1.5" fill="currentColor"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      width: isMobile ? 48 : 56,
+                      height: isMobile ? 48 : 56,
+                      background: '#2D3560',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                      <circle cx="10" cy="10" r="7" stroke="white" strokeWidth="2" />
+                      <line x1="15.5" y1="15.5" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </form>
+
+              {/* 상세 검색 팝업 */}
+              {showDetailedSearch && (
+                <>
+                  {/* 외부 클릭 닫기 오버레이 */}
+                  <div
+                    onClick={() => setShowDetailedSearch(false)}
+                    style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      left: 0,
+                      right: 0,
+                      background: '#FFFFFF',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 40px rgba(0,0,0,0.22)',
+                      padding: '20px 20px 16px',
+                      zIndex: 50,
+                      minWidth: isMobile ? 'auto' : 480,
+                    }}
+                  >
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#1E2124', marginBottom: 12, fontFamily: ff }}>
+                      상세 검색 조건
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {conditions.map((cond, idx) => (
+                        <div key={idx} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          {idx === 0 ? (
+                            <div style={{ width: 68, flexShrink: 0 }} />
+                          ) : (
+                            <select
+                              value={cond.operator}
+                              onChange={(e) => updateCondition(idx, { operator: e.target.value as DetailedSearchCondition['operator'] })}
+                              style={{
+                                width: 68, height: 36, padding: '0 6px',
+                                border: '1px solid #CDD1D5', borderRadius: 6,
+                                fontSize: 13, color: '#1E2124', background: '#FFFFFF',
+                                flexShrink: 0, cursor: 'pointer', outline: 'none', fontFamily: ff,
+                              }}
+                            >
+                              <option value="AND">AND</option>
+                              <option value="OR">OR</option>
+                              <option value="NOT">NOT</option>
+                            </select>
+                          )}
+                          <select
+                            value={cond.field}
+                            onChange={(e) => updateCondition(idx, { field: e.target.value as DetailedSearchCondition['field'] })}
+                            style={{
+                              width: 80, height: 36, padding: '0 6px',
+                              border: '1px solid #CDD1D5', borderRadius: 6,
+                              fontSize: 13, color: '#1E2124', background: '#FFFFFF',
+                              flexShrink: 0, cursor: 'pointer', outline: 'none', fontFamily: ff,
+                            }}
+                          >
+                            <option value="title">제목</option>
+                            <option value="author">저자</option>
+                            <option value="abstract">초록</option>
+                            <option value="keyword">키워드</option>
+                            <option value="doi">DOI</option>
+                            <option value="full_text">전문</option>
+                          </select>
+                          <input
+                            type="text"
+                            value={cond.keyword}
+                            onChange={(e) => updateCondition(idx, { keyword: e.target.value })}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleDetailedSearch(); }}
+                            placeholder="검색어를 입력하세요"
+                            style={{
+                              flex: 1, height: 36, padding: '0 12px',
+                              border: '1px solid #CDD1D5', borderRadius: 6,
+                              fontSize: 13, color: '#1E2124', outline: 'none', fontFamily: ff,
+                            }}
+                          />
+                          {idx > 0 ? (
+                            <button
+                              onClick={() => removeCondition(idx)}
+                              style={{
+                                width: 32, height: 36, flexShrink: 0,
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: '#8A949E', padding: 0,
+                              }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                              </svg>
+                            </button>
+                          ) : (
+                            <div style={{ width: 32, flexShrink: 0 }} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
+                      {conditions.length < 10 && (
+                        <button
+                          onClick={addCondition}
+                          style={{
+                            height: 34, padding: '0 14px', fontSize: 13, fontWeight: 500,
+                            color: '#256EF4', background: '#EEF4FF',
+                            border: '1px solid #256EF4', borderRadius: 6,
+                            cursor: 'pointer', fontFamily: ff,
+                          }}
+                        >
+                          + 조건 추가
+                        </button>
+                      )}
+                      <button
+                        onClick={handleDetailedSearch}
+                        style={{
+                          height: 34, padding: '0 18px', fontSize: 13, fontWeight: 600,
+                          color: '#FFFFFF', background: '#063A74',
+                          border: 'none', borderRadius: 6, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 6, fontFamily: ff,
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+                          <circle cx="14.67" cy="14.67" r="8" stroke="white" strokeWidth="2.5"/>
+                          <path d="M21.33 21.33L26.67 26.67" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                        </svg>
+                        검색
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* 우측: 일러스트 (PC only) */}

@@ -4,15 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
 import { OpenSearchTextResultItem, searchOpensearchDetailed, DetailedSearchCondition } from '@/api/search';
 import { addToCart, addToCartBatch } from '@/api/cart';
-import { addScrap, addScrapBatch, checkScrap, checkScrapBatch, deleteScrap } from '@/api/scraps';
+import { addScrapBatch, checkScrapBatch, deleteScrapBatch } from '@/api/scraps';
 import SearchFilterSidebar, { Filters } from '@/components/SearchFilterSidebar';
-
-const IconSearch = () => (
-  <svg className="w-5 h-5" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="14.67" cy="14.67" r="8" stroke="#1E2124" strokeWidth="2"/>
-    <path d="M21.33 21.33L26.67 26.67" stroke="#1E2124" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
@@ -42,12 +35,6 @@ function OpenSearchTextContent() {
   const [appliedFilters, setAppliedFilters] = useState<Partial<Filters>>({});
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const [conditions, setConditions] = useState<DetailedSearchCondition[]>(() => {
-    try {
-      const saved = sessionStorage.getItem('search_conditions');
-      return saved ? JSON.parse(saved) : [{ field: 'title', keyword: '', operator: 'AND' }];
-    } catch { return [{ field: 'title', keyword: '', operator: 'AND' }]; }
-  });
   const [submittedState, setSubmittedState] = useState<{
     conditions: DetailedSearchCondition[];
     sort: 'relevance' | 'latest';
@@ -66,14 +53,11 @@ function OpenSearchTextContent() {
     return 'relevance';
   });
 
-  // 홈 검색창에서 넘어올 때 URL의 q 파라미터로 자동 검색
   const qParam = searchParams.get('q');
   useEffect(() => {
     if (!qParam) return;
-    const newConditions: DetailedSearchCondition[] = [{ field: 'title', keyword: qParam, operator: 'AND' }];
-    setConditions(newConditions);
     setSubmittedState({
-      conditions: newConditions,
+      conditions: [{ field: 'title', keyword: qParam, operator: 'AND' }],
       sort: 'relevance',
       filters: {},
     });
@@ -86,13 +70,36 @@ function OpenSearchTextContent() {
   }, [qParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    sessionStorage.setItem('search_conditions', JSON.stringify(conditions));
-  }, [conditions]);
-
-  useEffect(() => {
     if (submittedState) sessionStorage.setItem('search_submitted', JSON.stringify(submittedState));
     else sessionStorage.removeItem('search_submitted');
   }, [submittedState]);
+
+  const FIELD_LABELS: Record<string, string> = {
+    title: '제목', author: '저자', abstract: '초록',
+    keyword: '키워드', doi: 'DOI', full_text: '전문',
+  };
+
+  const handleReset = () => {
+    setSubmittedState(null);
+    setAppliedFilters({});
+    setDetailedSort('relevance');
+    sessionStorage.removeItem('search_submitted');
+    setSearchParams({});
+  };
+
+  const removeConditionBadge = (idx: number) => {
+    if (!submittedState) return;
+    const next = submittedState.conditions.filter((_, i) => i !== idx);
+    if (next.length === 0) { handleReset(); return; }
+    setSubmittedState(prev => prev ? { ...prev, conditions: next } : prev);
+    setSearchParams({ page: '1' });
+  };
+
+  const removeYearFilter = () => {
+    setSubmittedState(prev => prev ? { ...prev, filters: {} } : prev);
+    setAppliedFilters(prev => ({ ...prev, yearFrom: '', yearTo: '' }));
+    setSearchParams({ page: '1' });
+  };
 
   // 상세검색 쿼리
   const { data, isLoading, error } = useQuery({
@@ -109,32 +116,6 @@ function OpenSearchTextContent() {
     enabled: submittedState !== null,
   });
 
-  const handleDetailedSearch = () => {
-    const valid = conditions.filter(c => c.keyword.trim());
-    if (valid.length === 0) return;
-    const yearFrom = appliedFilters.yearFrom ? parseInt(appliedFilters.yearFrom) : undefined;
-    const yearTo = appliedFilters.yearTo ? parseInt(appliedFilters.yearTo) : undefined;
-    setSubmittedState({
-      conditions: valid,
-      sort: detailedSort,
-      filters: { ...(yearFrom && { year_from: yearFrom }), ...(yearTo && { year_to: yearTo }) },
-    });
-    setSearchParams({ page: '1' });
-  };
-
-  const addCondition = () => {
-    if (conditions.length >= 10) return;
-    setConditions(prev => [...prev, { field: 'title', keyword: '', operator: 'AND' }]);
-  };
-
-  const removeCondition = (idx: number) => {
-    setConditions(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const updateCondition = (idx: number, patch: Partial<DetailedSearchCondition>) => {
-    setConditions(prev => prev.map((c, i) => i === idx ? { ...c, ...patch } : c));
-  };
-
   const searchResults = data?.results ?? [];
   const totalResults = data?.total ?? data?.count ?? 0;
   const searchError = error instanceof Error ? error.message : error ? '검색 중 오류가 발생했습니다.' : null;
@@ -149,21 +130,28 @@ function OpenSearchTextContent() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkCartLoading, setBulkCartLoading] = useState(false);
   const [bulkScrapLoading, setBulkScrapLoading] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   useEffect(() => {
     setSelectedIds(new Set());
   }, [data]);
 
-  // 검색 결과 로드 시 스크랩 상태 일괄 확인 → 개별 카드의 checkScrap 쿼리가 캐시를 즉시 사용
-  useEffect(() => {
-    if (!isLoggedIn || !data?.results?.length) return;
-    const ids = data.results.map(r => r.id);
-    checkScrapBatch(ids).then(scrappedSet => {
-      ids.forEach(id => {
-        queryClient.setQueryData(['scrap-check', id], scrappedSet.has(id));
-      });
+  const scrapIds = searchResults.map(r => r.id);
+  const { data: scrappedIds = new Set<string>() } = useQuery({
+    queryKey: ['scrap-batch', scrapIds],
+    queryFn: () => checkScrapBatch(scrapIds),
+    enabled: isLoggedIn && scrapIds.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const handleScrapToggle = (id: string, isScrapped: boolean) => {
+    queryClient.setQueryData<Set<string>>(['scrap-batch', scrapIds], (old = new Set()) => {
+      const next = new Set(old);
+      if (isScrapped) next.add(id);
+      else next.delete(id);
+      return next;
     });
-  }, [data, isLoggedIn, queryClient]);
+  };
 
   const handleToggleSelect = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -183,42 +171,38 @@ function OpenSearchTextContent() {
     }
   };
 
-  const handleBulkCart = async () => {
+  const handleBulkCite = async () => {
+    const citations = searchResults
+      .filter(r => selectedIds.has(r.id))
+      .map(r => {
+        const authors = r.authors?.slice(0, 3).join(', ') ?? '';
+        const year = r.year ?? '';
+        const journal = (r.metadata.journal as string | null)?.trim() ?? '';
+        return `${authors}${authors ? ' ' : ''}(${year}). ${r.title}. ${journal}`.trim();
+      })
+      .join('\n\n');
+    try {
+      await navigator.clipboard.writeText(citations);
+      alert('인용 정보가 복사되었습니다.');
+    } catch (e) {
+      console.error('복사 실패', e);
+    }
+  };
+
+  const handleBulkBuy = async () => {
     if (!isLoggedIn) { navigate('/login'); return; }
     setBulkCartLoading(true);
     const ids = [...selectedIds];
     try {
       await addToCartBatch(ids);
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      alert(`${ids.length}개를 장바구니에 추가했습니다.`);
+      navigate('/cart');
     } catch {
-      const results = await Promise.allSettled(ids.map(id => addToCart({ publication_id: id })));
+      await Promise.allSettled(ids.map(id => addToCart({ publication_id: id })));
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      const failed = results.filter(r => r.status === 'rejected').length;
-      const succeeded = ids.length - failed;
-      alert(failed === 0 ? `${succeeded}개를 장바구니에 추가했습니다.` : `${succeeded}개 추가, ${failed}개 실패했습니다.`);
+      navigate('/cart');
     } finally {
       setBulkCartLoading(false);
-    }
-  };
-
-  const handleBulkShare = async () => {
-    const urls = searchResults
-      .filter(r => selectedIds.has(r.id))
-      .map(r => {
-        const provider = (r.metadata.provider_name as string | null)?.trim();
-        const venue = (r.metadata.venue_name as string | null)?.trim();
-        const journal = (r.metadata.journal as string | null)?.trim();
-        const path = provider && venue && journal
-          ? `/papers/${encodeURIComponent(provider)}/${encodeURIComponent(venue)}/${encodeURIComponent(journal)}/${r.id}`
-          : `/papers/${r.id}`;
-        return window.location.origin + path;
-      })
-      .join('\n');
-    try {
-      await navigator.clipboard.writeText(urls);
-    } catch (e) {
-      console.error('복사 실패', e);
     }
   };
 
@@ -228,19 +212,14 @@ function OpenSearchTextContent() {
     const ids = [...selectedIds];
     try {
       await addScrapBatch(ids);
-      ids.forEach(id => queryClient.setQueryData(['scrap-check', id], true));
-      alert(`${ids.length}개를 스크랩에 추가했습니다.`);
-    } catch {
-      // batch 실패(일부 ID 유효성 오류 등) → 개별 요청으로 폴백
-      const results = await Promise.allSettled(ids.map(id => addScrap({ publication_id: id })));
-      results.forEach((r, i) => {
-        if (r.status === 'fulfilled') queryClient.setQueryData(['scrap-check', ids[i]], true);
+      queryClient.setQueryData<Set<string>>(['scrap-batch', scrapIds], (old = new Set()) => {
+        const next = new Set(old);
+        ids.forEach(id => next.add(id));
+        return next;
       });
-      const succeeded = results.filter(r => r.status === 'fulfilled').length;
-      const failed = ids.length - succeeded;
-      alert(failed === 0
-        ? `${succeeded}개를 스크랩에 추가했습니다.`
-        : `${succeeded}개 추가, ${failed}개는 추가할 수 없습니다.`);
+      alert(`${ids.length}개를 스크랩에 추가했습니다.`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '스크랩 추가에 실패했습니다.');
     } finally {
       setBulkScrapLoading(false);
     }
@@ -321,152 +300,198 @@ function OpenSearchTextContent() {
   return (
     <div className="min-h-screen bg-[#FAFAFC]">
       <main className="max-w-[1280px] mx-auto px-4 py-10">
-        {/* 상세검색 조건 빌더 */}
-        <div className="mb-6 space-y-2">
-          {conditions.map((cond, idx) => (
-            <div key={idx} className="flex gap-2 items-center">
-              {idx === 0 ? (
-                <div className="w-[72px] shrink-0" />
-              ) : (
-                <select
-                  value={cond.operator}
-                  onChange={(e) => updateCondition(idx, { operator: e.target.value as DetailedSearchCondition['operator'] })}
-                  className="w-[72px] h-10 px-2 border border-[#58616A] rounded-md text-[14px] text-[#1E2124] bg-white focus:outline-none focus:border-[#256EF4] shrink-0"
-                >
-                  <option value="AND">AND</option>
-                  <option value="OR">OR</option>
-                  <option value="NOT">NOT</option>
-                </select>
-              )}
-              <select
-                value={cond.field}
-                onChange={(e) => updateCondition(idx, { field: e.target.value as DetailedSearchCondition['field'] })}
-                className="w-24 h-10 px-2 border border-[#58616A] rounded-md text-[14px] text-[#1E2124] bg-white focus:outline-none focus:border-[#256EF4] shrink-0"
-              >
-                <option value="title">제목</option>
-                <option value="author">저자</option>
-                <option value="abstract">초록</option>
-                <option value="keyword">키워드</option>
-                <option value="doi">DOI</option>
-                <option value="full_text">전문</option>
-              </select>
-              <input
-                type="text"
-                value={cond.keyword}
-                onChange={(e) => updateCondition(idx, { keyword: e.target.value })}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleDetailedSearch(); }}
-                placeholder="검색어를 입력하세요"
-                className="flex-1 h-10 px-4 border border-[#58616A] rounded-md text-[15px] text-[#1E2124] placeholder:text-[#8A949E] focus:outline-none focus:border-[#256EF4]"
-              />
-              {idx > 0 ? (
+        {/* 검색 결과 헤더 — 제목 + 배지 */}
+        <div className="mb-6 bg-white rounded-xl border border-[#E4E7EA] px-6 py-5">
+          {submittedState ? (
+            <>
+              <h2 className="text-[22px] md:text-[26px] font-bold text-[#1E2124] mb-3">
+                <span className="text-[#256EF4]">{submittedState.conditions[0]?.keyword}</span>
+                {submittedState.conditions.length > 1 && ' 외'}
+                {' '}에 대한 검색결과
+              </h2>
+              <div className="flex flex-wrap gap-2 items-center">
                 <button
-                  onClick={() => removeCondition(idx)}
-                  className="w-10 h-10 flex items-center justify-center text-[#8A949E] hover:text-[#E32929] transition-colors shrink-0"
+                  onClick={handleReset}
+                  className="h-8 px-3 flex items-center gap-1 text-[13px] text-[#464C53] border border-[#CDD1D5] rounded-full hover:bg-gray-50 transition-colors"
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 8a6 6 0 1 1 1.22 3.68M2 8V4.5m0 3.5H5.5" stroke="#464C53" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
+                  초기화
                 </button>
-              ) : (
-                <div className="w-10 shrink-0" />
-              )}
-            </div>
-          ))}
-          <div className="flex items-center gap-2 pt-1">
-            {conditions.length < 10 && (
-              <button
-                onClick={addCondition}
-                className="h-9 px-4 text-[14px] text-[#256EF4] border border-[#256EF4] rounded-md hover:bg-[#ECF2FE] transition-colors"
-              >
-                + 조건 추가
-              </button>
-            )}
-            <button
-              onClick={handleDetailedSearch}
-              className="h-9 px-5 bg-[#063A74] text-white text-[14px] font-medium rounded-md hover:bg-[#052d5c] transition-colors flex items-center gap-2"
-            >
-              <IconSearch />
-              검색
-            </button>
-          </div>
+                {submittedState.conditions.map((cond, idx) => (
+                  <span key={idx} className="h-8 px-3 flex items-center gap-1.5 bg-[#F4F5F6] border border-[#CDD1D5] rounded-full text-[13px] text-[#464C53]">
+                    <span className="text-[#8A949E]">{FIELD_LABELS[cond.field]}:</span>
+                    {cond.keyword}
+                    <button onClick={() => removeConditionBadge(idx)} className="text-[#8A949E] hover:text-[#E32929] transition-colors flex items-center">
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+                {(submittedState.filters.year_from || submittedState.filters.year_to) && (
+                  <span className="h-8 px-3 flex items-center gap-1.5 bg-[#F4F5F6] border border-[#CDD1D5] rounded-full text-[13px] text-[#464C53]">
+                    {submittedState.filters.year_from ?? ''}~{submittedState.filters.year_to ?? ''}
+                    <button onClick={removeYearFilter} className="text-[#8A949E] hover:text-[#E32929] transition-colors flex items-center">
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-[15px] text-gray-500">검색어를 입력하고 검색을 실행하세요.</p>
+          )}
         </div>
 
-        {/* 검색 결과 요약 */}
-        {submittedState !== null && (
-          <div className="flex items-center mb-4">
-            <span className="text-[15px] md:text-[19px] font-bold text-[#1E2124]">
-              검색 결과 {totalResults.toLocaleString()}개
-            </span>
-          </div>
-        )}
-
         <div className="flex flex-col md:flex-row gap-6 items-start">
-          <div className="w-full md:w-auto md:sticky top-24 md:self-start">
+          {/* 모바일 필터 토글 바 */}
+          <div className="md:hidden w-full bg-white rounded-xl border border-[#E4E7EA] px-4 py-3 flex items-center justify-between">
+            <span className="text-[15px] font-bold text-[#1E2124]">결과 내 검색</span>
+            <button
+              onClick={() => setMobileFilterOpen(v => !v)}
+              className="flex items-center gap-1.5 text-[14px] text-[#464C53] border border-[#CDD1D5] rounded-md px-3 py-1.5"
+            >
+              필터{mobileFilterOpen ? '닫기' : '열기'}
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`transition-transform ${mobileFilterOpen ? '' : 'rotate-180'}`}>
+                <path d="M4 6l4 4 4-4" stroke="#464C53" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div className={`w-full md:w-auto md:sticky top-24 md:self-start ${mobileFilterOpen ? '' : 'hidden md:block'}`}>
             <SearchFilterSidebar
               onApply={(filters) => {
-                setAppliedFilters(filters);
-                const newSort = filters.sort === 'popularity' ? 'relevance' : filters.sort as 'relevance' | 'latest';
-                setDetailedSort(newSort);
-                if (submittedState) {
-                  const yearFrom = filters.yearFrom ? parseInt(filters.yearFrom) : undefined;
-                  const yearTo = filters.yearTo ? parseInt(filters.yearTo) : undefined;
-                  setSubmittedState(prev => prev ? {
-                    ...prev,
-                    sort: newSort,
-                    filters: { ...(yearFrom && { year_from: yearFrom }), ...(yearTo && { year_to: yearTo }) },
-                  } : prev);
-                  setSearchParams({ page: '1' });
-                }
+                const yearFrom = filters.yearFrom ? parseInt(filters.yearFrom) : undefined;
+                const yearTo = filters.yearTo ? parseInt(filters.yearTo) : undefined;
+                setSubmittedState(prev => prev ? {
+                  ...prev,
+                  filters: { ...(yearFrom && { year_from: yearFrom }), ...(yearTo && { year_to: yearTo }) },
+                } : prev);
+                setSearchParams({ page: '1' });
               }}
-              onReset={() => {
-                setAppliedFilters({});
-                setDetailedSort('relevance');
+              onReset={handleReset}
+              onWithinSearch={(keyword) => {
+                if (!keyword.trim()) return;
+                const newCond: DetailedSearchCondition = { field: 'title', keyword: keyword.trim(), operator: 'AND' };
+                setSubmittedState(prev => {
+                  if (!prev) return { conditions: [newCond], sort: 'relevance', filters: {} };
+                  return { ...prev, conditions: [...prev.conditions, newCond] };
+                });
+                setSearchParams({ page: '1' });
               }}
-              onWithinSearch={() => {}}
             />
           </div>
 
           {/* 결과 목록 */}
-          <div className="flex-1 min-w-0 w-full overflow-hidden">
+          <div className="w-full md:flex-1 md:min-w-0 md:overflow-hidden md:bg-white md:rounded-xl md:border md:border-[#E4E7EA] md:px-6 md:py-5">
             {/* 정렬 + 개수 컨트롤 */}
+            {/* 검색 결과 수 */}
+            {submittedState !== null && !isLoading && !searchError && totalResults > 0 && (
+              <p className="text-[15px] font-bold text-[#1E2124] mb-3">
+                검색 결과 <span className="text-[#256EF4]">{totalResults.toLocaleString()}</span>건
+              </p>
+            )}
+
+            {/* 통합 컨트롤 바 */}
             {submittedState !== null && (
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-1">
-                  {(['relevance', 'latest'] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => {
-                        setDetailedSort(s);
-                        if (submittedState) {
-                          setSubmittedState(prev => prev ? { ...prev, sort: s } : prev);
-                          setSearchParams(prev => { prev.set('page', '1'); return prev; });
-                        }
-                      }}
-                      className={`h-8 px-4 rounded-md text-[14px] font-medium transition-colors border ${
-                        detailedSort === s
-                          ? 'bg-[#063A74] text-white border-[#063A74]'
-                          : 'bg-white text-[#464C53] border-[#CDD1D5] hover:bg-gray-50'
-                      }`}
+              <div className="hidden md:flex items-center justify-between mb-4 pb-3 border-b border-[#E4E7EA]">
+                {/* 좌측: 전체선택 + 액션 버튼 */}
+                <div className="flex items-center">
+                  <button
+                    onClick={handleSelectAll}
+                    className="flex items-center gap-2 pr-4 text-[14px] text-[#464C53] hover:text-[#1E2124] transition-colors"
+                  >
+                    <div className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
+                      ${selectedIds.size === searchResults.length && searchResults.length > 0
+                        ? 'bg-[#256EF4] border-[#256EF4]'
+                        : selectedIds.size > 0
+                          ? 'bg-[#256EF4]/20 border-[#256EF4]'
+                          : 'border-[#CDD1D5] bg-white'}`}
                     >
-                      {s === 'relevance' ? '관련성순' : '최신순'}
-                    </button>
-                  ))}
+                      {selectedIds.size === searchResults.length && searchResults.length > 0 && (
+                        <svg width="10" height="8" viewBox="0 0 12 10" fill="none">
+                          <path d="M1 5L4.5 8.5L11 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                      {selectedIds.size > 0 && selectedIds.size < searchResults.length && (
+                        <div className="w-2 h-0.5 bg-[#256EF4] rounded" />
+                      )}
+                    </div>
+                    전체선택
+                  </button>
+                  <div className="w-px h-4 bg-[#CDD1D5]" />
+                  <button
+                    onClick={handleBulkScrap}
+                    disabled={selectedIds.size === 0 || bulkScrapLoading}
+                    className="px-4 text-[14px] text-[#464C53] hover:text-[#1E2124] disabled:text-[#CDD1D5] transition-colors flex items-center gap-1.5"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 2H12C12.55 2 13 2.45 13 3V14.5L8 11.5L3 14.5V3C3 2.45 3.45 2 4 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                    </svg>
+                    보관함 담기
+                  </button>
+                  <div className="w-px h-4 bg-[#CDD1D5]" />
+                  <button
+                    onClick={handleBulkCite}
+                    disabled={selectedIds.size === 0}
+                    className="px-4 text-[14px] text-[#464C53] hover:text-[#1E2124] disabled:text-[#CDD1D5] transition-colors flex items-center gap-1.5"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                      <path d="M2.5 5.5C2.5 4.67 3.17 4 4 4H5.5V7.5H2.5V5.5ZM8.5 5.5C8.5 4.67 9.17 4 10 4H11.5V7.5H8.5V5.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                      <path d="M2.5 7.5V12H5.5V7.5M8.5 7.5V12H11.5V7.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                    </svg>
+                    인용하기
+                  </button>
+                  <div className="w-px h-4 bg-[#CDD1D5]" />
+                  <button
+                    onClick={handleBulkBuy}
+                    disabled={selectedIds.size === 0 || bulkCartLoading}
+                    className="px-4 text-[14px] text-[#464C53] hover:text-[#1E2124] disabled:text-[#CDD1D5] transition-colors flex items-center gap-1.5"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                      <path d="M2.5 5.5H13.5L12 13H4L2.5 5.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                      <path d="M6 5.5C6 3.8 7 2.5 8 2.5C9 2.5 10 3.8 10 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                    구매하기
+                  </button>
                 </div>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                  className="h-8 px-2 pr-6 rounded-md text-[14px] text-[#464C53] border border-[#CDD1D5] bg-white appearance-none cursor-pointer hover:bg-gray-50 focus:outline-none"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23464C53' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
-                >
-                  {PAGE_SIZE_OPTIONS.map(size => (
-                    <option key={size} value={size}>{size}개씩</option>
-                  ))}
-                </select>
+
+                {/* 우측: 정렬 + 개수 */}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={detailedSort}
+                    onChange={(e) => {
+                      const s = e.target.value as 'relevance' | 'latest';
+                      setDetailedSort(s);
+                      setSubmittedState(prev => prev ? { ...prev, sort: s } : prev);
+                      setSearchParams(prev => { prev.set('page', '1'); return prev; });
+                    }}
+                    className="h-9 px-3 pr-8 rounded-lg text-[14px] text-[#464C53] border border-[#CDD1D5] bg-white appearance-none cursor-pointer hover:border-[#8A949E] focus:outline-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23464C53' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                  >
+                    <option value="relevance">정확도순</option>
+                    <option value="latest">최신순</option>
+                  </select>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="h-9 px-3 pr-8 rounded-lg text-[14px] text-[#464C53] border border-[#CDD1D5] bg-white appearance-none cursor-pointer hover:border-[#8A949E] focus:outline-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23464C53' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                  >
+                    {PAGE_SIZE_OPTIONS.map(size => (
+                      <option key={size} value={size}>{size}개씩</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
 
             {submittedState === null && (
-              <p className="text-gray-500 text-center py-8">조건을 입력하고 검색을 실행하세요.</p>
+              <p className="text-gray-500 text-center py-8">검색어를 입력하고 검색을 실행하세요.</p>
             )}
 
             {isLoading && (
@@ -487,35 +512,6 @@ function OpenSearchTextContent() {
 
             {!isLoading && !searchError && searchResults.length > 0 && (
               <div className="space-y-4">
-                {/* 전체선택 헤더 */}
-                <div className="flex items-center gap-3 px-1">
-                  <button
-                    onClick={handleSelectAll}
-                    className="flex items-center gap-2 text-[15px] text-[#464C53] hover:text-[#1E2124] transition-colors"
-                  >
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
-                      ${selectedIds.size === searchResults.length && searchResults.length > 0
-                        ? 'bg-[#256EF4] border-[#256EF4]'
-                        : selectedIds.size > 0
-                          ? 'bg-[#256EF4]/20 border-[#256EF4]'
-                          : 'border-[#CDD1D5] bg-white'}`}
-                    >
-                      {selectedIds.size === searchResults.length && searchResults.length > 0 && (
-                        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                          <path d="M1 5L4.5 8.5L11 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
-                      {selectedIds.size > 0 && selectedIds.size < searchResults.length && (
-                        <div className="w-2.5 h-0.5 bg-[#256EF4] rounded" />
-                      )}
-                    </div>
-                    전체선택
-                  </button>
-                  {selectedIds.size > 0 && (
-                    <span className="text-[14px] text-[#8A949E]">{selectedIds.size}개 선택됨</span>
-                  )}
-                </div>
-
                 {searchResults.map((result) => (
                   <SearchResultCard
                     key={result.id}
@@ -528,64 +524,53 @@ function OpenSearchTextContent() {
                     cartLoading={cartMutation.isPending && cartMutation.variables === result.id}
                     buyLoading={buyNowMutation.isPending && buyNowMutation.variables === result.id}
                     highlightTerms={highlightTerms}
+                    isScraped={scrappedIds.has(result.id)}
+                    onScrapToggle={handleScrapToggle}
                   />
                 ))}
               </div>
             )}
 
-            {/* 일괄 액션 바 */}
+            {/* 플로팅 액션 바 (스크롤 시 편의용) */}
             {selectedIds.size > 0 && (
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-[#1E2124] text-white rounded-2xl px-5 py-3 shadow-2xl">
-                <span className="text-[15px] font-medium whitespace-nowrap">{selectedIds.size}개 선택</span>
-                <div className="w-px h-5 bg-white/20 mx-1" />
-                <button
-                  onClick={handleBulkScrap}
-                  disabled={bulkScrapLoading}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#256EF4] rounded-xl text-[14px] font-medium hover:bg-[#1a5cd4] disabled:opacity-50 transition-colors whitespace-nowrap"
-                >
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                    <path d="M5 3H15C15.5523 3 16 3.44772 16 4V18L10 14.5L4 18V4C4 3.44772 4.44772 3 5 3Z" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
-                  </svg>
-                  {bulkScrapLoading ? '추가 중...' : '스크랩 추가'}
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-0 bg-[#1E2124] text-white rounded-2xl px-5 py-3 shadow-2xl">
+                <span className="text-[14px] font-medium whitespace-nowrap mr-4">{selectedIds.size}개 선택</span>
+                <div className="w-px h-4 bg-white/20" />
+                <button onClick={handleBulkScrap} disabled={bulkScrapLoading} className="px-4 text-[14px] text-white/80 hover:text-white disabled:text-white/30 transition-colors whitespace-nowrap">
+                  {bulkScrapLoading ? '추가 중...' : '보관함 담기'}
                 </button>
-                <button
-                  onClick={handleBulkCart}
-                  disabled={bulkCartLoading}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-white/10 rounded-xl text-[14px] font-medium hover:bg-white/20 disabled:opacity-50 transition-colors whitespace-nowrap"
-                >
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                    <path d="M3.5 6.5H16.5L15 15H5L3.5 6.5Z" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
-                    <path d="M7.5 6.5C7.5 4.6 8.7 3 10 3C11.3 3 12.5 4.6 12.5 6.5" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
-                  </svg>
-                  {bulkCartLoading ? '추가 중...' : '장바구니 담기'}
+                <div className="w-px h-4 bg-white/20" />
+                <button onClick={handleBulkCite} disabled={selectedIds.size === 0} className="px-4 text-[14px] text-white/80 hover:text-white transition-colors whitespace-nowrap">
+                  인용하기
                 </button>
-                <button
-                  onClick={handleBulkShare}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-white/10 rounded-xl text-[14px] font-medium hover:bg-white/20 transition-colors whitespace-nowrap"
-                >
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                    <circle cx="15" cy="4" r="2" stroke="white" strokeWidth="1.4"/>
-                    <circle cx="15" cy="16" r="2" stroke="white" strokeWidth="1.4"/>
-                    <circle cx="5" cy="10" r="2" stroke="white" strokeWidth="1.4"/>
-                    <path d="M7 9L13 5M7 11L13 15" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
-                  </svg>
-                  공유
+                <div className="w-px h-4 bg-white/20" />
+                <button onClick={handleBulkBuy} disabled={bulkCartLoading} className="px-4 text-[14px] text-white/80 hover:text-white disabled:text-white/30 transition-colors whitespace-nowrap">
+                  구매하기
                 </button>
-                <button
-                  onClick={() => setSelectedIds(new Set())}
-                  className="ml-1 p-1 text-white/50 hover:text-white transition-colors"
-                  title="선택 해제"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <div className="w-px h-4 bg-white/20 ml-1" />
+                <button onClick={() => setSelectedIds(new Set())} className="ml-3 text-white/40 hover:text-white transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                     <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
                   </svg>
                 </button>
               </div>
             )}
 
-            {/* 페이지네이션 */}
+            {/* 더보기 (모바일) */}
+            {!isLoading && !searchError && totalResults > 0 && currentPage < totalPages && (
+              <div className="md:hidden mt-6">
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  className="w-full h-12 rounded-xl border border-[#CDD1D5] text-[16px] font-medium text-[#464C53] bg-white hover:bg-gray-50 transition-colors"
+                >
+                  더보기
+                </button>
+              </div>
+            )}
+
+            {/* 페이지네이션 (데스크탑) */}
             {!isLoading && !searchError && totalResults > 0 && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8 pt-4">
+              <div className="hidden md:flex items-center justify-center gap-2 mt-8 pt-4">
                 <button
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
@@ -654,6 +639,8 @@ function SearchResultCard({
   cartLoading,
   buyLoading,
   highlightTerms = [],
+  isScraped,
+  onScrapToggle,
 }: {
   result: OpenSearchTextResultItem;
   onAddToCart: (e: React.MouseEvent, id: string) => void;
@@ -664,26 +651,20 @@ function SearchResultCard({
   cartLoading: boolean;
   buyLoading: boolean;
   highlightTerms?: string[];
+  isScraped: boolean;
+  onScrapToggle: (id: string, isScrapped: boolean) => void;
 }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  const { data: isScraped = false } = useQuery({
-    queryKey: ['scrap-check', result.id],
-    queryFn: () => checkScrap(result.id),
-    enabled: isLoggedIn,
-    staleTime: 1000 * 60 * 5,
-  });
 
   const scrapMutation = useMutation({
     mutationFn: () =>
       isScraped
-        ? deleteScrap(result.id)
-        : addScrap({ publication_id: result.id }),
+        ? deleteScrapBatch([result.id])
+        : addScrapBatch([result.id]),
     onSuccess: () => {
-      queryClient.setQueryData(['scrap-check', result.id], !isScraped);
+      onScrapToggle(result.id, !isScraped);
     },
     onError: (err) =>
       alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.'),
@@ -693,6 +674,18 @@ function SearchResultCard({
     e.stopPropagation();
     if (!isLoggedIn) { navigate('/login'); return; }
     scrapMutation.mutate();
+  };
+
+  const handleCite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const authors = result.authors?.slice(0, 3).join(', ') ?? '';
+    const year = result.year ?? '';
+    const journal = (result.metadata.journal as string | null)?.trim() ?? '';
+    const citation = `${authors}${authors ? ' ' : ''}(${year}). ${result.title}. ${journal}`.trim();
+    navigator.clipboard.writeText(citation).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
   };
 
   const handleShare = (e: React.MouseEvent) => {
@@ -740,13 +733,10 @@ function SearchResultCard({
 
   return (
     <div className={`bg-white border rounded-xl hover:shadow-md transition-shadow flex items-stretch
-      ${isSelected ? 'border-[#256EF4]' : 'border-[#CDD1D5]'}`}
+      ${isSelected ? 'border-[#256EF4]' : 'border-[#E4E7EA]'}`}
     >
-      {/* 체크박스 영역 */}
-      <div
-        onClick={onToggleSelect}
-        className="flex items-start justify-center pt-5 px-3 md:px-4 shrink-0 cursor-pointer"
-      >
+      {/* 체크박스 */}
+      <div onClick={onToggleSelect} className="flex items-start justify-center pt-5 px-3 md:px-4 shrink-0 cursor-pointer">
         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
           ${isSelected ? 'bg-[#256EF4] border-[#256EF4]' : 'border-[#CDD1D5] bg-white hover:border-[#256EF4]'}`}
         >
@@ -758,163 +748,171 @@ function SearchResultCard({
         </div>
       </div>
 
-      {/* 콘텐츠 영역 */}
-      <div
-        onClick={() => navigate(paperUrl)}
-        className="flex-1 min-w-0 p-4 md:p-8 pl-0 cursor-pointer"
-      >
-      {/* row-1: 배지 + 아이콘 버튼 */}
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center justify-center h-6 px-2 bg-[#ECF2FE] text-[#0B50D0] text-[15px] font-normal rounded leading-none">
-            학술저널
-          </span>
-          <span className="inline-flex items-center justify-center h-6 px-2 bg-[#EAF6EC] text-[#267337] text-[15px] font-normal rounded leading-none">
-            KCI등재
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleScrap}
-            disabled={scrapMutation.isPending}
-            className="transition-colors disabled:opacity-50"
-            title={isScraped ? '스크랩 해제' : '스크랩'}
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M5 3H15C15.5523 3 16 3.44772 16 4V18L10 14.5L4 18V4C4 3.44772 4.44772 3 5 3Z"
-                stroke={isScraped ? '#256EF4' : '#33363D'}
-                fill={isScraped ? '#256EF4' : 'none'}
-                strokeWidth="1.4"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={(e) => onAddToCart(e, result.id)}
-            disabled={cartLoading}
-            className="text-[#33363D] hover:text-[#1E2124] transition-colors disabled:opacity-50"
-            title="장바구니 담기"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M3.5 6.5H16.5L15 15H5L3.5 6.5Z" stroke="#33363D" strokeWidth="1.4" strokeLinejoin="round" />
-              <path d="M7.5 6.5C7.5 4.6 8.7 3 10 3C11.3 3 12.5 4.6 12.5 6.5" stroke="#33363D" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-          </button>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={handleShare}
-              className="p-1 text-[#33363D] hover:text-[#1E2124] transition-colors"
-              title="링크 복사"
-            >
-              {copied ? (
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M4 10L8.5 14.5L16 6" stroke="#256EF4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="15" cy="4" r="2" stroke="#33363D" strokeWidth="1.4"/>
-                  <circle cx="15" cy="16" r="2" stroke="#33363D" strokeWidth="1.4"/>
-                  <circle cx="5" cy="10" r="2" stroke="#33363D" strokeWidth="1.4"/>
-                  <path d="M7 9L13 5M7 11L13 15" stroke="#33363D" strokeWidth="1.4" strokeLinecap="round"/>
-                </svg>
-              )}
-            </button>
-            {copied && (
-              <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">
-                복사됨
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* 콘텐츠 */}
+      <div onClick={() => navigate(paperUrl)} className="flex-1 min-w-0 py-4 pr-5 pl-0 cursor-pointer">
 
-      {/* row-2: 본문 + 버튼 */}
-      <div className="flex flex-col md:flex-row items-start gap-4 md:gap-6">
-        <div className="flex-1 flex flex-col gap-2 min-w-0">
-          <h4 className="text-[19px] font-bold text-[#1E2124] leading-[1.5em]">
-            {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
-          </h4>
-          {result.abstract && (
-            <>
-              {expanded && (
-                <p className="text-[15px] text-[#464C53] leading-[1.5em]">{highlightText(result.abstract, highlightTerms)}</p>
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
-                className="text-[14px] text-[#256EF4] hover:underline self-start"
-              >
-                {expanded ? '접기' : '초록보기'}
-              </button>
-            </>
-          )}
-          <PublicationMeta metadata={result.metadata} />
-          <div className="flex items-center gap-0.5 flex-wrap">
-            {result.authors && result.authors.length > 0 && (
-              <div className="flex items-center gap-0.5">
-                {result.authors.slice(0, 3).map((author: string, idx: number) => (
-                  <span
-                    key={idx}
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center h-6 px-0.5 text-[15px] text-[#464C53] leading-none"
-                  >
-                    {author}
-                  </span>
-                ))}
-                {result.authors.length > 3 && (
-                  <span className="inline-flex items-center h-6 px-0.5 text-[15px] text-[#464C53] leading-none">
-                    외 {result.authors.length - 3}명
-                  </span>
+        {/* row-1: 배지 + 아이콘 */}
+        <div className="flex items-center justify-between gap-4 mb-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center h-[22px] px-2.5 bg-[#ECF2FE] text-[#0B50D0] text-[12px] font-medium rounded-full">학술저널</span>
+            <span className="inline-flex items-center h-[22px] px-2.5 bg-[#EAF6EC] text-[#267337] text-[12px] font-medium rounded-full">KCI등재</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            {/* 공유 */}
+            <div className="relative">
+              <button type="button" onClick={handleShare} className="text-[#8A949E] hover:text-[#1E2124] transition-colors" title="링크 복사">
+                {copied ? (
+                  <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
+                    <path d="M4 10L8.5 14.5L16 6" stroke="#256EF4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
+                    <circle cx="15" cy="4" r="2" stroke="currentColor" strokeWidth="1.4"/>
+                    <circle cx="15" cy="16" r="2" stroke="currentColor" strokeWidth="1.4"/>
+                    <circle cx="5" cy="10" r="2" stroke="currentColor" strokeWidth="1.4"/>
+                    <path d="M7 9L13 5M7 11L13 15" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
                 )}
-              </div>
-            )}
-            {result.year != null && (
-              <>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                  <line x1="8" y1="3" x2="8" y2="13" stroke="#CDD1D5" strokeWidth="1.07" strokeLinecap="round" />
-                </svg>
-                <span className="inline-flex items-center h-6 px-0.5 text-[15px] text-[#464C53] leading-none">
-                  {result.year}
-                </span>
-              </>
-            )}
+              </button>
+              {copied && (
+                <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">복사됨</span>
+              )}
+            </div>
+            {/* 스크랩 */}
+            <button onClick={handleScrap} disabled={scrapMutation.isPending} className="text-[#8A949E] hover:text-[#1E2124] transition-colors disabled:opacity-50" title={isScraped ? '스크랩 해제' : '스크랩'}>
+              <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
+                <path d="M5 3H15C15.55 3 16 3.45 16 4V18L10 14.5L4 18V4C4 3.45 4.45 3 5 3Z"
+                  stroke={isScraped ? '#256EF4' : 'currentColor'}
+                  fill={isScraped ? '#256EF4' : 'none'}
+                  strokeWidth="1.4" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {/* 장바구니 */}
+            <button onClick={(e) => onAddToCart(e, result.id)} disabled={cartLoading} className="text-[#8A949E] hover:text-[#1E2124] transition-colors disabled:opacity-50" title="장바구니 담기">
+              <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
+                <path d="M3.5 6.5H16.5L15 15H5L3.5 6.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                <path d="M7.5 6.5C7.5 4.6 8.7 3 10 3C11.3 3 12.5 4.6 12.5 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+            </button>
           </div>
         </div>
 
-        {/* 우측 버튼 */}
-        <div className="flex flex-row md:flex-col items-stretch gap-2 w-full md:w-[120px] md:self-start">
+        {/* row-2: 제목 */}
+        <h4 className="text-[16px] font-bold text-[#1E2124] leading-[1.5em] mb-2">
+          {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
+        </h4>
+
+        {/* row-3: 메타 + PC 가격/구매 */}
+        <div className="flex items-start justify-between gap-4 mb-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 flex-wrap text-[13px] text-[#464C53] mb-1">
+              {result.authors && result.authors.length > 0 && (
+                <>
+                  {result.authors.slice(0, 3).map((a: string, i: number) => (
+                    <span key={i}>{a}</span>
+                  ))}
+                  {result.authors.length > 3 && <span>외 {result.authors.length - 3}명</span>}
+                  <span className="text-[#CDD1D5] mx-0.5">|</span>
+                </>
+              )}
+              {result.year != null && (
+                <><span>{result.year}</span><span className="text-[#CDD1D5] mx-0.5">|</span></>
+              )}
+              <span>KCI등재</span>
+            </div>
+            <PublicationMeta metadata={result.metadata} />
+          </div>
+          {/* PC: 가격(위) + 구매하기(아래) 우측 정렬 */}
+          <div className="hidden md:flex flex-col items-end gap-1.5 shrink-0">
+            <span className="text-[14px] font-bold text-[#AB2B36] border border-[#AB2B36] rounded-md px-3 py-1">￦ 7,000</span>
+            <button
+              onClick={(e) => onBuyNow(e, result.id)}
+              disabled={buyLoading}
+              className="h-8 px-4 bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              {buyLoading ? '처리 중...' : '구매하기'}
+            </button>
+          </div>
+        </div>
+
+        {/* 모바일: 가격 + 구매하기 */}
+        <div className="flex md:hidden items-center justify-end gap-3 mt-2 mb-1">
+          <span className="text-[14px] font-bold text-[#AB2B36] border border-[#AB2B36] rounded-md px-3 py-1">￦ 7,000</span>
           <button
             onClick={(e) => onBuyNow(e, result.id)}
             disabled={buyLoading}
-            className="flex-1 md:flex-none md:w-full h-10 md:h-14 flex items-center justify-center bg-white text-[#AB2B36] text-[15px] md:text-[16px] font-bold rounded-md border border-[#CDD1D5] hover:bg-gray-50 transition-colors disabled:opacity-50 px-3"
-          >
-            ￦ 5,000
-          </button>
-          <button
-            onClick={(e) => onBuyNow(e, result.id)}
-            disabled={buyLoading}
-            className="flex-1 md:flex-none md:w-full h-10 md:h-14 flex items-center justify-center bg-[#ECF2FE] text-[#0B50D0] text-[15px] md:text-[16px] font-normal rounded-md border border-[#256EF4] hover:bg-[#dce7fd] transition-colors disabled:opacity-50 px-3"
+            className="h-8 px-4 bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
           >
             {buyLoading ? '처리 중...' : '구매하기'}
           </button>
         </div>
-      </div>
+
+        {/* row-4: 하단 액션 버튼 */}
+        <div className="hidden md:flex items-center border-t border-[#F4F5F6] pt-2.5 mt-1" onClick={(e) => e.stopPropagation()}>
+          <button className="flex items-center gap-1 pr-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path d="M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+              <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.4"/>
+            </svg>
+            미리보기
+          </button>
+          <div className="w-px h-3 bg-[#CDD1D5]"/>
+          <button
+            onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+            className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors"
+          >
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M4.5 6H11.5M4.5 9.5H8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            {expanded ? '접기' : '초록보기'}
+          </button>
+          <div className="w-px h-3 bg-[#CDD1D5]"/>
+          <button className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1.5L9.8 5.5L14 6.1L11 9L11.8 13.2L8 11.1L4.2 13.2L5 9L2 6.1L6.2 5.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+            </svg>
+            AI 요약
+          </button>
+          <div className="w-px h-3 bg-[#CDD1D5]"/>
+          <button onClick={handleCite} className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path d="M2.5 5.5C2.5 4.67 3.17 4 4 4H5.5V7.5H2.5V5.5ZM8.5 5.5C8.5 4.67 9.17 4 10 4H11.5V7.5H8.5V5.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+              <path d="M2.5 7.5V12H5.5V7.5M8.5 7.5V12H11.5V7.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+            </svg>
+            인용하기
+          </button>
+        </div>
+
+        {/* 초록 펼침 */}
+        {expanded && result.abstract && (
+          <div className="mt-3 p-3 bg-[#F8F9FA] rounded-lg border border-[#E4E7EA]">
+            <p className="text-[13px] text-[#464C53] leading-[1.6em]">
+              {highlightText(result.abstract, highlightTerms)}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 function PublicationMeta({ metadata }: { metadata: Record<string, unknown> }) {
-  const providerName = metadata.provider_name as string | null;
+  const providerName = (metadata.provider_name || metadata.publisher_name) as string | null;
   const venueName = metadata.venue_name as string | null;
   const journal = metadata.journal as string | null;
   const volume = metadata.volume as string | null | number;
-  const issue = metadata.issue_number as string | null;
+  const issue = (metadata.issue_number || metadata.number) as string | null;
   const volumeIssue = volume || issue
     ? [volume ? `${volume}권` : '', issue ? `(${issue}호)` : ''].filter(Boolean).join(' ')
     : null;
-  const segments = [providerName, venueName, journal, volumeIssue].filter(Boolean) as string[];
+  const pageStart = metadata.page_start as string | null;
+  const pageEnd = metadata.page_end as string | null;
+  const pageRange = (metadata.page_range as string | null)
+    || (pageStart || pageEnd
+      ? [pageStart, pageEnd].filter(Boolean).join('-') + 'p'
+      : null);
+  const segments = [providerName, venueName, journal, volumeIssue, pageRange].filter(Boolean) as string[];
   if (segments.length === 0) return null;
   return (
     <div className="flex items-center gap-1 flex-wrap text-[14px] text-[#6B7280]">

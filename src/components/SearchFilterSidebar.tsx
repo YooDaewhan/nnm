@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 export interface Filters {
-  sort: 'relevance' | 'popularity' | 'latest';
   providerName: string;
   venueName: string;
   yearFrom: string;
@@ -15,7 +14,6 @@ export interface ProviderOption {
 }
 
 const DEFAULT_FILTERS: Filters = {
-  sort: 'relevance',
   providerName: '',
   venueName: '',
   yearFrom: '',
@@ -31,8 +29,7 @@ interface Props {
 
 export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, providers }: Props) {
   const [accordionOpen, setAccordionOpen] = useState({
-    search: false,
-    sort: false,
+    search: true,
     year: false,
     venue: false,
   });
@@ -69,12 +66,12 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
                     type="text"
                     value={withinQuery}
                     onChange={(e) => setWithinQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && withinQuery.trim()) onWithinSearch(withinQuery.trim()); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && withinQuery.trim()) { onWithinSearch(withinQuery.trim()); setWithinQuery(''); } }}
                     placeholder="검색어를 입력해주세요."
                     className="w-full h-10 px-4 pr-12 border border-[#58616A] rounded-md text-[15px] text-[#1E2124] placeholder:text-[#8A949E] focus:outline-none focus:border-[#256EF4]"
                   />
                   <button
-                    onClick={() => { if (withinQuery.trim()) onWithinSearch(withinQuery.trim()); }}
+                    onClick={() => { if (withinQuery.trim()) { onWithinSearch(withinQuery.trim()); setWithinQuery(''); } }}
                     className="absolute right-4 top-1/2 -translate-y-1/2"
                   >
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -83,35 +80,6 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
                     </svg>
                   </button>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* 정렬 → sort */}
-          <div className="border-t border-[#CDD1D5]">
-            <button onClick={() => toggle('sort')} className="flex items-center justify-between w-full py-3">
-              <span className="text-[17px] font-bold text-[#1E2124]">정렬</span>
-              <ChevronIcon open={accordionOpen.sort} />
-            </button>
-            {accordionOpen.sort && (
-              <div className="pb-6 pt-2 flex gap-2">
-                {([
-                  { value: 'relevance', label: '관련도순' },
-                  { value: 'popularity', label: '인기순' },
-                  { value: 'latest', label: '최신순' },
-                ] as const).map(({ value, label }) => (
-                  <button
-                    key={value}
-                    onClick={() => setFilters(prev => ({ ...prev, sort: value }))}
-                    className={`h-9 px-3 rounded-md text-[15px] font-normal transition-colors border ${
-                      filters.sort === value
-                        ? 'bg-[#ECF2FE] text-[#0B50D0] border-[#256EF4]'
-                        : 'bg-white text-[#1E2124] border-[#B1B8BE] hover:border-[#256EF4]'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
               </div>
             )}
           </div>

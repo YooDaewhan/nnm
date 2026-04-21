@@ -58,6 +58,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setIsLoggedIn(propIsLoggedIn ?? isAuthenticated());
@@ -88,8 +89,8 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
 
       {/* ── 메인 헤더 (로고 + 검색바 + 우측 버튼) ── */}
       <div className="w-full bg-white">
-        <div className="max-w-[1248px] mx-auto flex items-center py-[10px] md:py-[15px] gap-3 md:gap-10 px-4 md:px-0">
-          {/* CI-slogan: 로고 200×39 */}
+        <div className="max-w-[1248px] mx-auto flex items-center py-[10px] md:py-[15px] gap-3 md:gap-6 px-4 md:px-0">
+          {/* 로고 */}
           <button
             onClick={() => navigate('/')}
             className="shrink-0 hover:opacity-80 transition-opacity"
@@ -97,6 +98,35 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
           >
             <img src="/icons/logo__pc.svg" alt="뉴논문" className="w-[140px] md:w-[200px] h-auto" />
           </button>
+
+          {/* 검색바 (PC만) */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!searchQuery.trim()) return;
+              navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+            }}
+            className="hidden md:flex flex-1 max-w-[480px]"
+          >
+            <div className="flex items-center w-full h-10 border border-[#CDD1D5] rounded-lg overflow-hidden bg-white hover:border-[#8A949E] transition-colors">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="논문, 저자, 키워드 검색"
+                className="flex-1 px-4 text-[14px] text-[#1E2124] placeholder:text-[#8A949E] bg-transparent border-none outline-none"
+              />
+              <button
+                type="submit"
+                className="w-10 h-10 flex items-center justify-center text-[#8A949E] hover:text-[#1E2124] transition-colors shrink-0"
+              >
+                <svg width="18" height="18" viewBox="0 0 22 22" fill="none">
+                  <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2"/>
+                  <line x1="15.5" y1="15.5" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </form>
 
           {/* 우측: 로그인 상태에 따라 분기 */}
           <div className="flex flex-1 justify-end">

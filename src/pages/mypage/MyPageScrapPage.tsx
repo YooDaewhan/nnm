@@ -4,26 +4,9 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
-import { getScraps, deleteScrap, ScrapItem } from '../../api/scraps';
-import { getPaperDetail } from '../../api/search';
+import { getScraps, deleteScrap } from '../../api/scraps';
 
 const PER_PAGE = 10;
-
-async function fetchScrapsWithTitles(page: number) {
-  const res = await getScraps(page, PER_PAGE);
-  const scrapsWithTitles = await Promise.all(
-    res.data.map(async (scrap: ScrapItem) => {
-      if (scrap.title) return scrap;
-      try {
-        const detail = await getPaperDetail(scrap.publication_id);
-        return { ...scrap, title: detail.title };
-      } catch {
-        return scrap;
-      }
-    })
-  );
-  return { ...res, data: scrapsWithTitles };
-}
 
 export default function MyPageScrapPage() {
   const navigate = useNavigate();
@@ -39,7 +22,7 @@ export default function MyPageScrapPage() {
 
   const { data, isLoading, isFetching, error: fetchError } = useQuery({
     queryKey: ['scraps', currentPage],
-    queryFn: () => fetchScrapsWithTitles(currentPage),
+    queryFn: () => getScraps(currentPage, PER_PAGE),
     enabled: isAuthenticated(),
     staleTime: 1000 * 60 * 5,
     placeholderData: keepPreviousData,

@@ -58,15 +58,16 @@ export const checkScrapBatch = async (publicationIds: string[]): Promise<Set<str
   const token = getToken();
   if (!token || publicationIds.length === 0) return new Set();
 
-  const response = await fetch(`${API_BASE_URL}/api/scraps/batch`, {
+  const params = new URLSearchParams();
+  publicationIds.forEach(id => params.append('publication_ids[]', id));
+
+  const response = await fetch(`${API_BASE_URL}/api/scraps/batch?${params.toString()}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
     credentials: 'include',
-    body: JSON.stringify({ publication_ids: publicationIds }),
   });
 
   if (response.status === 401) { handleAuthExpired(); return new Set(); }
