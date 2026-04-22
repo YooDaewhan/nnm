@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
@@ -641,6 +641,12 @@ function OpenSearchTextContent() {
   );
 }
 
+const CITE_FORMATS = [
+  { key: 'apa', label: 'APA(7th ed.)' },
+  { key: 'mla', label: 'MLA' },
+  { key: 'chicago', label: 'Chicago(17th ed.)' },
+] as const;
+
 function SearchResultCard({
   result,
   onAddToCart,
@@ -669,6 +675,10 @@ function SearchResultCard({
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [citeOpen, setCiteOpen] = useState(false);
+  const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
+  const [citeLoadings, setCiteLoadings] = useState<Record<string, boolean>>({});
+  const [citeCopied, setCiteCopied] = useState<string | null>(null);
 
   const scrapMutation = useMutation({
     mutationFn: () =>
@@ -688,17 +698,56 @@ function SearchResultCard({
     scrapMutation.mutate();
   };
 
-  const handleCite = (e: React.MouseEvent) => {
+  const fetchCitation = useCallback(async (fmt: string) => {
+    setCiteLoadings(prev => ({ ...prev, [fmt]: true }));
+    try {
+      const { API_BASE_URL } = await import('../api/client');
+      const res = await fetch(`${API_BASE_URL}/api/citations/${result.id}?format=${fmt}`, {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (!res.ok) throw new Error('fetch failed');
+      const json = await res.json();
+      const text: string = json.citation ?? json.data?.citation ?? JSON.stringify(json);
+      setCiteTexts(prev => ({ ...prev, [fmt]: text }));
+    } catch {
+      const authors = result.authors?.slice(0, 3).join(', ') ?? '';
+      const year = result.year ?? '';
+      const journal = (result.metadata.journal as string | null)?.trim() ?? '';
+      setCiteTexts(prev => ({ ...prev, [fmt]: `${authors} (${year}). ${result.title}. ${journal}.` }));
+    } finally {
+      setCiteLoadings(prev => ({ ...prev, [fmt]: false }));
+    }
+  }, [result]);
+
+  const handleOpenCite = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    const authors = result.authors?.slice(0, 3).join(', ') ?? '';
-    const year = result.year ?? '';
-    const journal = (result.metadata.journal as string | null)?.trim() ?? '';
-    const citation = `${authors}${authors ? ' ' : ''}(${year}). ${result.title}. ${journal}`.trim();
-    navigator.clipboard.writeText(citation).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    }).catch(() => {});
-  };
+    setCiteOpen(true);
+    setCiteTexts({});
+    CITE_FORMATS.forEach(({ key }) => fetchCitation(key));
+  }, [fetchCitation]);
+
+  const handleCiteCopy = useCallback((fmt: string) => {
+    const text = citeTexts[fmt];
+    if (!text) return;
+    const tryClipboard = () => {
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(tryClipboard);
+    } else {
+      tryClipboard();
+    }
+    setCiteCopied(fmt);
+    setTimeout(() => setCiteCopied(null), 2000);
+  }, [citeTexts]);
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -744,6 +793,7 @@ function SearchResultCard({
   })();
 
   return (
+    <>
     <div className={`bg-white border rounded-xl hover:shadow-md transition-shadow flex items-stretch
       ${isSelected ? 'border-[#256EF4]' : 'border-[#E4E7EA]'}`}
     >
@@ -870,14 +920,14 @@ function SearchResultCard({
           </button>
           <div className="w-px h-3 bg-[#CDD1D5]"/>
           <button
-            onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
-            className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors"
+            onClick={(e) => { e.stopPropagation(); if (result.abstract) setExpanded(v => !v); }}
+            className={`flex items-center gap-1 px-3 text-[13px] transition-colors ${result.abstract ? 'text-[#464C53] hover:text-[#256EF4]' : 'text-[#CDD1D5] cursor-default'}`}
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
               <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
               <path d="M4.5 6H11.5M4.5 9.5H8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
-            {expanded ? '접기' : '초록보기'}
+            {!result.abstract ? '초록 없음' : expanded ? '접기' : '초록보기'}
           </button>
           <div className="w-px h-3 bg-[#CDD1D5]"/>
           <button className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
@@ -887,7 +937,7 @@ function SearchResultCard({
             AI 요약
           </button>
           <div className="w-px h-3 bg-[#CDD1D5]"/>
-          <button onClick={handleCite} className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
+          <button onClick={handleOpenCite} className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
               <path d="M2.5 5.5C2.5 4.67 3.17 4 4 4H5.5V7.5H2.5V5.5ZM8.5 5.5C8.5 4.67 9.17 4 10 4H11.5V7.5H8.5V5.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
               <path d="M2.5 7.5V12H5.5V7.5M8.5 7.5V12H11.5V7.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
@@ -906,6 +956,77 @@ function SearchResultCard({
         )}
       </div>
     </div>
+
+    {/* 인용하기 모달 */}
+    {citeOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+        onClick={(e) => { if (e.target === e.currentTarget) setCiteOpen(false); }}
+      >
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-[800px] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#CDD1D5]">
+            <span className="text-[17px] font-bold text-[#131416]">인용하기</span>
+            <button
+              onClick={() => setCiteOpen(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F0F2F5] transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 5l10 10M15 5L5 15" stroke="#1E2124" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+          <div className="px-0 pb-2">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-[#F8F9FA] border-y border-[#CDD1D5]">
+                  <th className="py-2.5 px-4 w-[140px] text-[13px] font-medium text-[#8A949E] text-left">양식이름</th>
+                  <th className="py-2.5 px-3 text-[13px] font-medium text-[#8A949E] text-left">인용양식</th>
+                  <th className="py-2.5 px-4 w-[72px] text-[13px] font-medium text-[#8A949E] text-center">복사</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CITE_FORMATS.map(({ key, label }) => (
+                  <tr key={key} className="border-b border-[#CDD1D5] last:border-b-0">
+                    <td className="py-4 px-4 w-[140px] align-top">
+                      <span className="text-[13px] font-medium text-[#131416]">{label}</span>
+                    </td>
+                    <td className="py-4 px-3 align-top">
+                      {citeLoadings[key] ? (
+                        <span className="text-[13px] text-[#8A949E]">불러오는 중...</span>
+                      ) : citeTexts[key] ? (
+                        <span className="text-[13px] leading-[1.7em] text-[#131416] select-all">{citeTexts[key]}</span>
+                      ) : (
+                        <span className="text-[13px] text-[#8A949E]">인용 정보를 불러오지 못했습니다.</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 w-[72px] align-middle text-center">
+                      <button
+                        onClick={() => handleCiteCopy(key)}
+                        disabled={!citeTexts[key] || citeLoadings[key]}
+                        className="w-8 h-8 inline-flex items-center justify-center rounded hover:bg-[#F0F2F5] transition-colors disabled:opacity-40"
+                        title="복사"
+                      >
+                        {citeCopied === key ? (
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8l4 4 6-7" stroke="#256EF4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <rect x="5.5" y="1.5" width="9" height="11" rx="1.2" stroke="#8A949E" strokeWidth="1.2" />
+                            <rect x="1.5" y="4.5" width="9" height="11" rx="1.2" stroke="#8A949E" strokeWidth="1.2" fill="white" />
+                          </svg>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

@@ -439,6 +439,7 @@ export default function HomePage() {
                           {idx === 0 ? (
                             <div style={{ width: 68, flexShrink: 0 }} />
                           ) : (
+                            /* AND/OR/NOT 연산자 선택 — 추후 활성화 가능
                             <select
                               value={cond.operator}
                               onChange={(e) => updateCondition(idx, { operator: e.target.value as DetailedSearchCondition['operator'] })}
@@ -453,6 +454,15 @@ export default function HomePage() {
                               <option value="OR">OR</option>
                               <option value="NOT">NOT</option>
                             </select>
+                            */
+                            <div style={{
+                              width: 68, height: 36, flexShrink: 0,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 11, fontWeight: 700, color: '#8A949E',
+                              letterSpacing: '0.08em',
+                            }}>
+                              AND
+                            </div>
                           )}
                           <select
                             value={cond.field}
@@ -504,7 +514,7 @@ export default function HomePage() {
                       ))}
                     </div>
 
-                    <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
                       {conditions.length < 10 && (
                         <button
                           onClick={addCondition}
