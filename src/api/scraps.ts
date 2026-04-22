@@ -38,14 +38,17 @@ export const getScraps = async (page = 1, perPage = 10): Promise<GetScrapsRespon
   }
 
   const json = await response.json();
-  console.log('[scraps API raw response]', json); // TODO: 구조 확인 후 제거
 
-  // 응답 구조 정규화: flat / meta 중첩 / 키 래핑 모두 처리
-  const paged = json.scraps ?? json.data_wrapper ?? json;
-  const items: ScrapItem[] = Array.isArray(paged.data) ? paged.data : (Array.isArray(json.data) ? json.data : []);
-  const current_page: number = paged.current_page ?? json.meta?.current_page ?? 1;
-  const last_page: number   = paged.last_page   ?? json.meta?.last_page   ?? 1;
-  const total: number       = paged.total        ?? json.meta?.total        ?? items.length;
+  const rawItems: any[] = Array.isArray(json.data) ? json.data : [];
+  const items: ScrapItem[] = rawItems.map((item) => ({
+    id: item.id,
+    publication_id: item.publication_id,
+    title: item.publication?.title ?? item.title,
+    created_at: item.created_at,
+  }));
+  const current_page: number = json.meta?.current_page ?? 1;
+  const last_page: number = json.meta?.last_page ?? 1;
+  const total: number = json.meta?.total ?? items.length;
 
   return { data: items, current_page, last_page, total };
 };
@@ -58,16 +61,15 @@ export const checkScrapBatch = async (publicationIds: string[]): Promise<Set<str
   const token = getToken();
   if (!token || publicationIds.length === 0) return new Set();
 
-  const params = new URLSearchParams();
-  publicationIds.forEach(id => params.append('publication_ids[]', id));
-
-  const response = await fetch(`${API_BASE_URL}/api/scraps/batch?${params.toString()}`, {
+  const response = await fetch(`${API_BASE_URL}/api/scraps/batch`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
     credentials: 'include',
+    body: JSON.stringify({ publication_ids: publicationIds }),
   });
 
   if (response.status === 401) { handleAuthExpired(); return new Set(); }
@@ -75,14 +77,11 @@ export const checkScrapBatch = async (publicationIds: string[]): Promise<Set<str
 
   try {
     const json = await response.json();
-    // 배열 또는 { publication_ids: [...] } / { data: [...] } 형태 모두 처리
-    const ids: string[] = Array.isArray(json)
-      ? json
-      : Array.isArray(json.publication_ids)
-        ? json.publication_ids
-        : Array.isArray(json.data)
-          ? json.data
-          : [];
+    // { scrapped: { "uuid": true, "uuid2": false } } 형태
+    const scrapped: Record<string, boolean> = json.scrapped ?? {};
+    const ids = Object.entries(scrapped)
+      .filter(([, v]) => v === true)
+      .map(([k]) => k);
     return new Set(ids);
   } catch {
     return new Set();

@@ -1,6 +1,8 @@
 import { API_BASE_URL } from './client';
 import { getToken, handleAuthExpired } from '@/lib/auth';
 
+const stripHtml = (str: string) => str.replace(/<[^>]*>/g, '');
+
 // 장바구니 아이템 타입
 export interface CartItem {
   id: number;
@@ -39,7 +41,15 @@ export const getCart = async (): Promise<CartItem[]> => {
   }
 
   const json = await response.json();
-  return json.cart?.items ?? [];
+  const items: Array<Record<string, unknown>> = json.cart?.items ?? [];
+  return items.map(item => ({
+    id: item.id as number,
+    publication_id: item.publication_id as string,
+    title: item.title as string,
+    quantity: (item.quantity as number) ?? 1,
+    unit_price: (item.unit_price ?? item.price ?? 0) as number,
+    subtotal: (item.subtotal ?? ((item.unit_price ?? item.price ?? 0) as number) * ((item.quantity as number) ?? 1)) as number,
+  }));
 };
 
 // 장바구니 추가 요청 타입
@@ -68,19 +78,18 @@ export const addToCart = async (data: AddToCartRequest): Promise<void> => {
     body: JSON.stringify(data),
   });
 
-  if (response.status === 200 || response.status === 201) {
-    return;
-  }
+  if (response.ok) return;
 
   if (response.status === 401) {
     handleAuthExpired();
     throw new Error('인증이 필요합니다.');
   }
 
-  if (response.status === 422) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || '유효성 검사에 실패했습니다.');
-  }
+  const errorBody = await response.text().catch(() => '');
+  let parsed: { message?: string; error_code?: string } = {};
+  try { parsed = JSON.parse(errorBody); } catch {}
+
+  if (parsed.message) throw new Error(stripHtml(parsed.message));
 
   throw new Error('장바구니 추가에 실패했습니다.');
 };
@@ -88,7 +97,7 @@ export const addToCart = async (data: AddToCartRequest): Promise<void> => {
 /**
  * 여러 논문을 장바구니에 일괄 추가합니다. (최대 50건)
  */
-export const addToCartBatch = async (publicationIds: string[]): Promise<void> => {
+export const addToCartBatch = async (publicationIds: string[]): Promise<Record<string, unknown>> => {
   const token = getToken();
   if (!token) throw new Error('인증되지 않았습니다.');
 
@@ -103,12 +112,15 @@ export const addToCartBatch = async (publicationIds: string[]): Promise<void> =>
     body: JSON.stringify({ publication_ids: publicationIds }),
   });
 
-  if (response.status === 200 || response.status === 201) return;
-  if (response.status === 401) { handleAuthExpired(); throw new Error('인증이 필요합니다.'); }
-  if (response.status === 422) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || '유효성 검사에 실패했습니다.');
+  if (response.ok) {
+    return await response.json().catch(() => ({}));
   }
+  if (response.status === 401) { handleAuthExpired(); throw new Error('인증이 필요합니다.'); }
+
+  const errorBody = await response.text().catch(() => '');
+  let parsed: { message?: string } = {};
+  try { parsed = JSON.parse(errorBody); } catch {}
+  if (parsed.message) throw new Error(stripHtml(parsed.message));
   throw new Error('장바구니 일괄 추가에 실패했습니다.');
 };
 

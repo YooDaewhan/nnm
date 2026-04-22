@@ -194,13 +194,25 @@ function OpenSearchTextContent() {
     setBulkCartLoading(true);
     const ids = [...selectedIds];
     try {
-      await addToCartBatch(ids);
+      const res = await addToCartBatch(ids);
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      navigate('/cart');
+      const added = (res?.data as any)?.result?.added ?? ids.length;
+      const skipped = ids.length - added;
+      if (skipped > 0) {
+        alert(`${added}개가 장바구니에 추가되었습니다.\n(${skipped}개는 추가할 수 없는 논문입니다.)`);
+      } else {
+        alert(`${added}개가 장바구니에 추가되었습니다.`);
+      }
     } catch {
-      await Promise.allSettled(ids.map(id => addToCart({ publication_id: id })));
+      const results = await Promise.allSettled(ids.map(id => addToCart({ publication_id: id })));
+      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.length - succeeded;
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      navigate('/cart');
+      if (succeeded === 0) {
+        alert(`선택한 논문을 장바구니에 추가할 수 없습니다.`);
+      } else {
+        alert(`${succeeded}개가 장바구니에 추가되었습니다.${failed > 0 ? `\n(${failed}개는 구매 불가 논문입니다.)` : ''}`);
+      }
     } finally {
       setBulkCartLoading(false);
     }
@@ -456,7 +468,7 @@ function OpenSearchTextContent() {
                       <path d="M2.5 5.5H13.5L12 13H4L2.5 5.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
                       <path d="M6 5.5C6 3.8 7 2.5 8 2.5C9 2.5 10 3.8 10 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
                     </svg>
-                    구매하기
+                    장바구니 담기
                   </button>
                 </div>
 
@@ -545,7 +557,7 @@ function OpenSearchTextContent() {
                 </button>
                 <div className="w-px h-4 bg-white/20" />
                 <button onClick={handleBulkBuy} disabled={bulkCartLoading} className="px-4 text-[14px] text-white/80 hover:text-white disabled:text-white/30 transition-colors whitespace-nowrap">
-                  구매하기
+                  {bulkCartLoading ? '추가 중...' : '장바구니 담기'}
                 </button>
                 <div className="w-px h-4 bg-white/20 ml-1" />
                 <button onClick={() => setSelectedIds(new Set())} className="ml-3 text-white/40 hover:text-white transition-colors">

@@ -91,11 +91,10 @@ function PaperDetailContent() {
 
   const [pdfOpen, setPdfOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [cityCopied, setCityCopied] = useState(false);
   const [citeOpen, setCiteOpen] = useState(false);
-  const [citeFormat, setCiteFormat] = useState<'apa' | 'mla' | 'chicago'>('apa');
-  const [citeText, setCiteText] = useState('');
-  const [citeLoading, setCiteLoading] = useState(false);
+  const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
+  const [citeLoadings, setCiteLoadings] = useState<Record<string, boolean>>({});
+  const [citeCopied, setCiteCopied] = useState<string | null>(null);
 
   const loggedIn = isAuthenticated();
 
@@ -184,10 +183,15 @@ function PaperDetailContent() {
     abstractRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const fetchCitation = useCallback(async (fmt: 'apa' | 'mla' | 'chicago') => {
+  const CITE_FORMATS = [
+    { key: 'apa', label: 'APA(7th ed.)' },
+    { key: 'mla', label: 'MLA' },
+    { key: 'chicago', label: 'Chicago(17th ed.)' },
+  ] as const;
+
+  const fetchCitation = useCallback(async (fmt: string) => {
     if (!paper) return;
-    setCiteLoading(true);
-    setCiteText('');
+    setCiteLoadings(prev => ({ ...prev, [fmt]: true }));
     try {
       const { API_BASE_URL } = await import('../api/client');
       const res = await fetch(`${API_BASE_URL}/api/citations/${paper.id}?format=${fmt}`, {
@@ -196,32 +200,29 @@ function PaperDetailContent() {
       if (!res.ok) throw new Error('fetch failed');
       const json = await res.json();
       const text: string = json.citation ?? json.data?.citation ?? JSON.stringify(json);
-      setCiteText(text);
+      setCiteTexts(prev => ({ ...prev, [fmt]: text }));
     } catch {
       const authors = paper.authors?.map((a) => (typeof a === 'string' ? a : a.name)).join(', ') ?? '';
       const year = paper.published_at ? new Date(paper.published_at).getFullYear() : '';
       const venue = paper.venue?.name ?? '';
-      setCiteText(`${authors} (${year}). ${paper.title}. ${venue}.${paper.doi ? ` https://doi.org/${paper.doi}` : ''}`);
+      setCiteTexts(prev => ({ ...prev, [fmt]: `${authors} (${year}). ${paper.title}. ${venue}.${paper.doi ? ` https://doi.org/${paper.doi}` : ''}` }));
     } finally {
-      setCiteLoading(false);
+      setCiteLoadings(prev => ({ ...prev, [fmt]: false }));
     }
   }, [paper]);
 
   const handleOpenCite = useCallback(() => {
     setCiteOpen(true);
-    fetchCitation(citeFormat);
-  }, [citeFormat, fetchCitation]);
+    setCiteTexts({});
+    CITE_FORMATS.forEach(({ key }) => fetchCitation(key));
+  }, [fetchCitation]);
 
-  const handleCiteFormatChange = (fmt: 'apa' | 'mla' | 'chicago') => {
-    setCiteFormat(fmt);
-    fetchCitation(fmt);
-  };
-
-  const handleCiteCopy = useCallback(() => {
-    if (!citeText) return;
+  const handleCiteCopy = useCallback((fmt: string) => {
+    const text = citeTexts[fmt];
+    if (!text) return;
     const tryClipboard = () => {
       const el = document.createElement('textarea');
-      el.value = citeText;
+      el.value = text;
       el.style.position = 'fixed';
       el.style.opacity = '0';
       document.body.appendChild(el);
@@ -231,13 +232,13 @@ function PaperDetailContent() {
       document.body.removeChild(el);
     };
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(citeText).catch(tryClipboard);
+      navigator.clipboard.writeText(text).catch(tryClipboard);
     } else {
       tryClipboard();
     }
-    setCityCopied(true);
-    setTimeout(() => setCityCopied(false), 2000);
-  }, [citeText]);
+    setCiteCopied(fmt);
+    setTimeout(() => setCiteCopied(null), 2000);
+  }, [citeTexts]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -404,9 +405,9 @@ function PaperDetailContent() {
               </div>
 
               {/* ── 액션 바 ── */}
-              <div className="flex items-center justify-between px-6 sm:px-10 py-3">
-                {/* 좌측: 기능 버튼들 */}
-                <div className="flex items-center">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 sm:px-10 py-3 gap-2 sm:gap-0">
+                {/* 기능 버튼들 */}
+                <div className="flex items-center flex-wrap">
                   {/* 미리보기 */}
                   <button
                     onClick={() => setPdfOpen(true)}
@@ -455,8 +456,8 @@ function PaperDetailContent() {
                   </button>
                 </div>
 
-                {/* 우측: 가격 + 구매 버튼 */}
-                <div className="flex items-center gap-2">
+                {/* 가격 + 구매 버튼 */}
+                <div className="flex items-center gap-2 self-end sm:self-auto">
                   {isPurchased ? (
                     <>
                       <button
@@ -601,7 +602,7 @@ function PaperDetailContent() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
           onClick={(e) => { if (e.target === e.currentTarget) setCiteOpen(false); }}
         >
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[560px] flex flex-col overflow-hidden">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[800px] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#CDD1D5]">
               <span className="text-[17px] font-bold text-[#131416]">인용하기</span>
               <button
@@ -613,37 +614,53 @@ function PaperDetailContent() {
                 </svg>
               </button>
             </div>
-            <div className="flex flex-col gap-4 px-6 py-5">
-              {/* 형식 탭 */}
-              <div className="flex gap-1 bg-[#F0F2F5] rounded-lg p-1">
-                {(['apa', 'mla', 'chicago'] as const).map((fmt) => (
-                  <button
-                    key={fmt}
-                    onClick={() => handleCiteFormatChange(fmt)}
-                    className={`flex-1 h-8 rounded-md text-[13px] font-medium transition-colors ${
-                      citeFormat === fmt
-                        ? 'bg-white text-[#131416] shadow-sm'
-                        : 'text-[#8A949E] hover:text-[#464C53]'
-                    }`}
-                  >
-                    {fmt.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              {/* 인용 텍스트 */}
-              <div className="min-h-[80px] bg-[#F8F9FA] rounded-lg px-4 py-3 text-[14px] leading-[1.7em] text-[#131416] select-all">
-                {citeLoading ? (
-                  <span className="text-[#8A949E]">불러오는 중...</span>
-                ) : citeText || <span className="text-[#8A949E]">인용 정보를 불러오지 못했습니다.</span>}
-              </div>
-              {/* 복사 버튼 */}
-              <button
-                onClick={handleCiteCopy}
-                disabled={!citeText || citeLoading}
-                className="w-full h-10 bg-[#256EF4] text-white text-[14px] font-medium rounded-lg hover:bg-[#1E5ADB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {cityCopied ? '복사됨!' : '클립보드에 복사'}
-              </button>
+            <div className="px-0 pb-2">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-[#F8F9FA] border-y border-[#CDD1D5]">
+                    <th className="py-2.5 px-4 w-[140px] text-[13px] font-medium text-[#8A949E] text-left">양식이름</th>
+                    <th className="py-2.5 px-3 text-[13px] font-medium text-[#8A949E] text-left">인용양식</th>
+                    <th className="py-2.5 px-4 w-[72px] text-[13px] font-medium text-[#8A949E] text-center">복사</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CITE_FORMATS.map(({ key, label }) => (
+                    <tr key={key} className="border-b border-[#CDD1D5] last:border-b-0">
+                      <td className="py-4 px-4 w-[140px] align-top">
+                        <span className="text-[13px] font-medium text-[#131416]">{label}</span>
+                      </td>
+                      <td className="py-4 px-3 align-top">
+                        {citeLoadings[key] ? (
+                          <span className="text-[13px] text-[#8A949E]">불러오는 중...</span>
+                        ) : citeTexts[key] ? (
+                          <span className="text-[13px] leading-[1.7em] text-[#131416] select-all">{citeTexts[key]}</span>
+                        ) : (
+                          <span className="text-[13px] text-[#8A949E]">인용 정보를 불러오지 못했습니다.</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 w-[72px] align-middle text-center">
+                        <button
+                          onClick={() => handleCiteCopy(key)}
+                          disabled={!citeTexts[key] || citeLoadings[key]}
+                          className="w-8 h-8 inline-flex items-center justify-center rounded hover:bg-[#F0F2F5] transition-colors disabled:opacity-40"
+                          title="복사"
+                        >
+                          {citeCopied === key ? (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M3 8l4 4 6-7" stroke="#256EF4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <rect x="5.5" y="1.5" width="9" height="11" rx="1.2" stroke="#8A949E" strokeWidth="1.2" />
+                              <rect x="1.5" y="4.5" width="9" height="11" rx="1.2" stroke="#8A949E" strokeWidth="1.2" fill="white" />
+                            </svg>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

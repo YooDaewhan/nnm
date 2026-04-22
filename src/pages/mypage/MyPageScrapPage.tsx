@@ -24,7 +24,6 @@ export default function MyPageScrapPage() {
     queryKey: ['scraps', currentPage],
     queryFn: () => getScraps(currentPage, PER_PAGE),
     enabled: isAuthenticated(),
-    staleTime: 1000 * 60 * 5,
     placeholderData: keepPreviousData,
   });
 
@@ -97,7 +96,7 @@ export default function MyPageScrapPage() {
               >
                 <div className="flex-1 flex flex-col gap-1 min-w-0">
                   <p className="text-[17px] font-bold leading-[1.5em] text-[#1E2124] line-clamp-2">
-                    {scrap.title || scrap.publication_id}
+                    {scrap.title ?? scrap.publication_id}
                   </p>
                   {scrap.created_at && (
                     <span className="text-[15px] text-[#8A949E]">
@@ -122,38 +121,57 @@ export default function MyPageScrapPage() {
 
         {/* 페이지네이션 */}
         {!isLoading && !error && lastPage > 1 && (
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-1">
+            {/* 이전 */}
             <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`w-10 h-10 rounded-md text-[17px] font-medium transition-colors flex items-center justify-center
-                ${currentPage === 1
-                  ? 'bg-transparent text-[#8A949E] cursor-not-allowed'
-                  : 'bg-transparent text-[#464C53] hover:bg-gray-100'}`}
+              className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors
+                ${currentPage === 1 ? 'text-[#8A949E] cursor-not-allowed' : 'text-[#464C53] hover:bg-gray-100'}`}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            {Array.from({ length: lastPage }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => goToPage(page)}
-                className={`w-10 h-10 rounded-md text-[17px] font-medium transition-colors
-                  ${page === currentPage
-                    ? 'bg-[#063A74] text-white font-bold'
-                    : 'bg-transparent text-[#464C53] hover:bg-gray-100'}`}
-              >
-                {page}
-              </button>
-            ))}
+
+            {/* 첫 페이지 + ... */}
+            {currentPage > 4 && (
+              <>
+                <button onClick={() => goToPage(1)} className="w-10 h-10 rounded-md text-[15px] text-[#464C53] hover:bg-gray-100 transition-colors">1</button>
+                {currentPage > 5 && <span className="w-10 h-10 flex items-center justify-center text-[#8A949E] text-[15px]">…</span>}
+              </>
+            )}
+
+            {/* 윈도우 페이지 버튼 (현재 ±2) */}
+            {Array.from({ length: lastPage }, (_, i) => i + 1)
+              .filter(p => p >= currentPage - 2 && p <= currentPage + 2)
+              .map((page) => (
+                <button
+                  key={page}
+                  onClick={() => goToPage(page)}
+                  className={`w-10 h-10 rounded-md text-[15px] font-medium transition-colors
+                    ${page === currentPage
+                      ? 'bg-[#063A74] text-white font-bold'
+                      : 'text-[#464C53] hover:bg-gray-100'}`}
+                >
+                  {page}
+                </button>
+              ))}
+
+            {/* ... + 마지막 페이지 */}
+            {currentPage < lastPage - 3 && (
+              <>
+                {currentPage < lastPage - 4 && <span className="w-10 h-10 flex items-center justify-center text-[#8A949E] text-[15px]">…</span>}
+                <button onClick={() => goToPage(lastPage)} className="w-10 h-10 rounded-md text-[15px] text-[#464C53] hover:bg-gray-100 transition-colors">{lastPage}</button>
+              </>
+            )}
+
+            {/* 다음 */}
             <button
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage === lastPage}
-              className={`w-10 h-10 rounded-md text-[17px] font-medium transition-colors flex items-center justify-center
-                ${currentPage === lastPage
-                  ? 'bg-transparent text-[#8A949E] cursor-not-allowed'
-                  : 'bg-transparent text-[#464C53] hover:bg-gray-100'}`}
+              className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors
+                ${currentPage === lastPage ? 'text-[#8A949E] cursor-not-allowed' : 'text-[#464C53] hover:bg-gray-100'}`}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

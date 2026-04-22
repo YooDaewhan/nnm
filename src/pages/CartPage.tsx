@@ -24,9 +24,10 @@ export default function CartPage() {
     }
   }, [navigate]);
 
+  const cartItemIds = cartItems.map(item => item.id).join(',');
   useEffect(() => {
     setSelectedItems(cartItems.map((item: CartItem) => item.id));
-  }, [cartItems]);
+  }, [cartItemIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const removeMutation = useMutation({
     mutationFn: removeFromCart,
@@ -39,7 +40,7 @@ export default function CartPage() {
 
   const totalAmount = cartItems
     .filter((item: CartItem) => selectedItems.includes(item.id))
-    .reduce((sum: number, item: CartItem) => sum + item.subtotal, 0);
+    .reduce((sum: number, item: CartItem) => sum + (item.subtotal ?? item.unit_price ?? 0), 0);
 
   const handleSelectItem = (id: number) => {
     setSelectedItems((prev) =>
@@ -210,7 +211,7 @@ export default function CartPage() {
                       </div>
                       <div className="flex items-center justify-center">
                         <p className="text-[17px] font-bold leading-[1.5] text-center text-[#131416]">
-                          {item.unit_price.toLocaleString()}원
+                          {(item.unit_price ?? 0).toLocaleString()}원
                         </p>
                       </div>
                       <button
