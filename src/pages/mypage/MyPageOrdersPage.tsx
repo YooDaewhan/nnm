@@ -441,7 +441,7 @@ function ArticleRow({ title, paperId, authors, publishDate, kci, publisher, jour
 
   const handleMetaClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (paperId) navigate(`/papers?id=${paperId}`);
+    if (paperId) navigate(`/papers/${paperId}`);
   };
 
   const handleDownload = async (e: React.MouseEvent) => {
