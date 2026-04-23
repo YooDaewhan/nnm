@@ -109,6 +109,9 @@ function OpenSearchTextContent() {
         title: result?.title ?? '',
         unit_price: 5000,
         quantity: 1,
+        authors: result?.authors ?? [],
+        publisher: result?.metadata?.publisher_name ?? null,
+        journal: result?.metadata?.journal ?? null,
       }));
     },
     onSuccess: () => navigate('/pay?direct=true'),

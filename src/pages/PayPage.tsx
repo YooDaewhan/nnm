@@ -266,23 +266,29 @@ function PayPageContent() {
                                 {item.title}
                               </p>
                               <div className="flex items-center gap-1 flex-wrap">
-                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">저자</span>
-                                <span className="text-xs text-[#CDD1D5]">|</span>
+                                {item.authors?.length ? (
+                                  <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">{item.authors.slice(0, 3).join(', ')}{item.authors.length > 3 ? ' 외' : ''}</span>
+                                ) : null}
+                                {item.authors?.length ? <span className="text-xs text-[#CDD1D5]">|</span> : null}
                                 <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">{item.unit_price.toLocaleString()}원</span>
                                 <span className="text-xs text-[#CDD1D5] mx-0.5">|</span>
                                 <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">수량 {item.quantity}개</span>
                               </div>
-                              <div className="flex items-center gap-1 flex-wrap">
-                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">발행기관</span>
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                  <path d="M6 12L10 8L6 4" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">저널명</span>
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                  <path d="M6 12L10 8L6 4" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                                <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">KCI등재</span>
-                              </div>
+                              {(item.publisher || item.journal) && (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  {item.publisher && (
+                                    <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">{item.publisher}</span>
+                                  )}
+                                  {item.publisher && item.journal && (
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                                      <path d="M6 12L10 8L6 4" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  )}
+                                  {item.journal && (
+                                    <span className="text-sm sm:text-[15px] text-[#464C53] leading-[1.5em]">{item.journal}</span>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
                             <div className="flex items-center sm:flex-col sm:justify-center gap-2 self-end sm:self-auto">

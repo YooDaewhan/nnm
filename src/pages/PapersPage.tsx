@@ -147,6 +147,9 @@ function PaperDetailContent() {
       title: paper!.title,
       unit_price: 7000,
       quantity: 1,
+      authors: paper!.authors.map(a => a.name),
+      publisher: paper!.publisher_name ?? paper!.provider?.name ?? null,
+      journal: paper!.venue?.name ?? null,
     }));
     navigate('/pay?direct=true');
   };

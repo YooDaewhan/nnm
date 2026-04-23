@@ -58,7 +58,7 @@ export default function MypageLayout({ children, onLogout }: MypageLayoutProps) 
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-start">
 
             {/* 왼쪽 세로 탭 메뉴 - 데스크톱만 표시 */}
-            <div className="hidden sm:flex bg-white rounded-xl flex-col gap-[2px] p-4 w-[300px] shrink-0">
+            <div className="hidden sm:flex bg-white rounded-xl flex-col gap-[2px] p-4 w-[300px] shrink-0 sm:sticky sm:top-24 sm:self-start">
               {menuItems.map((item) => {
                 const active = isActive(item.href);
                 return (

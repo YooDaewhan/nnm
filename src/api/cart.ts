@@ -11,6 +11,9 @@ export interface CartItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  authors?: string[];
+  publisher?: string | null;
+  journal?: string | null;
 }
 
 /**
@@ -49,6 +52,9 @@ export const getCart = async (): Promise<CartItem[]> => {
     quantity: (item.quantity as number) ?? 1,
     unit_price: (item.unit_price ?? item.price ?? 0) as number,
     subtotal: (item.subtotal ?? ((item.unit_price ?? item.price ?? 0) as number) * ((item.quantity as number) ?? 1)) as number,
+    authors: Array.isArray(item.authors) ? item.authors as string[] : undefined,
+    publisher: (item.publisher_name ?? item.publisher) as string | null | undefined,
+    journal: item.journal as string | null | undefined,
   }));
 };
 
