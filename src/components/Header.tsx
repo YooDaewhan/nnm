@@ -85,7 +85,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
   };
 
   return (
-    <header className="w-full bg-white">
+    <header className="w-full bg-white sticky top-0 z-50">
 
       {/* ── 메인 헤더 (로고 + 검색바 + 우측 버튼) ── */}
       <div className="w-full bg-white">
