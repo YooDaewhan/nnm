@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
 import { searchOpensearchDetailed, DetailedSearchCondition } from '@/api/search';
 import { addToCart } from '@/api/cart';
 import { checkScrapBatch } from '@/api/scraps';
+import { getPayments } from '@/api/payment';
 import SearchFilterSidebar from '@/components/SearchFilterSidebar';
 import { SearchResultHeader } from '@/components/search/SearchResultHeader';
 import { SearchControlBar } from '@/components/search/SearchControlBar';
@@ -55,10 +56,38 @@ function OpenSearchTextContent() {
 
   const searchResults = data?.results ?? [];
   const totalResults = data?.total ?? data?.count ?? 0;
+
+  if (data) {
+    console.log('[SearchPage] API response:', data);
+    console.log('[SearchPage] 첫번째 결과 샘플:', data.results?.[0]);
+    console.log('[SearchPage] 첫번째 결과 metadata:', data.results?.[0]?.metadata);
+  }
   const searchError = error instanceof Error ? error.message : error ? '검색 중 오류가 발생했습니다.' : null;
   const totalPages = Math.ceil(totalResults / itemsPerPage);
 
   useEffect(() => { setSelectedIds(new Set()); }, [data]);
+
+  // 구매 내역 조회 (PapersPage와 동일한 로직)
+  const { data: ordersData } = useQuery({
+    queryKey: ['orders-paid'],
+    queryFn: () => getPayments({ status: 'paid', per_page: 100 }),
+    enabled: isLoggedIn,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const paidOrders = ordersData?.success ? ordersData.orders.data : [];
+
+  // 구매한 논문 ID Set 생성
+  const purchasedIds = useMemo(() => {
+    const ids = new Set<string>();
+    paidOrders.forEach((order) => {
+      const items = (order as any).metadata?.items as { publication_id?: string }[] ?? [];
+      items.forEach((item) => {
+        if (item.publication_id) ids.add(item.publication_id);
+      });
+    });
+    return ids;
+  }, [paidOrders]);
 
   const scrapIds = searchResults.map(r => r.id);
   const { data: scrappedIds = new Set<string>() } = useQuery({
@@ -251,6 +280,7 @@ function OpenSearchTextContent() {
                     highlightTerms={highlightTerms}
                     isScraped={scrappedIds.has(result.id)}
                     onScrapToggle={handleScrapToggle}
+                    isPurchased={purchasedIds.has(result.id)}
                   />
                 ))}
               </div>

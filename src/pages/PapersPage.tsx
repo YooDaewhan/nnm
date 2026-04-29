@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
+import { getPdfFull, PdfApiError } from '../api/pdf';
+import { PdfPreviewModal } from '../components/PdfPreviewModal';
+import { PdfFullViewerModal } from '../components/PdfFullViewerModal';
 
 type OSPaperDetail = PaperDetail & {
   keywords_en?: string[];
@@ -18,42 +21,6 @@ import { getPayments } from '../api/payment';
 import { isAuthenticated } from '../lib/auth';
 import { addRecentPaper } from './mypage/MyPageRecentPage';
 
-const PDF_VIEWER_BASE = import.meta.env.VITE_PDF_SERVER_URL || 'http://localhost:3000';
-
-function PdfViewerModal({ paperId, onClose }: { paperId: string; onClose: () => void }) {
-  const handleBackdrop = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose();
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-2 sm:px-0"
-      onClick={handleBackdrop}
-    >
-      <div className="relative bg-white rounded-xl shadow-2xl w-full sm:w-[90vw] max-w-[1100px] h-[90vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#CDD1D5]">
-          <span className="text-[17px] font-bold text-[#131416]">원문보기</span>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F0F2F5] transition-colors"
-            aria-label="닫기"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 5l10 10M15 5L5 15" stroke="#1E2124" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <iframe
-            src={`${PDF_VIEWER_BASE}/api/viewer/${paperId}`}
-            className="w-full h-full border-0"
-            title="원문 PDF"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -90,6 +57,7 @@ function PaperDetailContent() {
   const abstractRef = useRef<HTMLDivElement>(null);
 
   const [pdfOpen, setPdfOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [citeOpen, setCiteOpen] = useState(false);
   const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
@@ -162,21 +130,37 @@ function PaperDetailContent() {
         ? '논문 정보를 불러오는데 실패했습니다.'
         : null;
 
+  const handleViewFull = useCallback(() => {
+    setPreviewOpen(false);
+    setPdfOpen(true);
+  }, []);
+
   const handleDownload = useCallback(async () => {
     if (!paper) return;
     setDownloading(true);
     try {
-      const res = await fetch(`${PDF_VIEWER_BASE}/api/documents/${paper.id}/file`);
+      const { url: pdfUrl } = await getPdfFull(paper.id);
+      // S3 URL을 Vite 프록시 경로로 변환하여 CORS 우회
+      const s3Host = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
+      const proxiedUrl = pdfUrl.replace(s3Host, '/s3-proxy');
+      const res = await fetch(proxiedUrl);
       if (!res.ok) throw new Error('다운로드 실패');
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
+      const downloadName = `${paper.title.replace(/[\\/:*?"<>|]/g, '_')}.pdf`;
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${paper.title}.pdf`;
+      a.href = blobUrl;
+      a.download = downloadName;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      alert('PDF 다운로드에 실패했습니다.');
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      if (err instanceof PdfApiError && err.status === 403) {
+        alert('다운로드 권한이 없습니다. 논문을 구매해 주세요.');
+      } else {
+        alert('PDF 다운로드에 실패했습니다.');
+      }
     } finally {
       setDownloading(false);
     }
@@ -413,7 +397,7 @@ function PaperDetailContent() {
                 <div className="flex items-center flex-wrap">
                   {/* 미리보기 */}
                   <button
-                    onClick={() => setPdfOpen(true)}
+                    onClick={() => { console.log('[미리보기] 클릭 paper:', paper?.id, 'previewOpen:', previewOpen); setPreviewOpen(true); }}
                     className="flex items-center gap-1.5 px-2 sm:px-3 h-9 text-[13px] sm:text-[14px] text-[#464C53] hover:text-[#131416] transition-colors"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -464,7 +448,7 @@ function PaperDetailContent() {
                   {isPurchased ? (
                     <>
                       <button
-                        onClick={() => setPdfOpen(true)}
+                        onClick={handleViewFull}
                         className="inline-flex items-center justify-center px-4 h-9 bg-white border border-[#256EF4] text-[#0B50D0] text-[14px] rounded-md hover:bg-[#ECF2FE] transition-colors"
                       >
                         원문보기
@@ -594,9 +578,19 @@ function PaperDetailContent() {
         </div>
       </main>
 
-      {/* PDF 뷰어 모달 */}
+      {/* 미리보기 모달 */}
+      {previewOpen && paper && (
+        <PdfPreviewModal
+          paperId={paper.id}
+          isPurchased={isPurchased}
+          onClose={() => setPreviewOpen(false)}
+          onPurchase={() => { setPreviewOpen(false); handlePurchase(); }}
+          onViewFull={() => { setPreviewOpen(false); handleViewFull(); }}
+        />
+      )}
+
       {pdfOpen && paper && (
-        <PdfViewerModal paperId={paper.id} onClose={() => setPdfOpen(false)} />
+        <PdfFullViewerModal paperId={paper.id} onClose={() => setPdfOpen(false)} />
       )}
 
       {/* 인용하기 모달 */}

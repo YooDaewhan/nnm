@@ -2,6 +2,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { isAuthenticated } from '../lib/auth';
 import { createOrder } from '../api/payment';
+import { getCurrentUser } from '../api/auth';
 import { getCart, type CartItem } from '../api/cart';
 import TermsModal from '../components/pay/TermsModal';
 import PhoneVerifyModal from '../components/pay/PhoneVerifyModal';
@@ -92,10 +93,22 @@ function PayPageContent() {
   const [agreed, setAgreed] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [phoneVerifyModalOpen, setPhoneVerifyModalOpen] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneCheckLoading, setPhoneCheckLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated()) { navigate('/login?redirect=/pay'); return; }
     setAuthChecked(true);
+
+    // 휴대폰 인증 여부 확인
+    getCurrentUser()
+      .then((user) => {
+        if (user?.phone_verified_at || user?.phone_verified) {
+          setPhoneVerified(true);
+        }
+      })
+      .catch(() => { /* 실패해도 인증 모달로 fallback */ })
+      .finally(() => setPhoneCheckLoading(false));
   }, [navigate]);
 
   useEffect(() => {
@@ -402,7 +415,11 @@ function PayPageContent() {
                 <button
                   onClick={() => {
                     if (!agreed) { alert('상품정보 및 서비스 이용약관에 동의해주세요.'); return; }
-                    setPhoneVerifyModalOpen(true);
+                    if (phoneVerified) {
+                      handlePayment();
+                    } else {
+                      setPhoneVerifyModalOpen(true);
+                    }
                   }}
                   disabled={loading || totalAmount === 0}
                   className={`w-full sm:w-[300px] h-14 sm:h-16 rounded-lg border-none flex items-center justify-center flex-shrink-0 transition-colors ${loading || totalAmount === 0 || !agreed ? 'bg-[#CDD1D5] cursor-not-allowed' : 'bg-[#256EF4] cursor-pointer'}`}
@@ -421,6 +438,7 @@ function PayPageContent() {
               onClose={() => setPhoneVerifyModalOpen(false)}
               onVerified={() => {
                 setPhoneVerifyModalOpen(false);
+                setPhoneVerified(true);
                 handlePayment();
               }}
             />

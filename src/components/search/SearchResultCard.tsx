@@ -2,10 +2,13 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { OpenSearchTextResultItem } from '@/api/search';
+import { getPdfFull, PdfApiError } from '@/api/pdf';
+import { PdfFullViewerModal } from '../PdfFullViewerModal';
 import { addScrapBatch, deleteScrapBatch } from '@/api/scraps';
 import { highlightText } from '@/utils/highlight';
 import { PublicationMeta } from './PublicationMeta';
 import { CitationModal, CITE_FORMATS } from './CitationModal';
+import { PdfPreviewModal } from '../PdfPreviewModal';
 
 interface SearchResultCardProps {
   result: OpenSearchTextResultItem;
@@ -19,6 +22,7 @@ interface SearchResultCardProps {
   highlightTerms?: string[];
   isScraped: boolean;
   onScrapToggle: (id: string, isScrapped: boolean) => void;
+  isPurchased?: boolean;
 }
 
 export function SearchResultCard({
@@ -33,14 +37,18 @@ export function SearchResultCard({
   highlightTerms = [],
   isScraped,
   onScrapToggle,
+  isPurchased = false,
 }: SearchResultCardProps) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [citeOpen, setCiteOpen] = useState(false);
   const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
   const [citeLoadings, setCiteLoadings] = useState<Record<string, boolean>>({});
   const [citeCopied, setCiteCopied] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const scrapMutation = useMutation({
     mutationFn: () =>
@@ -54,6 +62,34 @@ export function SearchResultCard({
     if (!isLoggedIn) { navigate('/login'); return; }
     scrapMutation.mutate();
   };
+
+  const handleDownload = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDownloading(true);
+    try {
+      const { url: pdfUrl } = await getPdfFull(result.id);
+      const proxiedUrl = pdfUrl.replace('https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com', '/s3-proxy');
+      const res = await fetch(proxiedUrl);
+      if (!res.ok) throw new Error('다운로드 실패');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${result.title.replace(/[\\/:*?"<>|]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      if (err instanceof PdfApiError && err.status === 403) {
+        alert('다운로드 권한이 없습니다. 논문을 구매해 주세요.');
+      } else {
+        alert('PDF 다운로드에 실패했습니다.');
+      }
+    } finally {
+      setDownloading(false);
+    }
+  }, [result]);
 
   const fetchCitation = useCallback(async (fmt: string) => {
     setCiteLoadings(prev => ({ ...prev, [fmt]: true }));
@@ -149,6 +185,40 @@ export function SearchResultCard({
     }
   };
 
+  const renderPurchaseButtons = () => {
+    if (isPurchased) {
+      return (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); setViewerOpen(true); }}
+            className="h-8 px-4 bg-white border border-[#256EF4] text-[#0B50D0] text-[13px] font-medium rounded-md hover:bg-[#ECF2FE] transition-colors whitespace-nowrap"
+          >
+            원문보기
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="h-8 px-4 bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
+          >
+            {downloading ? '다운로드 중...' : '다운로드'}
+          </button>
+        </>
+      );
+    }
+    return (
+      <>
+        <span className="text-[14px] font-bold text-[#AB2B36] border border-[#AB2B36] rounded-md px-3 py-1">￦ 7,000</span>
+        <button
+          onClick={(e) => onBuyNow(e, result.id)}
+          disabled={buyLoading}
+          className="h-8 px-4 bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
+        >
+          {buyLoading ? '처리 중...' : '구매하기'}
+        </button>
+      </>
+    );
+  };
+
   return (
     <>
       <div className={`bg-white border rounded-xl hover:shadow-md transition-shadow flex items-stretch
@@ -233,30 +303,19 @@ export function SearchResultCard({
               <PublicationMeta metadata={result.metadata} />
             </div>
             <div className="hidden md:flex flex-col items-end gap-1.5 shrink-0">
-              <span className="text-[14px] font-bold text-[#AB2B36] border border-[#AB2B36] rounded-md px-3 py-1">￦ 7,000</span>
-              <button
-                onClick={(e) => onBuyNow(e, result.id)}
-                disabled={buyLoading}
-                className="h-8 px-4 bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
-              >
-                {buyLoading ? '처리 중...' : '구매하기'}
-              </button>
+              {renderPurchaseButtons()}
             </div>
           </div>
 
           <div className="flex md:hidden items-center justify-end gap-3 mt-2 mb-1">
-            <span className="text-[14px] font-bold text-[#AB2B36] border border-[#AB2B36] rounded-md px-3 py-1">￦ 7,000</span>
-            <button
-              onClick={(e) => onBuyNow(e, result.id)}
-              disabled={buyLoading}
-              className="h-8 px-4 bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
-            >
-              {buyLoading ? '처리 중...' : '구매하기'}
-            </button>
+            {renderPurchaseButtons(true)}
           </div>
 
           <div className="hidden md:flex items-center border-t border-[#F4F5F6] pt-2.5 mt-1" onClick={(e) => e.stopPropagation()}>
-            <button className="flex items-center gap-1 pr-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
+            <button
+              onClick={(e) => { e.stopPropagation(); setPreviewOpen(true); }}
+              className="flex items-center gap-1 pr-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors"
+            >
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
                 <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.4"/>
@@ -300,6 +359,20 @@ export function SearchResultCard({
           )}
         </div>
       </div>
+
+      {previewOpen && (
+        <PdfPreviewModal
+          paperId={result.id}
+          isPurchased={isPurchased}
+          onClose={() => setPreviewOpen(false)}
+          onPurchase={() => { setPreviewOpen(false); navigate(paperUrl); }}
+          onViewFull={() => { setPreviewOpen(false); setViewerOpen(true); }}
+        />
+      )}
+
+      {viewerOpen && (
+        <PdfFullViewerModal paperId={result.id} onClose={() => setViewerOpen(false)} />
+      )}
 
       <CitationModal
         open={citeOpen}
