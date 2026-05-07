@@ -14,6 +14,7 @@ import LibraryPage from '@/pages/LibraryPage';
 import PapersPage from '@/pages/PapersPage';
 import ProvidersPage from '@/pages/ProvidersPage';
 import ProvidersDetailPage from '@/pages/ProvidersDetailPage';
+import JournalPage from '@/pages/JournalPage';
 import MyPageInfoPage from '@/pages/mypage/MyPageInfoPage';
 import MyPageOrdersPage from '@/pages/mypage/MyPageOrdersPage';
 import MyPageLibraryPage from '@/pages/mypage/MyPageLibraryPage';
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
       { path: '/papers/:id',          element: <PapersPage /> },
       { path: '/providers',           element: <ProvidersPage /> },
       { path: '/providers/detail',    element: <ProvidersDetailPage /> },
+      { path: '/journal',             element: <JournalPage /> },
       { path: '/cart',                element: <CartPage /> },
       { path: '/pay',                 element: <PayPage /> },
       { path: '/payment/success',     element: <PaymentSuccessPage /> },
