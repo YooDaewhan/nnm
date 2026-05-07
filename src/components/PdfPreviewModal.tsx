@@ -1,11 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getPdfPreview, PdfApiError } from '../api/pdf';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import { getPdfPreview } from '../api/pdf';
 
-type PreviewState =
-  | { type: 'loading' }
-  | { type: 'ok'; url: string }
-  | { type: 'too_short' }
-  | { type: 'unavailable'; message?: string };
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
+
+const S3_HOST = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
 
 interface PdfPreviewModalProps {
   paperId: string;
@@ -22,27 +25,32 @@ export function PdfPreviewModal({
   onPurchase,
   onViewFull,
 }: PdfPreviewModalProps) {
-  const [state, setState] = useState<PreviewState>({ type: 'loading' });
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageWidth, setPageWidth] = useState(800);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleBackdrop = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) onClose();
-    },
-    [onClose],
-  );
+  const handleBackdrop = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  }, [onClose]);
 
   useEffect(() => {
     getPdfPreview(paperId)
-      .then((url) => setState({ type: 'ok', url }))
-      .catch((err) => {
-        if (err instanceof PdfApiError && err.reason === 'too_short') {
-          setState({ type: 'too_short' });
-        } else {
-          console.error('[PdfPreview] error:', err);
-          setState({ type: 'unavailable', message: err?.message ?? String(err) });
-        }
-      });
+      .then((url) => setFileUrl(url.replace(S3_HOST, '/s3-proxy')))
+      .catch(() => setError('미리보기를 불러오는데 실패했습니다.'));
   }, [paperId]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setPageWidth(entry.contentRect.width - 32);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const previewPages = Math.min(numPages, 2);
 
   return (
     <div
@@ -68,81 +76,77 @@ export function PdfPreviewModal({
         </div>
 
         {/* 본문 */}
-        <div className="flex-1 overflow-hidden relative">
-          {state.type === 'loading' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+        <div
+          ref={containerRef}
+          className="flex-1 overflow-y-auto bg-[#F0F2F5] px-4 py-4"
+          style={{ userSelect: 'none' }}
+        >
+          {!fileUrl && !error && (
+            <div className="flex flex-col items-center justify-center h-full gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
               <p className="text-[13px] text-[#8A949E]">미리보기를 불러오는 중...</p>
             </div>
           )}
-          {state.type === 'ok' && (
-            <iframe src={state.url} className="w-full h-full border-0" title="논문 미리보기" />
-          )}
-          {(state.type === 'too_short' || state.type === 'unavailable') && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <rect x="10" y="6" width="28" height="36" rx="3" stroke="#CDD1D5" strokeWidth="2" />
-                <line x1="16" y1="16" x2="32" y2="16" stroke="#CDD1D5" strokeWidth="1.8" strokeLinecap="round" />
-                <line x1="16" y1="22" x2="32" y2="22" stroke="#CDD1D5" strokeWidth="1.8" strokeLinecap="round" />
-                <line x1="16" y1="28" x2="24" y2="28" stroke="#CDD1D5" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-              <p className="text-[15px] text-[#464C53]">
-                {state.type === 'too_short'
-                  ? '이 논문은 미리보기가 준비되지 않았습니다.'
-                  : '미리보기를 불러올 수 없습니다.'}
-              </p>
-              {state.type === 'too_short' && (
-                <p className="text-[13px] text-[#8A949E]">미리보기 파일이 아직 생성되지 않았거나, 분량이 짧은 논문입니다.</p>
-              )}
-              {state.type === 'unavailable' && state.message && (
-                <p className="text-[12px] text-[#AB2B36] font-mono bg-[#FFF0F0] px-3 py-1.5 rounded max-w-md break-all">
-                  {state.message}
-                </p>
-              )}
+
+          {error && (
+            <div className="flex items-center justify-center h-full px-6 text-center">
+              <p className="text-[14px] text-[#AB2B36]">{error}</p>
             </div>
+          )}
+
+          {fileUrl && (
+            <Document
+              file={fileUrl}
+              onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+              onLoadError={() => setError('PDF를 불러오는데 실패했습니다.')}
+              loading={
+                <div className="flex flex-col items-center justify-center h-40 gap-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+                  <p className="text-[13px] text-[#8A949E]">PDF 렌더링 중...</p>
+                </div>
+              }
+              className="flex flex-col items-center gap-3"
+            >
+              {Array.from({ length: previewPages }, (_, i) => (
+                <Page
+                  key={i + 1}
+                  pageNumber={i + 1}
+                  width={pageWidth}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  className="shadow-md"
+                />
+              ))}
+            </Document>
           )}
         </div>
 
         {/* 푸터 */}
-        {(state.type === 'ok' || state.type === 'too_short') && (
-          <div className="flex-shrink-0 border-t border-[#CDD1D5] px-4 sm:px-6 py-3 flex items-center justify-between gap-3 bg-[#FAFAFC]">
-            <p className="text-[13px] text-[#8A949E] hidden sm:block">
-              {state.type === 'ok'
-                ? '앞 2페이지 미리보기입니다. 전체 논문을 보시려면 구매해 주세요.'
-                : '전체 논문을 구매하고 보실 수 있습니다.'}
-            </p>
-            <div className="flex items-center gap-2 ml-auto">
-              {state.type === 'ok' && (
-                <a
-                  href={state.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-4 h-9 bg-white border border-[#CDD1D5] text-[#464C53] text-[14px] rounded-md hover:bg-[#F0F2F5] transition-colors"
-                >
-                  새 탭으로 열기
-                </a>
-              )}
-              {isPurchased && onViewFull ? (
+        <div className="flex-shrink-0 border-t border-[#CDD1D5] px-4 sm:px-6 py-3 flex items-center justify-between gap-3 bg-[#FAFAFC]">
+          <p className="text-[13px] text-[#8A949E] hidden sm:block">
+            전체 논문을 구매하고 보실 수 있습니다.
+          </p>
+          <div className="flex items-center gap-2 ml-auto">
+            {isPurchased && onViewFull ? (
+              <button
+                onClick={onViewFull}
+                className="inline-flex items-center justify-center px-4 h-9 bg-[#256EF4] text-white text-[14px] rounded-md hover:bg-[#1E5ADB] transition-colors"
+              >
+                원문보기
+              </button>
+            ) : !isPurchased && onPurchase ? (
+              <>
+                <span className="text-[15px] font-bold text-[#AB2B36]">￦ 7,000</span>
                 <button
-                  onClick={onViewFull}
+                  onClick={onPurchase}
                   className="inline-flex items-center justify-center px-4 h-9 bg-[#256EF4] text-white text-[14px] rounded-md hover:bg-[#1E5ADB] transition-colors"
                 >
-                  원문보기
+                  구매하기
                 </button>
-              ) : !isPurchased && onPurchase ? (
-                <>
-                  <span className="text-[15px] font-bold text-[#AB2B36]">￦ 7,000</span>
-                  <button
-                    onClick={onPurchase}
-                    className="inline-flex items-center justify-center px-4 h-9 bg-[#256EF4] text-white text-[14px] rounded-md hover:bg-[#1E5ADB] transition-colors"
-                  >
-                    구매하기
-                  </button>
-                </>
-              ) : null}
-            </div>
+              </>
+            ) : null}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
-import { getPdfFull, PdfApiError } from '../api/pdf';
 import { PdfPreviewModal } from '../components/PdfPreviewModal';
 import { PdfFullViewerModal } from '../components/PdfFullViewerModal';
 
@@ -58,7 +57,7 @@ function PaperDetailContent() {
 
   const [pdfOpen, setPdfOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+
   const [citeOpen, setCiteOpen] = useState(false);
   const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
   const [citeLoadings, setCiteLoadings] = useState<Record<string, boolean>>({});
@@ -135,36 +134,6 @@ function PaperDetailContent() {
     setPdfOpen(true);
   }, []);
 
-  const handleDownload = useCallback(async () => {
-    if (!paper) return;
-    setDownloading(true);
-    try {
-      const { url: pdfUrl } = await getPdfFull(paper.id);
-      // S3 URL을 Vite 프록시 경로로 변환하여 CORS 우회
-      const s3Host = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
-      const proxiedUrl = pdfUrl.replace(s3Host, '/s3-proxy');
-      const res = await fetch(proxiedUrl);
-      if (!res.ok) throw new Error('다운로드 실패');
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const downloadName = `${paper.title.replace(/[\\/:*?"<>|]/g, '_')}.pdf`;
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = downloadName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      if (err instanceof PdfApiError && err.status === 403) {
-        alert('다운로드 권한이 없습니다. 논문을 구매해 주세요.');
-      } else {
-        alert('PDF 다운로드에 실패했습니다.');
-      }
-    } finally {
-      setDownloading(false);
-    }
-  }, [paper]);
 
   const handleScrollToAbstract = () => {
     abstractRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -443,35 +412,17 @@ function PaperDetailContent() {
                   </button>
                 </div>
 
-                {/* 가격 + 구매 버튼 */}
+                {/* 가격 + 구매/원문보기 버튼 */}
                 <div className="flex items-center gap-2 self-end sm:self-auto">
-                  {isPurchased ? (
-                    <>
-                      <button
-                        onClick={handleViewFull}
-                        className="inline-flex items-center justify-center px-4 h-9 bg-white border border-[#256EF4] text-[#0B50D0] text-[14px] rounded-md hover:bg-[#ECF2FE] transition-colors"
-                      >
-                        원문보기
-                      </button>
-                      <button
-                        onClick={handleDownload}
-                        disabled={downloading}
-                        className="inline-flex items-center justify-center px-4 h-9 bg-[#256EF4] text-white text-[14px] rounded-md hover:bg-[#1E5ADB] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {downloading ? '다운로드 중...' : '다운로드'}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-[15px] font-bold text-[#AB2B36]">￦ 7,000</span>
-                      <button
-                        onClick={handlePurchase}
-                        className="inline-flex items-center justify-center px-4 h-9 bg-white border border-[#256EF4] text-[#0B50D0] text-[14px] rounded-md hover:bg-[#ECF2FE] transition-colors"
-                      >
-                        구매하기
-                      </button>
-                    </>
+                  {!isPurchased && (
+                    <span className="text-[15px] font-bold text-[#AB2B36]">￦ 7,000</span>
                   )}
+                  <button
+                    onClick={isPurchased ? handleViewFull : handlePurchase}
+                    className="inline-flex items-center justify-center px-4 h-9 bg-[#256EF4] text-white text-[14px] rounded-md hover:bg-[#1E5ADB] transition-colors"
+                  >
+                    {isPurchased ? '원문보기' : '구매하기'}
+                  </button>
                 </div>
               </div>
 
