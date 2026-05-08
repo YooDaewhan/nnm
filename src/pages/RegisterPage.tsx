@@ -104,15 +104,15 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!agreeAll) { setError('약관에 동의해주세요.'); return; }
     if (!otpVerified || !verificationToken) { setError('이메일 인증을 완료해주세요.'); return; }
-    if (password !== passwordConfirmation) { setError('비밀번호가 일치하지 않습니다.'); return; }
-    setLoading(true);
+setLoading(true);
     setError(null);
     try {
-      const registerData = {
+      const registerData: PostApiAuthRegisterBody = {
         name, email, password,
         password_confirmation: passwordConfirmation,
         verification_token: verificationToken,
-      } as PostApiAuthRegisterBody;
+        agreement: 1,
+      };
 
       const response = await postApiAuthRegister(registerData, { credentials: 'include' });
 
@@ -269,7 +269,7 @@ export default function RegisterPage() {
 
               {/* 비밀번호 확인 */}
               <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-md overflow-hidden">
+                <div className={`flex items-center gap-2 px-4 py-3 bg-[#F4F5F6] border rounded-md overflow-hidden ${passwordConfirmation && password !== passwordConfirmation ? 'border-red-400' : 'border-[#CDD1D5]'}`}>
                   <input
                     type={showPassword ? 'text' : 'password'} value={passwordConfirmation}
                     onChange={(e) => setPasswordConfirmation(e.target.value)}
@@ -277,7 +277,15 @@ export default function RegisterPage() {
                     className={inputCls} style={fontStyle}
                   />
                 </div>
-                <span className="text-xs sm:text-[13px] text-[#464C53]" style={fontStyle}>8~16자리의 영문 대소문자, 숫자, 특수문자를 조합하여 설정해 주세요.</span>
+                {passwordConfirmation && password !== passwordConfirmation && (
+                  <span className="text-xs sm:text-[13px] text-red-500" style={fontStyle}>비밀번호가 일치하지 않습니다.</span>
+                )}
+                {passwordConfirmation && password === passwordConfirmation && (
+                  <span className="text-xs sm:text-[13px] text-green-600" style={fontStyle}>비밀번호가 일치합니다.</span>
+                )}
+                {!passwordConfirmation && (
+                  <span className="text-xs sm:text-[13px] text-[#464C53]" style={fontStyle}>8~16자리의 영문 대소문자, 숫자, 특수문자를 조합하여 설정해 주세요.</span>
+                )}
               </div>
             </div>
 
@@ -305,7 +313,7 @@ export default function RegisterPage() {
               style={fontStyle}>
               취소
             </button>
-            <button type="button" onClick={handleRegister as any} disabled={loading || !otpVerified || !agreeAll}
+            <button type="button" onClick={handleRegister as any} disabled={loading || !otpVerified || !agreeAll || password !== passwordConfirmation || !password}
               className="flex-1 h-14 bg-[#039BE5] rounded-lg border-none text-white text-lg sm:text-[19px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               style={fontStyle}>
               {loading ? '처리 중...' : '가입'}

@@ -60,8 +60,12 @@ export type PostApiAuthRegisterBody = {
    * @nullable
    */
   device_name?: string | null;
+  /** 비밀번호 확인 (password와 동일한 값). */
+  password_confirmation: string;
   /** /auth/email/verify-otp 에서 발급받은 64자 인증 토큰. Must be 64 characters. */
   verification_token: string;
+  /** 약관 동의 여부 (1: 동의, 0: 비동의). */
+  agreement: 0 | 1;
 };
 
 export type PostApiAuthRegister201User = {
