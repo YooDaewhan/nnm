@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { OpenSearchTextResultItem } from '@/api/search';
+import { OpenSearchTextResultItem, fetchAiSummary } from '@/api/search';
 import { getPdfFull, PdfApiError } from '@/api/pdf';
 import { PdfFullViewerModal } from '../PdfFullViewerModal';
 import { addScrapBatch, deleteScrapBatch } from '@/api/scraps';
@@ -49,6 +49,10 @@ export function SearchResultCard({
   const [citeCopied, setCiteCopied] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [aiSummaryExpanded, setAiSummaryExpanded] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [aiSummaryError, setAiSummaryError] = useState(false);
 
   const scrapMutation = useMutation({
     mutationFn: () =>
@@ -151,6 +155,26 @@ export function SearchResultCard({
     }
     return `/papers/${result.id}`;
   })();
+
+  const handleAiSummary = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (aiSummaryExpanded) {
+      setAiSummaryExpanded(false);
+      return;
+    }
+    setAiSummaryExpanded(true);
+    if (aiSummary !== null) return;
+    setAiSummaryLoading(true);
+    setAiSummaryError(false);
+    try {
+      const summary = await fetchAiSummary(result.title);
+      setAiSummary(summary);
+    } catch {
+      setAiSummaryError(true);
+    } finally {
+      setAiSummaryLoading(false);
+    }
+  }, [aiSummaryExpanded, aiSummary, result.title]);
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -334,11 +358,11 @@ export function SearchResultCard({
               {!result.abstract ? '초록 없음' : expanded ? '접기' : '초록보기'}
             </button>
             <div className="w-px h-3 bg-[#CDD1D5]"/>
-            <button className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
+            <button onClick={handleAiSummary} className={`flex items-center gap-1 px-3 text-[13px] transition-colors ${aiSummaryExpanded ? 'text-[#256EF4]' : 'text-[#464C53] hover:text-[#256EF4]'}`}>
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M8 1.5L9.8 5.5L14 6.1L11 9L11.8 13.2L8 11.1L4.2 13.2L5 9L2 6.1L6.2 5.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
               </svg>
-              AI 요약
+              {aiSummaryLoading ? '요약 중...' : aiSummaryExpanded ? '접기' : 'AI 요약'}
             </button>
             <div className="w-px h-3 bg-[#CDD1D5]"/>
             <button onClick={handleOpenCite} className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
@@ -355,6 +379,24 @@ export function SearchResultCard({
               <p className="text-[13px] text-[#464C53] leading-[1.6em]">
                 {highlightText(result.abstract, highlightTerms)}
               </p>
+            </div>
+          )}
+
+          {aiSummaryExpanded && (
+            <div className="mt-3 p-3 bg-[#F0F4FF] rounded-lg border border-[#C7D9FF]">
+              <div className="flex items-center gap-1.5 mb-2">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 1.5L9.8 5.5L14 6.1L11 9L11.8 13.2L8 11.1L4.2 13.2L5 9L2 6.1L6.2 5.5L8 1.5Z" stroke="#256EF4" strokeWidth="1.3" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-[12px] font-semibold text-[#256EF4]">AI 요약</span>
+              </div>
+              {aiSummaryLoading ? (
+                <p className="text-[13px] text-[#8A949E]">요약을 생성하고 있습니다...</p>
+              ) : aiSummaryError ? (
+                <p className="text-[13px] text-[#AB2B36]">AI 요약을 불러오는데 실패했습니다.</p>
+              ) : (
+                <p className="text-[13px] text-[#464C53] leading-[1.6em]">{aiSummary}</p>
+              )}
             </div>
           )}
         </div>

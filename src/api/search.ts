@@ -1002,6 +1002,39 @@ export async function searchOpensearchVector(params: {
   };
 }
 
+// ===== AI 요약 API =====
+
+export type PostAiSearchBody = {
+  query: string;
+  top_k?: number;
+  min_similarity?: number;
+  include_summary?: boolean;
+};
+
+export type AiSearchResponse = {
+  summary?: string;
+  results?: unknown[];
+  [key: string]: unknown;
+};
+
+export async function fetchAiSummary(query: string): Promise<string> {
+  const accessToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  const res = await fetch('/api/ai/search', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify({ query, top_k: 5, min_similarity: 0.5, include_summary: true }),
+  });
+  if (!res.ok) throw new Error('AI 요약을 불러오는데 실패했습니다.');
+  const data: AiSearchResponse = await res.json();
+  const summary = data.summary ?? (data as any).data?.summary;
+  if (!summary) throw new Error('AI 요약 결과가 없습니다.');
+  return summary;
+}
+
 // ===== OpenSearch 하이브리드 검색 API =====
 
 export type PostApiSearchOpensearchHybridBody = {

@@ -79,7 +79,7 @@ export function SearchControlBar({
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
               <path d="M4 2H12C12.55 2 13 2.45 13 3V14.5L8 11.5L3 14.5V3C3 2.45 3.45 2 4 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
             </svg>
-            보관함 담기
+            스크랩
           </button>
           <div className="w-px h-4 bg-[#CDD1D5]" />
           <button

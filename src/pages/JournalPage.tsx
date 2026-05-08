@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 /* ───────────────────────────────────────────
    Types
@@ -92,6 +92,7 @@ const METRICS = [
    Component
    ─────────────────────────────────────────── */
 export default function JournalPage() {
+  const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabType>('최신 논문');
   const [selectedVolume, setSelectedVolume] = useState('');
   const [selectedIssue, setSelectedIssue] = useState('');

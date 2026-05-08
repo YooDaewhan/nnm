@@ -15,7 +15,7 @@ export function FloatingActionBar({ selectedCount, bulkScrapLoading, bulkCartLoa
       <span className="text-[14px] font-medium whitespace-nowrap mr-4">{selectedCount}개 선택</span>
       <div className="w-px h-4 bg-white/20" />
       <button onClick={onScrap} disabled={bulkScrapLoading} className="px-4 text-[14px] text-white/80 hover:text-white disabled:text-white/30 transition-colors whitespace-nowrap">
-        {bulkScrapLoading ? '추가 중...' : '보관함 담기'}
+        {bulkScrapLoading ? '추가 중...' : '스크랩'}
       </button>
       <div className="w-px h-4 bg-white/20" />
       <button onClick={onCite} disabled={selectedCount === 0} className="px-4 text-[14px] text-white/80 hover:text-white transition-colors whitespace-nowrap">

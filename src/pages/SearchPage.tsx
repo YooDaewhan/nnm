@@ -57,15 +57,18 @@ function OpenSearchTextContent() {
   const searchResults = data?.results ?? [];
   const totalResults = data?.total ?? data?.count ?? 0;
 
-  if (data) {
-    console.log('[SearchPage] API response:', data);
-    console.log('[SearchPage] 첫번째 결과 샘플:', data.results?.[0]);
-    console.log('[SearchPage] 첫번째 결과 metadata:', data.results?.[0]?.metadata);
-  }
   const searchError = error instanceof Error ? error.message : error ? '검색 중 오류가 발생했습니다.' : null;
   const totalPages = Math.ceil(totalResults / itemsPerPage);
 
   useEffect(() => { setSelectedIds(new Set()); }, [data]);
+
+  useEffect(() => {
+    if (data) {
+      console.log('[SearchPage] API response:', data);
+      console.log('[SearchPage] 첫번째 결과 샘플:', data.results?.[0]);
+      console.log('[SearchPage] 첫번째 결과 metadata:', data.results?.[0]?.metadata);
+    }
+  }, [data]);
 
   // 구매 내역 조회 (PapersPage와 동일한 로직)
   const { data: ordersData } = useQuery({

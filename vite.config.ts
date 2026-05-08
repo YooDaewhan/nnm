@@ -23,6 +23,10 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/s3-proxy/, ''),
         secure: true,
       },
+      '/api/ai': {
+        target: 'http://192.168.20.231:8000',
+        changeOrigin: true,
+      },
     },
   },
   build: {

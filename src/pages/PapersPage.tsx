@@ -304,7 +304,12 @@ function PaperDetailContent() {
                               </svg>
                             </>
                           )}
-                          <span className="text-[15px] leading-[1.5em] text-[#464C53]">{paper.venue.name}</span>
+                          <Link
+                            to={`/journal/${paper.venue.id}`}
+                            className="text-[15px] leading-[1.5em] text-[#464C53] hover:underline"
+                          >
+                            {paper.venue.name}
+                          </Link>
                           {paper.issue?.label && (
                             <>
                               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 mx-0.5">
@@ -403,7 +408,7 @@ function PaperDetailContent() {
                   {/* 인용하기 */}
                   <button
                     onClick={handleOpenCite}
-                    className="flex items-center gap-1.5 px-2 sm:px-3 h-9 text-[13px] sm:text-[14px] text-[#464C53] hover:text-[#131416] transition-colors"
+                    className="flex items-ce nter gap-1.5 px-2 sm:px-3 h-9 text-[13px] sm:text-[14px] text-[#464C53] hover:text-[#131416] transition-colors"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M4 6.5C4 5 5 4 6.5 4H7v2H6.5C6.2 6 6 6.2 6 6.5V7h1v3H4V6.5zM9.5 6.5C9.5 5 10.5 4 12 4h.5v2H12c-.3 0-.5.2-.5.5V7h1v3H9.5V6.5z" fill="#464C53" opacity="0.8" />

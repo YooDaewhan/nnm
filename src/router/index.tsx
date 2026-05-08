@@ -32,6 +32,7 @@ export const router = createBrowserRouter([
       { path: '/papers/:id',          element: <PapersPage /> },
       { path: '/providers',           element: <ProvidersPage /> },
       { path: '/providers/detail',    element: <ProvidersDetailPage /> },
+      { path: '/journal/:id',          element: <JournalPage /> },
       { path: '/journal',             element: <JournalPage /> },
       { path: '/cart',                element: <CartPage /> },
       { path: '/pay',                 element: <PayPage /> },
