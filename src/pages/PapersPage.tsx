@@ -1,10 +1,12 @@
 import { useState, Suspense, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
 import { PdfPreviewModal } from '../components/PdfPreviewModal';
 import { PdfFullViewerModal } from '../components/PdfFullViewerModal';
+import { addToCart } from '../api/cart';
+import { addScrapBatch, deleteScrapBatch, checkScrapBatch } from '../api/scraps';
 
 type OSPaperDetail = PaperDetail & {
   keywords_en?: string[];
@@ -65,6 +67,8 @@ function PaperDetailContent() {
   const [citeCopied, setCiteCopied] = useState<string | null>(null);
 
   const loggedIn = isAuthenticated();
+  const queryClient = useQueryClient();
+  const [copied, setCopied] = useState(false);
 
   const { data: paper, isLoading, error: fetchError } = useQuery<OSPaperDetail>({
     queryKey: ['paper', id],
@@ -78,6 +82,60 @@ function PaperDetailContent() {
     enabled: loggedIn,
     staleTime: 1000 * 60 * 5,
   });
+
+  const { data: scrappedIds = new Set<string>() } = useQuery({
+    queryKey: ['scrap-batch', id ? [id] : []],
+    queryFn: () => checkScrapBatch([id!]),
+    enabled: loggedIn && !!id,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const isScraped = id ? scrappedIds.has(id) : false;
+
+  const scrapMutation = useMutation({
+    mutationFn: () => isScraped ? deleteScrapBatch([id!]) : addScrapBatch([id!]),
+    onSuccess: () => {
+      queryClient.setQueryData<Set<string>>(['scrap-batch', id ? [id] : []], (old = new Set()) => {
+        const next = new Set(old);
+        if (isScraped) next.delete(id!);
+        else next.add(id!);
+        return next;
+      });
+    },
+    onError: (err) => alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.'),
+  });
+
+  const cartMutation = useMutation({
+    mutationFn: () => addToCart({ publication_id: id! }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['cart'] }); alert('장바구니에 추가되었습니다.'); },
+    onError: (err) => alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
+  });
+
+  const handleShare = () => {
+    const url = window.location.href;
+    const doCopy = () => { setCopied(true); setTimeout(() => setCopied(false), 1500); };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(doCopy).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = url; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta);
+        ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); doCopy();
+      });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = url; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta);
+      ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); doCopy();
+    }
+  };
+
+  const handleScrap = () => {
+    if (!loggedIn) { navigate('/login'); return; }
+    scrapMutation.mutate();
+  };
+
+  const handleAddToCart = () => {
+    if (!loggedIn) { navigate('/login'); return; }
+    cartMutation.mutate();
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -289,25 +347,39 @@ function PaperDetailContent() {
                         style={{ background: '#ECF2FE', color: '#0B50D0' }}
                       >
                         KCI등재
-                      </span>
+                      </span> 
                     </div>
 
                     {/* btn-icon-box : share, heart, bag icons (gap 16px) */}
                     <div className="flex flex-row justify-end items-center gap-[16px]">
                       {/* share */}
-                      <button className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors">
+                      <div className="relative">
+                        <button onClick={handleShare} title="링크 복사" className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors">
+                          {copied ? (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                              <path d="M5 12l5 5L19 7" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                              <path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </button>
+                        {copied && (
+                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">복사됨</span>
+                        )}
+                      </div>
+                      {/* heart/scrap */}
+                      <button onClick={handleScrap} disabled={scrapMutation.isPending} title={isScraped ? '스크랩 해제' : '스크랩'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+                            stroke={isScraped ? '#256EF4' : '#33363D'}
+                            fill={isScraped ? '#256EF4' : 'none'}
+                            strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
-                      {/* heart */}
-                      <button className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                      {/* bag */}
-                      <button className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors">
+                      {/* bag/cart */}
+                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title="장바구니 담기" className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                           <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -352,7 +424,7 @@ function PaperDetailContent() {
                           {paper.provider && (
                             <>
                               {paper.provider.website_url ? (
-                                <a href={paper.provider.website_url} target="_blank" rel="noopener noreferrer"
+                                <a href={/^https?:\/\//i.test(paper.provider.website_url) ? paper.provider.website_url : `https://${paper.provider.website_url}`} target="_blank" rel="noopener noreferrer"
                                   className="text-[17px] leading-[150%] text-[#464C53] hover:underline">
                                   {paper.provider.name}
                                 </a>
@@ -475,21 +547,21 @@ function PaperDetailContent() {
               <div className="w-full h-px" style={{ background: '#CDD1D5' }} />
 
               {/* ══ article__detail : flex col, gap 64px ══ */}
-              <div className="flex flex-col gap-[64px]">
+              <div className="flex flex-col gap-[64px] w-full">
 
                 {/* con-abstract : 초록, gap 20px */}
                 {paper.abstract && (
-                  <div ref={abstractRef} className="flex flex-col gap-[20px]">
+                  <div ref={abstractRef} className="flex flex-col gap-[20px] w-full">
                     <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">초록</h2>
-                    <p className="text-[17px] font-normal leading-[150%] text-[#464C53] whitespace-pre-line">{paper.abstract}</p>
+                    <p className="text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract}</p>
                   </div>
                 )}
 
                 {/* 영문초록 */}
                 {paper.abstract_en && (
-                  <div className="flex flex-col gap-[20px]">
+                  <div className="flex flex-col gap-[20px] w-full">
                     <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">영문초록</h2>
-                    <p className="text-[17px] font-normal leading-[150%] text-[#464C53] whitespace-pre-line">{paper.abstract_en}</p>
+                    <p className="text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract_en}</p>
                   </div>
                 )}
 
