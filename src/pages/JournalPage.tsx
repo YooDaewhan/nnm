@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { API_BASE_URL } from '../api/client';
 
 /* ───────────────────────────────────────────
@@ -20,6 +20,18 @@ interface FeaturedPaper {
   doi?: string;
 }
 
+interface VenueSettings {
+  pissn?: string;
+  eissn?: string;
+  kci?: boolean;
+  lang?: string;
+  award?: string[];
+  status?: string;
+  frequency?: number;
+  published_since_year?: number;
+  [key: string]: unknown;
+}
+
 interface VenueDetail {
   id: string;
   name: string;
@@ -30,7 +42,7 @@ interface VenueDetail {
   frequency_label?: string;
   pissn?: string;
   eissn?: string;
-  settings?: Record<string, unknown>;
+  settings?: VenueSettings;
   provider?: {
     name?: string;
     website_url?: string;
@@ -39,6 +51,12 @@ interface VenueDetail {
     papers_count?: number;
     volumes_count?: number;
     active_years?: number;
+  };
+  kci?: {
+    impact_factor?: number;
+    paper_count?: number;
+    citation_count?: number;
+    synced_at?: string;
   };
   featured_papers?: {
     recent?: FeaturedPaper[];
@@ -63,6 +81,7 @@ type TabType = (typeof TABS)[number];
    ─────────────────────────────────────────── */
 export default function JournalPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [venue, setVenue] = useState<VenueDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +104,7 @@ export default function JournalPage() {
         return res.json();
       })
       .then((data) => {
-        console.log('[JournalPage] featured_papers:', data.featured_papers);
+        console.log('[JournalPage] full response:', JSON.stringify(data, null, 2));
         setVenue(data);
       })
       .catch((e) => setError(e.message))
@@ -126,11 +145,17 @@ export default function JournalPage() {
   };
   const tabPapers = tabMap[activeTab];
 
+  const pissn = venue.pissn ?? venue.settings?.pissn;
+  const eissn = venue.eissn ?? venue.settings?.eissn;
+
   const infoRows: [string, string | undefined][] = [
     ['발행기관', venue.provider?.name],
-    ['ISSN', venue.pissn],
+    ['ISSN', pissn],
     ['발행주기', venue.frequency_label],
-    ['eISSN', venue.eissn],
+    ['eISSN', eissn],
+    ['KCI 영향력지수', venue.kci?.impact_factor?.toLocaleString()],
+    ['KCI 논문수', venue.kci?.paper_count?.toLocaleString()],
+    ['KCI 피인용횟수', venue.kci?.citation_count?.toLocaleString()],
   ];
 
   return (
@@ -237,7 +262,7 @@ export default function JournalPage() {
               >
                 {infoRows.map(([label, value], i) => (
                   <div key={i} className="flex items-start">
-                    <span style={{ width: 100, color: '#F4F5F6', fontWeight: 400 }}>{label}</span>
+                    <span style={{ minWidth: 140, color: '#F4F5F6', fontWeight: 400 }}>{label}</span>
                     <span style={{ color: '#F4F5F6', fontWeight: 600 }}>{value ?? ''}</span>
                   </div>
                 ))}
@@ -251,7 +276,7 @@ export default function JournalPage() {
             >
               {venue.submission_url && (
                 <a
-                  href={venue.submission_url}
+                  href={/^https?:\/\//i.test(venue.submission_url) ? venue.submission_url : `https://${venue.submission_url}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -275,7 +300,7 @@ export default function JournalPage() {
               )}
               {venue.provider?.website_url && (
                 <a
-                  href={venue.provider.website_url}
+                  href={/^https?:\/\//i.test(venue.provider.website_url) ? venue.provider.website_url : `https://${venue.provider.website_url}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -489,6 +514,7 @@ export default function JournalPage() {
                   >
                     <div className="flex flex-col gap-2 flex-1">
                       <h4
+                        onClick={() => navigate(`/papers/${paper.id}`)}
                         style={{
                           fontFamily: "'Pretendard GOV', sans-serif",
                           fontWeight: 700,
@@ -562,6 +588,7 @@ export default function JournalPage() {
                       style={{ width: 96, alignSelf: 'stretch' }}
                     >
                       <button
+                        onClick={() => navigate(`/papers/${paper.id}`)}
                         style={{
                           width: 96,
                           height: 40,
@@ -654,7 +681,7 @@ export default function JournalPage() {
                   <>
                     <div style={{ height: 1, background: '#D8E5FD' }} />
                     <a
-                      href={venue.submission_url}
+                      href={/^https?:\/\//i.test(venue.submission_url!) ? venue.submission_url! : `https://${venue.submission_url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

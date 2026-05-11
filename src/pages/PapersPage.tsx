@@ -17,13 +17,23 @@ type OSPaperDetail = PaperDetail & {
   issue_number?: string;
   source?: string;
   indexing?: { kci?: string; kci_status?: number; index_info?: string };
+  venue?: PaperDetail['venue'] & { settings?: { award?: string[]; kci?: boolean } };
+};
+
+const AWARD_BADGE_MAP: Record<string, { label: string; bg: string; color: string }> = {
+  kci:           { label: 'KCI등재',     bg: '#ECF2FE', color: '#0B50D0' },
+  kci_candidate: { label: 'KCI등재후보', bg: '#EEF6FF', color: '#2563EB' },
+  scopus:        { label: 'SCOPUS',      bg: '#F0FDF4', color: '#166534' },
+  scie:          { label: 'SCIE',        bg: '#FFF7ED', color: '#C2410C' },
+  ssci:          { label: 'SSCI',        bg: '#FDF4FF', color: '#7E22CE' },
+  esci:          { label: 'ESCI',        bg: '#FFFBEB', color: '#B45309' },
 };
 import { getPayments } from '../api/payment';
 import { isAuthenticated } from '../lib/auth';
 import { addRecentPaper } from './mypage/MyPageRecentPage';
 
 
-/* 메타 행 컴포넌트 — CSS: info-1 row, label 100px w-[100px], font-weight:600, 17px, #1E2124 */
+/* 메타 행 컴포넌트 — CSS: info-1 row, label 100px w-[100px], f ont-weight:600, 17px, #1E2124 */
 function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-row items-start">
@@ -60,6 +70,7 @@ function PaperDetailContent() {
 
   const [pdfOpen, setPdfOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const [citeOpen, setCiteOpen] = useState(false);
   const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
@@ -143,7 +154,16 @@ function PaperDetailContent() {
 
   useEffect(() => {
     if (paper) {
-      console.log('[PaperDetail]', paper);
+      console.log('[PaperDetail] 전체 응답:', paper);
+      console.log('[PaperDetail] table_of_contents:', paper.table_of_contents);
+      console.log('[PaperDetail] abstract:', paper.abstract);
+      console.log('[PaperDetail] abstract_en:', paper.abstract_en);
+      console.log('[PaperDetail] keywords:', paper.keywords);
+      console.log('[PaperDetail] keywords_en:', (paper as OSPaperDetail).keywords_en);
+      console.log('[PaperDetail] references:', paper.references);
+      console.log('[PaperDetail] body_content:', paper.body_content);
+      console.log('[PaperDetail] venue.settings.award:', paper.venue?.settings?.award);
+      console.log('[PaperDetail] JSON:', JSON.stringify(paper));
       addRecentPaper({
         id: paper.id,
         title: paper.title,
@@ -192,6 +212,47 @@ function PaperDetailContent() {
     setPreviewOpen(false);
     setPdfOpen(true);
   }, []);
+
+  const handleDownload = useCallback(async () => {
+    if (!paper) return;
+    setDownloading(true);
+    try {
+      const { API_BASE_URL } = await import('../api/client');
+      const token = localStorage.getItem('access_token');
+      const headers: Record<string, string> = { Accept: 'application/json', 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const res = await fetch(`${API_BASE_URL}/api/citations/${paper.id}/download?format=bibtex`, { method: 'GET', headers });
+      if (!res.ok) throw new Error('다운로드에 실패했습니다.');
+
+      const contentType = res.headers.get('Content-Type') ?? '';
+      if (contentType.includes('application/json')) {
+        const json = await res.json();
+        const url: string | undefined = json.url ?? json.download_url ?? json.signed_url ?? json.presigned_url ?? json.data?.url;
+        if (!url) throw new Error('다운로드 URL이 없습니다.');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = json.filename ?? `${paper.title}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${paper.title}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '다운로드에 실패했습니다.');
+    } finally {
+      setDownloading(false);
+    }
+  }, [paper]);
 
 
   const handleScrollToAbstract = () => {
@@ -334,20 +395,28 @@ function PaperDetailContent() {
                   <div className="flex flex-row justify-between items-center">
                     {/* badge-box : gap 8px */}
                     <div className="flex flex-row items-start gap-[8px]">
-                      {/* 학술저널 badge : bg #E7F4FE, color #096AB3 */}
+                      {/* 학술저널 badge : 항상 표시 */}
                       <span
                         className="inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
                         style={{ background: '#E7F4FE', color: '#096AB3' }}
                       >
                         학술저널
                       </span>
-                      {/* KCI등재 badge : bg #ECF2FE, color #0B50D0 */}
-                      <span
-                        className="inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
-                        style={{ background: '#ECF2FE', color: '#0B50D0' }}
-                      >
-                        KCI등재
-                      </span> 
+                      {/* venue.settings.award 기반 동적 배지 */}
+                      {paper.venue?.settings?.award?.map((award: string) => {
+                        const key = award.trim().toLowerCase();
+                        const badge = AWARD_BADGE_MAP[key];
+                        if (!badge) return null;
+                        return (
+                          <span
+                            key={award}
+                            className="inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
+                            style={{ background: badge.bg, color: badge.color }}
+                          >
+                            {badge.label}
+                          </span>
+                        );
+                      })}
                     </div>
 
                     {/* btn-icon-box : share, heart, bag icons (gap 16px) */}
@@ -538,6 +607,23 @@ function PaperDetailContent() {
                       >
                         {isPurchased ? '원문보기' : '구매하기'}
                       </button>
+                      {isPurchased && (
+                        <button
+                          onClick={handleDownload}
+                          disabled={downloading}
+                          title="PDF 다운로드"
+                          className="inline-flex items-center justify-center w-[48px] h-[48px] rounded-[6px] border border-[#CDD1D5] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50"
+                        >
+                          {downloading ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1E2124]" />
+                          ) : (
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                              <path d="M10 3v10M6 9l4 4 4-4" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M4 15h12" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" />
+                            </svg>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -606,7 +692,7 @@ function PaperDetailContent() {
                 <div className="flex flex-col gap-[20px]">
                   <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">목차</h2>
                   <div className="text-[17px] font-normal leading-[150%] text-[#464C53] whitespace-pre-line">
-                    {paper.table_of_contents || '등록된 목차 정보가 없습니다.'}
+                    {paper.body_content || '등록된 목차 정보가 없습니다.'}
                   </div>
                 </div>
 
