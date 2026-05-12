@@ -39,6 +39,9 @@ export function SearchControlBar({
     backgroundPosition: 'right 10px center',
   };
 
+  const allSelected = selectedIds.size === searchResults.length && searchResults.length > 0;
+  const partialSelected = selectedIds.size > 0 && !allSelected;
+
   return (
     <>
       {totalResults > 0 && (
@@ -48,40 +51,41 @@ export function SearchControlBar({
       )}
       <div className="hidden md:flex items-center justify-between mb-4 pb-3 border-b border-[#E4E7EA]">
         <div className="flex items-center">
+          {/* 전체선택 */}
           <button
             onClick={onSelectAll}
-            className="flex items-center gap-2 pr-4 text-[14px] text-[#464C53] hover:text-[#1E2124] transition-colors"
+            className="flex items-center gap-1.5 pr-4 text-[14px] text-[#464C53] hover:text-[#1E2124] transition-colors"
           >
             <div className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
-              ${selectedIds.size === searchResults.length && searchResults.length > 0
-                ? 'bg-[#256EF4] border-[#256EF4]'
-                : selectedIds.size > 0
-                  ? 'bg-[#256EF4]/20 border-[#256EF4]'
-                  : 'border-[#CDD1D5] bg-white'}`}
+              ${allSelected ? 'bg-[#256EF4] border-[#256EF4]' : partialSelected ? 'bg-[#256EF4]/20 border-[#256EF4]' : 'border-[#CDD1D5] bg-white'}`}
             >
-              {selectedIds.size === searchResults.length && searchResults.length > 0 && (
+              {allSelected && (
                 <svg width="10" height="8" viewBox="0 0 12 10" fill="none">
                   <path d="M1 5L4.5 8.5L11 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )}
-              {selectedIds.size > 0 && selectedIds.size < searchResults.length && (
-                <div className="w-2 h-0.5 bg-[#256EF4] rounded" />
-              )}
+              {partialSelected && <div className="w-2 h-0.5 bg-[#256EF4] rounded" />}
             </div>
             전체선택
           </button>
+
           <div className="w-px h-4 bg-[#CDD1D5]" />
+
+          {/* 보관함 담기 */}
           <button
             onClick={onBulkScrap}
             disabled={selectedIds.size === 0 || bulkScrapLoading}
             className="px-4 text-[14px] text-[#464C53] hover:text-[#1E2124] disabled:text-[#CDD1D5] transition-colors flex items-center gap-1.5"
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <path d="M4 2H12C12.55 2 13 2.45 13 3V14.5L8 11.5L3 14.5V3C3 2.45 3.45 2 4 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+              <path d="M8 12.5L4.5 10 2 11V4C2 3.45 2.45 3 3 3H13C13.55 3 14 3.45 14 4V11L11.5 10 8 12.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
             </svg>
-            스크랩
+            보관함 담기
           </button>
+
           <div className="w-px h-4 bg-[#CDD1D5]" />
+
+          {/* 인용하기 */}
           <button
             onClick={onBulkCite}
             disabled={selectedIds.size === 0}
@@ -93,7 +97,10 @@ export function SearchControlBar({
             </svg>
             인용하기
           </button>
+
           <div className="w-px h-4 bg-[#CDD1D5]" />
+
+          {/* 구매하기 */}
           <button
             onClick={onBulkBuy}
             disabled={selectedIds.size === 0 || bulkCartLoading}
@@ -103,9 +110,11 @@ export function SearchControlBar({
               <path d="M2.5 5.5H13.5L12 13H4L2.5 5.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
               <path d="M6 5.5C6 3.8 7 2.5 8 2.5C9 2.5 10 3.8 10 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
-            장바구니 담기
+            구매하기
           </button>
         </div>
+
+        {/* 정렬 + 개수 */}
         <div className="flex items-center gap-2">
           <select
             value={detailedSort}

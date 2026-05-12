@@ -70,7 +70,6 @@ function OpenSearchTextContent() {
     }
   }, [data]);
 
-  // 구매 내역 조회 (PapersPage와 동일한 로직)
   const { data: ordersData } = useQuery({
     queryKey: ['orders-paid'],
     queryFn: () => getPayments({ status: 'paid', per_page: 100 }),
@@ -80,7 +79,6 @@ function OpenSearchTextContent() {
 
   const paidOrders = ordersData?.success ? ordersData.orders.data : [];
 
-  // 구매한 논문 ID Set 생성
   const purchasedIds = useMemo(() => {
     const ids = new Set<string>();
     paidOrders.forEach((order) => {
@@ -191,6 +189,7 @@ function OpenSearchTextContent() {
         />
 
         <div className="flex flex-col md:flex-row gap-6 items-start">
+          {/* 모바일 필터 토글 */}
           <div className="md:hidden w-full bg-white rounded-xl border border-[#E4E7EA] px-4 py-3 flex items-center justify-between">
             <span className="text-[15px] font-bold text-[#1E2124]">결과 내 검색</span>
             <button
@@ -204,6 +203,7 @@ function OpenSearchTextContent() {
             </button>
           </div>
 
+          {/* 필터 사이드바 */}
           <div className={`w-full md:w-auto md:sticky top-24 md:self-start ${mobileFilterOpen ? '' : 'hidden md:block'}`}>
             <SearchFilterSidebar
               onApply={(filters) => {
@@ -228,6 +228,7 @@ function OpenSearchTextContent() {
             />
           </div>
 
+          {/* 검색 결과 영역 */}
           <div className="w-full md:flex-1 md:min-w-0 md:overflow-hidden md:bg-white md:rounded-xl md:border md:border-[#E4E7EA] md:px-6 md:py-5">
             {submittedState !== null && !isLoading && !searchError && (
               <SearchControlBar
@@ -267,8 +268,9 @@ function OpenSearchTextContent() {
               <p className="text-gray-500 text-center py-8">검색 결과가 없습니다.</p>
             )}
 
+            {/* 카드 목록 — border-top으로 구분, gap 없음 */}
             {!isLoading && !searchError && searchResults.length > 0 && (
-              <div className="space-y-4">
+              <div>
                 {searchResults.map((result) => (
                   <SearchResultCard
                     key={result.id}

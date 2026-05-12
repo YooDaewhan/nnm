@@ -180,75 +180,69 @@ export function SearchResultCard({
     e.stopPropagation();
     e.preventDefault();
     const url = window.location.origin + paperUrl;
-    const doCopy = () => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 500);
-    };
+    const doCopy = () => { setCopied(true); setTimeout(() => setCopied(false), 500); };
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(doCopy).catch(() => {
         const ta = document.createElement('textarea');
-        ta.value = url;
-        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        doCopy();
+        ta.value = url; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta); doCopy();
       });
     } else {
       const ta = document.createElement('textarea');
-      ta.value = url;
-      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      doCopy();
+      ta.value = url; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta); doCopy();
     }
   };
 
+  /* ── 구매 버튼 영역 ── */
   const renderPurchaseButtons = () => {
     if (isPurchased) {
       return (
-        <>
+        <div className="flex flex-col items-stretch gap-2 w-[112px]">
           <button
             onClick={(e) => { e.stopPropagation(); setViewerOpen(true); }}
-            className="h-8 px-4 bg-white border border-[#256EF4] text-[#0B50D0] text-[13px] font-medium rounded-md hover:bg-[#ECF2FE] transition-colors whitespace-nowrap"
+            className="h-9 w-full bg-white border border-[#256EF4] text-[#0B50D0] text-[13px] font-medium rounded-md hover:bg-[#ECF2FE] transition-colors"
           >
             원문보기
           </button>
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="h-8 px-4 bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
+            className="h-9 w-full bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50"
           >
             {downloading ? '다운로드 중...' : '다운로드'}
           </button>
-        </>
+        </div>
       );
     }
     return (
-      <>
-        <span className="text-[14px] font-bold text-[#AB2B36] border border-[#AB2B36] rounded-md px-3 py-1">￦ 7,000</span>
+      <div className="flex flex-col items-stretch gap-2 w-[112px]">
+        <div className="h-9 w-full flex items-center justify-center border border-[#AB2B36] rounded-md">
+          <span className="text-[14px] font-bold text-[#AB2B36]">￦ 7,000</span>
+        </div>
         <button
           onClick={(e) => onBuyNow(e, result.id)}
           disabled={buyLoading}
-          className="h-8 px-4 bg-[#256EF4] text-white text-[13px] font-medium rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
+          className="h-9 w-full bg-[#256EF4] text-white text-[13px] font-semibold rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50"
         >
           {buyLoading ? '처리 중...' : '구매하기'}
         </button>
-      </>
+      </div>
     );
   };
 
+  /* ── 아이콘 버튼 공통 클래스 ── */
+  const iconBtn = 'w-8 h-8 flex items-center justify-center rounded-md text-[#8A949E] hover:text-[#1E2124] hover:bg-[#F4F5F6] transition-colors';
+
   return (
     <>
-      <div className={`bg-white border rounded-xl hover:shadow-md transition-shadow flex items-stretch
-        ${isSelected ? 'border-[#256EF4]' : 'border-[#E4E7EA]'}`}
+      <div className={`flex flex-row items-start gap-4 py-6 border-t bg-white
+        ${isSelected ? 'border-t-[#256EF4]' : 'border-t-[#CDD1D5]'}`}
       >
-        <div onClick={onToggleSelect} className="flex items-start justify-center pt-5 px-3 md:px-4 shrink-0 cursor-pointer">
+        {/* 체크박스 */}
+        <div onClick={onToggleSelect} className="flex items-start justify-center pt-0.5 shrink-0 cursor-pointer">
           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
             ${isSelected ? 'bg-[#256EF4] border-[#256EF4]' : 'border-[#CDD1D5] bg-white hover:border-[#256EF4]'}`}
           >
@@ -260,25 +254,31 @@ export function SearchResultCard({
           </div>
         </div>
 
-        <div onClick={() => navigate(paperUrl)} className="flex-1 min-w-0 py-4 pr-5 pl-0 cursor-pointer">
+        {/* 본문 */}
+        <div onClick={() => navigate(paperUrl)} className="flex-1 min-w-0 cursor-pointer">
+
+          {/* 뱃지 + 아이콘 3개 */}
           <div className="flex items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="inline-flex items-center h-[22px] px-2.5 bg-[#ECF2FE] text-[#0B50D0] text-[12px] font-medium rounded-full">학술저널</span>
               <span className="inline-flex items-center h-[22px] px-2.5 bg-[#EAF6EC] text-[#267337] text-[12px] font-medium rounded-full">KCI등재</span>
             </div>
-            <div className="flex items-center gap-2.5">
+
+            {/* 아이콘 3개 — 모두 32×32 컨테이너, SVG 18×18로 통일 */}
+            <div className="flex items-center gap-0.5">
+              {/* 공유 */}
               <div className="relative">
-                <button type="button" onClick={handleShare} className="text-[#8A949E] hover:text-[#1E2124] transition-colors" title="링크 복사">
+                <button type="button" onClick={handleShare} className={iconBtn} title="링크 복사">
                   {copied ? (
-                    <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
-                      <path d="M4 10L8.5 14.5L16 6" stroke="#256EF4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                      <path d="M4 10L8.5 14.5L16 6" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   ) : (
-                    <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
-                      <circle cx="15" cy="4" r="2" stroke="currentColor" strokeWidth="1.4"/>
-                      <circle cx="15" cy="16" r="2" stroke="currentColor" strokeWidth="1.4"/>
-                      <circle cx="5" cy="10" r="2" stroke="currentColor" strokeWidth="1.4"/>
-                      <path d="M7 9L13 5M7 11L13 15" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                      <circle cx="15" cy="4"  r="2.2" stroke="currentColor" strokeWidth="1.5"/>
+                      <circle cx="15" cy="16" r="2.2" stroke="currentColor" strokeWidth="1.5"/>
+                      <circle cx="5"  cy="10" r="2.2" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M7.1 8.9L12.9 5.5M7.1 11.1L12.9 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
                   )}
                 </button>
@@ -286,28 +286,47 @@ export function SearchResultCard({
                   <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">복사됨</span>
                 )}
               </div>
-              <button onClick={handleScrap} disabled={scrapMutation.isPending} className="text-[#8A949E] hover:text-[#1E2124] transition-colors disabled:opacity-50" title={isScraped ? '스크랩 해제' : '스크랩'}>
-                <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
-                  <path d="M5 3H15C15.55 3 16 3.45 16 4V18L10 14.5L4 18V4C4 3.45 4.45 3 5 3Z"
+
+              {/* 스크랩 */}
+              <button
+                onClick={handleScrap}
+                disabled={scrapMutation.isPending}
+                className={`${iconBtn} disabled:opacity-50`}
+                title={isScraped ? '스크랩 해제' : '스크랩'}
+              >
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M5 3H15C15.55 3 16 3.45 16 4V18L10 14.5L4 18V4C4 3.45 4.45 3 5 3Z"
                     stroke={isScraped ? '#256EF4' : 'currentColor'}
                     fill={isScraped ? '#256EF4' : 'none'}
-                    strokeWidth="1.4" strokeLinejoin="round"/>
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
-              <button onClick={(e) => onAddToCart(e, result.id)} disabled={cartLoading} className="text-[#8A949E] hover:text-[#1E2124] transition-colors disabled:opacity-50" title="장바구니 담기">
-                <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
-                  <path d="M3.5 6.5H16.5L15 15H5L3.5 6.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-                  <path d="M7.5 6.5C7.5 4.6 8.7 3 10 3C11.3 3 12.5 4.6 12.5 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+
+              {/* 장바구니 */}
+              <button
+                onClick={(e) => onAddToCart(e, result.id)}
+                disabled={cartLoading}
+                className={`${iconBtn} disabled:opacity-50`}
+                title="장바구니 담기"
+              >
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <path d="M3 6H17L15.2 15H4.8L3 6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M7.5 6C7.5 4.1 8.6 2.5 10 2.5C11.4 2.5 12.5 4.1 12.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </button>
             </div>
           </div>
 
+          {/* 제목 */}
           <h4 className="text-[16px] font-bold text-[#1E2124] leading-[1.5em] mb-2">
             {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
           </h4>
 
-          <div className="flex items-start justify-between gap-4 mb-1">
+          {/* 메타 + 구매 버튼 */}
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1 flex-wrap text-[13px] text-[#464C53] mb-1">
                 {result.authors && result.authors.length > 0 && (
@@ -325,17 +344,24 @@ export function SearchResultCard({
                 <span>KCI등재</span>
               </div>
               <PublicationMeta metadata={result.metadata} />
+              {result.abstract && (
+                <p className="text-[13px] text-[#C0392B] mt-1.5 line-clamp-1 leading-snug">
+                  • {result.abstract}
+                </p>
+              )}
             </div>
-            <div className="hidden md:flex flex-col items-end gap-1.5 shrink-0">
+
+            <div className="hidden md:block shrink-0">
               {renderPurchaseButtons()}
             </div>
           </div>
 
-          <div className="flex md:hidden items-center justify-end gap-3 mt-2 mb-1">
-            {renderPurchaseButtons(true)}
+          <div className="flex md:hidden justify-end mt-2">
+            {renderPurchaseButtons()}
           </div>
 
-          <div className="hidden md:flex items-center border-t border-[#F4F5F6] pt-2.5 mt-1" onClick={(e) => e.stopPropagation()}>
+          {/* 하단 액션 버튼 */}
+          <div className="hidden md:flex items-center border-t border-[#F4F5F6] pt-2.5 mt-3" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={(e) => { e.stopPropagation(); setPreviewOpen(true); }}
               className="flex items-center gap-1 pr-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors"
@@ -411,11 +437,9 @@ export function SearchResultCard({
           onViewFull={() => { setPreviewOpen(false); setViewerOpen(true); }}
         />
       )}
-
       {viewerOpen && (
         <PdfFullViewerModal paperId={result.id} onClose={() => setViewerOpen(false)} />
       )}
-
       <CitationModal
         open={citeOpen}
         onClose={() => setCiteOpen(false)}
