@@ -717,7 +717,7 @@ function PaperDetailContent() {
                   {paper.references && paper.references.length > 0 ? (
                     <div className="text-[17px] font-normal leading-[150%] text-[#131416]">
                       {paper.references.map((ref, idx) => (
-                        <p key={idx}>{String(ref)}</p>
+                        <p key={idx}>{typeof ref === 'string' ? ref : (ref as { raw_text?: string }).raw_text ?? ''}</p>
                       ))}
                     </div>
                   ) : (
