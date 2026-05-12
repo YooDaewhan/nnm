@@ -38,7 +38,7 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
   return (
     <div className="flex flex-row items-start">
       <div className="flex-shrink-0 w-[100px]">
-        <span className="text-[17px] font-semibold leading-[150%] text-[#1E2124]">{label}</span>
+        <span className="papers-meta-label text-[17px] font-semibold leading-[150%] text-[#1E2124]">{label}</span>
       </div>
       <div className="flex items-center flex-wrap gap-x-[6px]">{children}</div>
     </div>
@@ -334,7 +334,22 @@ function PaperDetailContent() {
     <div className="min-h-screen bg-white">
 
       {/* main : flex col center, padding 48px 0 56px */}
-      <main className="flex flex-col items-center" style={{ padding: '48px 0 56px' }}>
+      <main className="papers-main flex flex-col items-center" style={{ padding: '48px 0 56px' }}>
+        <style>{`
+          @media (max-width: 767px) {
+            .papers-main { padding: 24px 0 56px !important; }
+            .papers-title-ko { font-size: 22px !important; }
+            .papers-title-en { font-size: 15px !important; }
+            .papers-section-heading { font-size: 22px !important; }
+            .papers-badge { font-size: 15px !important; height: 24px !important; }
+            .papers-meta-label { font-size: 15px !important; }
+            .papers-meta-value { font-size: 15px !important; }
+            .papers-body-text { font-size: 15px !important; }
+            .papers-btn-row { flex-direction: column !important; gap: 16px !important; }
+            .papers-btn-pay-box { width: 100% !important; justify-content: flex-end !important; }
+            .papers-btn-icon-left { width: 100% !important; }
+          }
+        `}</style>
 
         {/* wrap : max-w 1280px, padding 0 16px, gap 48px */}
         <div className="w-full max-w-[1280px] px-4 flex flex-col gap-[48px]">
@@ -397,7 +412,7 @@ function PaperDetailContent() {
                     <div className="flex flex-row items-start gap-[8px]">
                       {/* 학술저널 badge : 항상 표시 */}
                       <span
-                        className="inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
+                        className="papers-badge inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
                         style={{ background: '#E7F4FE', color: '#096AB3' }}
                       >
                         학술저널
@@ -410,7 +425,7 @@ function PaperDetailContent() {
                         return (
                           <span
                             key={award}
-                            className="inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
+                            className="papers-badge inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
                             style={{ background: badge.bg, color: badge.color }}
                           >
                             {badge.label}
@@ -460,14 +475,14 @@ function PaperDetailContent() {
                   <div className="flex flex-col gap-[4px]">
                     {/* 제목 : 32px, bold, letter-spacing 1px, #131416 */}
                     <h1
-                      className="text-[24px] lg:text-[32px] font-bold leading-[150%] text-[#131416]"
+                      className="papers-title-ko text-[24px] lg:text-[32px] font-bold leading-[150%] text-[#131416]"
                       style={{ letterSpacing: '1px' }}
                     >
                       {paper.title}
                     </h1>
                     {/* 영문 제목 : 17px, #464C53 */}
                     {paper.title_en && (
-                      <p className="text-[15px] lg:text-[17px] font-normal leading-[150%] text-[#464C53]">
+                      <p className="papers-title-en text-[15px] lg:text-[17px] font-normal leading-[150%] text-[#464C53]">
                         {paper.title_en}
                       </p>
                     )}
@@ -479,7 +494,7 @@ function PaperDetailContent() {
                     {/* 저자정보 */}
                     {paper.authors && paper.authors.length > 0 && (
                       <MetaRow label="저자정보">
-                        <span className="text-[17px] leading-[150%] text-[#464C53]">
+                        <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
                           {paper.authors.slice(0, 3).map((a) => (typeof a === 'string' ? a : a.name)).join(' ')}
                           {paper.authors.length > 3 ? ` 외 ${paper.authors.length - 3}명` : ''}
                         </span>
@@ -494,11 +509,11 @@ function PaperDetailContent() {
                             <>
                               {paper.provider.website_url ? (
                                 <a href={/^https?:\/\//i.test(paper.provider.website_url) ? paper.provider.website_url : `https://${paper.provider.website_url}`} target="_blank" rel="noopener noreferrer"
-                                  className="text-[17px] leading-[150%] text-[#464C53] hover:underline">
+                                  className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline">
                                   {paper.provider.name}
                                 </a>
                               ) : (
-                                <span className="text-[17px] leading-[150%] text-[#464C53]">{paper.provider.name}</span>
+                                <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{paper.provider.name}</span>
                               )}
                               {/* arrow-to-right icon 16px, stroke #CDD1D5 */}
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
@@ -510,7 +525,7 @@ function PaperDetailContent() {
                             <>
                               <Link
                                 to={`/journal/${paper.venue.id}`}
-                                className="text-[17px] leading-[150%] text-[#464C53] hover:underline"
+                                className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline"
                               >
                                 {paper.venue.name}
                               </Link>
@@ -519,7 +534,7 @@ function PaperDetailContent() {
                                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                                     <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
-                                  <span className="text-[17px] leading-[150%] text-[#464C53]">{paper.issue.label}</span>
+                                  <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{paper.issue.label}</span>
                                 </>
                               )}
                               {(paper.page_start || paper.page_end) && (
@@ -527,7 +542,7 @@ function PaperDetailContent() {
                                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                                     <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
-                                  <span className="text-[17px] leading-[150%] text-[#464C53]">
+                                  <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
                                     {paper.page_start && paper.page_end
                                       ? `pp.${paper.page_start}-${paper.page_end}`
                                       : paper.page_start ? `p.${paper.page_start}` : ''}
@@ -547,7 +562,7 @@ function PaperDetailContent() {
                           href={`https://doi.org/${paper.doi}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[17px] leading-[150%] text-[#464C53] hover:underline break-all"
+                          className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline break-all"
                         >
                           {paper.doi}
                         </a>
@@ -556,9 +571,9 @@ function PaperDetailContent() {
                   </div>
 
                   {/* button row : space-between, h-48px */}
-                  <div className="flex flex-row justify-between items-center">
+                  <div className="papers-btn-row flex flex-row justify-between items-center">
                     {/* btn-icon-box left : 미리보기 / 인용하기 (gap 16px) */}
-                    <div className="flex flex-row items-center gap-[16px]">
+                    <div className="papers-btn-icon-left flex flex-row items-center gap-[16px]">
                       {/* 미리보기 button : h-32px, rounded-[4px], gap 4px, font 17px */}
                       <button
                         onClick={() => { console.log('[미리보기] 클릭 paper:', paper?.id, 'previewOpen:', previewOpen); setPreviewOpen(true); }}
@@ -589,7 +604,7 @@ function PaperDetailContent() {
                     </div>
 
                     {/* button-pay-box right : gap 16px */}
-                    <div className="flex flex-row justify-end items-center gap-[16px]">
+                    <div className="papers-btn-pay-box flex flex-row justify-end items-center gap-[16px]">
                       {/* 원문 받기 button (outline) : h-48px, rounded-[6px], px-24, font 17px */}
                       {!isPurchased && (
                         <button
@@ -638,23 +653,23 @@ function PaperDetailContent() {
                 {/* con-abstract : 초록, gap 20px */}
                 {paper.abstract && (
                   <div ref={abstractRef} className="flex flex-col gap-[20px] w-full">
-                    <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">초록</h2>
-                    <p className="text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract}</p>
+                    <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">초록</h2>
+                    <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract}</p>
                   </div>
                 )}
 
                 {/* 영문초록 */}
                 {paper.abstract_en && (
                   <div className="flex flex-col gap-[20px] w-full">
-                    <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">영문초록</h2>
-                    <p className="text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract_en}</p>
+                    <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">영문초록</h2>
+                    <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract_en}</p>
                   </div>
                 )}
 
                 {/* con-keyword : 키워드, gap 20px */}
                 {paper.keywords && paper.keywords.length > 0 && (
                   <div className="flex flex-col gap-[20px]">
-                    <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">키워드</h2>
+                    <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">키워드</h2>
                     {/* keyword__list : gap 10px */}
                     <div className="flex flex-wrap gap-[10px]">
                       {paper.keywords.map((kw, idx) => (
@@ -673,7 +688,7 @@ function PaperDetailContent() {
                 {/* 영문 키워드 */}
                 {paper.keywords_en && paper.keywords_en.length > 0 && (
                   <div className="flex flex-col gap-[20px]">
-                    <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">영문 키워드</h2>
+                    <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">영문 키워드</h2>
                     <div className="flex flex-wrap gap-[10px]">
                       {paper.keywords_en.map((kw, idx) => (
                         <button
@@ -690,15 +705,15 @@ function PaperDetailContent() {
 
                 {/* con-table : 목차, gap 20px */}
                 <div className="flex flex-col gap-[20px]">
-                  <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">목차</h2>
-                  <div className="text-[17px] font-normal leading-[150%] text-[#464C53] whitespace-pre-line">
+                  <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">목차</h2>
+                  <div className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] whitespace-pre-line">
                     {paper.body_content || '등록된 목차 정보가 없습니다.'}
                   </div>
                 </div>
 
                 {/* con-references : 참고문헌, gap 20px */}
                 <div className="flex flex-col gap-[20px]">
-                  <h2 className="text-[24px] font-bold leading-[150%] text-[#131416]">참고문헌</h2>
+                  <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">참고문헌</h2>
                   {paper.references && paper.references.length > 0 ? (
                     <div className="text-[17px] font-normal leading-[150%] text-[#131416]">
                       {paper.references.map((ref, idx) => (
