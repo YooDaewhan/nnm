@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
-import { getPdfFull, PdfApiError } from '../api/pdf';
+import { getPdfPreview, PdfApiError } from '../api/pdf';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -36,11 +36,17 @@ export function PdfPreviewModal({
   }, [onClose]);
 
   useEffect(() => {
-    getPdfFull(paperId)
-      .then(({ url }) => setFileUrl(url.replace(S3_HOST, '/s3-proxy')))
-      .catch((err) => {
-        if (err instanceof PdfApiError && err.status === 403) {
-          setError('열람 권한이 없습니다. 논문을 구매해 주세요.');
+    getPdfPreview(paperId)
+      .then((url) => setFileUrl(url.replace(S3_HOST, '/s3-proxy')))
+      .catch((err: unknown) => {
+        if (err instanceof PdfApiError) {
+          if (err.status === 403 && err.reason === 'too_short') {
+            setError('논문이 너무 짧아 미리보기를 제공하지 않습니다.');
+          } else if (err.status === 404) {
+            setError('미리보기 파일을 찾을 수 없습니다.');
+          } else {
+            setError('미리보기를 불러오는데 실패했습니다.');
+          }
         } else {
           setError('미리보기를 불러오는데 실패했습니다.');
         }
