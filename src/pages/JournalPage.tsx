@@ -42,6 +42,7 @@ interface VenueDetail {
   frequency_label?: string;
   pissn?: string;
   eissn?: string;
+  cover_url?: string | null;
   settings?: VenueSettings;
   provider?: {
     name?: string;
@@ -187,7 +188,7 @@ export default function JournalPage() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M6 4l4 4-4 4" stroke="#F4F5F6" strokeWidth="1.5" />
             </svg>
-            <span
+            <span 
               className="underline px-1"
               style={{
                 fontFamily: "'Pretendard GOV', sans-serif",
@@ -207,15 +208,23 @@ export default function JournalPage() {
               className="flex-shrink-0 rounded-md overflow-hidden flex items-center justify-center"
               style={{ width: 160, height: 221, background: '#F4F5F6', borderRadius: 6 }}
             >
-              <div className="flex flex-col items-center justify-center text-center px-3">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="mb-2">
-                  <rect x="8" y="4" width="32" height="40" rx="3" stroke="#B1B8BE" strokeWidth="2" />
-                  <line x1="14" y1="14" x2="34" y2="14" stroke="#B1B8BE" strokeWidth="2" />
-                  <line x1="14" y1="20" x2="30" y2="20" stroke="#B1B8BE" strokeWidth="2" />
-                  <line x1="14" y1="26" x2="26" y2="26" stroke="#B1B8BE" strokeWidth="2" />
-                </svg>
-                <span style={{ fontSize: 12, color: '#8A949E' }}>Journal Cover</span>
-              </div>
+              {venue?.cover_url ? (
+                <img
+                  src={venue.cover_url}
+                  alt="저널 커버"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center px-3">
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="mb-2">
+                    <rect x="8" y="4" width="32" height="40" rx="3" stroke="#B1B8BE" strokeWidth="2" />
+                    <line x1="14" y1="14" x2="34" y2="14" stroke="#B1B8BE" strokeWidth="2" />
+                    <line x1="14" y1="20" x2="30" y2="20" stroke="#B1B8BE" strokeWidth="2" />
+                    <line x1="14" y1="26" x2="26" y2="26" stroke="#B1B8BE" strokeWidth="2" />
+                  </svg>
+                  <span style={{ fontSize: 12, color: '#8A949E' }}>Journal Cover</span>
+                </div>
+              )}
             </div>
 
             {/* Info */}

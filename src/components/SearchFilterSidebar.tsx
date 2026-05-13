@@ -145,29 +145,6 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
                     );
                   })}
                 </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={filters.yearFrom}
-                    onChange={(e) => {
-                      setActiveYearBtn(null);
-                      setFilters(prev => ({ ...prev, yearFrom: e.target.value }));
-                    }}
-                    placeholder="YYYY.MM.DD"
-                    className="flex-1 h-9 px-3 border border-[#CDD1D5] rounded-md text-[13px] placeholder:text-[#B1B8BE] focus:outline-none focus:border-[#256EF4]"
-                  />
-                  <span className="text-[13px] text-[#8A949E]">-</span>
-                  <input
-                    type="text"
-                    value={filters.yearTo}
-                    onChange={(e) => {
-                      setActiveYearBtn(null);
-                      setFilters(prev => ({ ...prev, yearTo: e.target.value }));
-                    }}
-                    placeholder="YYYY.MM.DD"
-                    className="flex-1 h-9 px-3 border border-[#CDD1D5] rounded-md text-[13px] placeholder:text-[#B1B8BE] focus:outline-none focus:border-[#256EF4]"
-                  />
-                </div>
               </div>
             )}
           </div>

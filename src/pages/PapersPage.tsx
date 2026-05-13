@@ -390,17 +390,25 @@ function PaperDetailContent() {
                 {/* article-cover : 320px × 340px, bg #F4F5F6, rounded-xl */}
                 <div
                   className="hidden lg:flex flex-shrink-0 flex-col justify-center items-center w-[320px] h-[340px] rounded-[12px]"
-                  style={{ background: '#F4F5F6', padding: '32px' }}
+                  style={{ background: '#F4F5F6', padding: '16px' }}
                 >
-                  {/* journal-cover placeholder 200×276 */}
-                  <div className="w-[200px] h-[276px] bg-[#D9DDE1] rounded flex items-center justify-center">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                      <rect x="8" y="4" width="32" height="40" rx="3" stroke="#A0A8B0" strokeWidth="2" fill="none" />
-                      <line x1="14" y1="14" x2="34" y2="14" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
-                      <line x1="14" y1="20" x2="34" y2="20" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
-                      <line x1="14" y1="26" x2="28" y2="26" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                  </div>
+                  {paper.cover_url ? (
+                    <img
+                      src={paper.cover_url}
+                      alt="저널 커버"
+                      className="w-[200px] h-[300px] rounded object-cover"
+                    />
+                  ) : (
+                    /* journal-cover placeholder 200×276 */
+                    <div className="w-[200px] h-[276px] bg-[#D9DDE1] rounded flex items-center justify-center">
+                      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <rect x="8" y="4" width="32" height="40" rx="3" stroke="#A0A8B0" strokeWidth="2" fill="none" />
+                        <line x1="14" y1="14" x2="34" y2="14" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
+                        <line x1="14" y1="20" x2="34" y2="20" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
+                        <line x1="14" y1="26" x2="28" y2="26" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
 
                 {/* article-info : flex col, gap 16px, flex-grow */}

@@ -400,6 +400,7 @@ export type PaperDetail = {
   download_count?: number | null;
   h_index?: number | null;
   impact_factor?: number | null;
+  cover_url?: string | null;
 };
 
 export type GetApiPapersId404 = {
