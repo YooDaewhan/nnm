@@ -953,7 +953,7 @@ export default function HomePage() {
               const publisher = venue.publisher ?? venue.publisher_name ?? '';
               const coverUrl = venue.cover_url;
               return (
-                <div key={venue.id ?? i} style={{ cursor: 'pointer' }}>
+                <div key={venue.id ?? i} style={{ cursor: 'pointer' }} onClick={() => venue.id && navigate(`/journal/${venue.id}`)}>
                   <div
                     style={{
                       width: '100%',
