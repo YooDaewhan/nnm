@@ -71,6 +71,7 @@ export const removeToken = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
+    localStorage.removeItem('recent_papers');
   }
 };
 

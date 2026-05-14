@@ -521,7 +521,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    customFetch<{ data: unknown }>('/api/home/featured-venues?limit=8')
+    customFetch<{ data: unknown }>('/api/home/featured-venues?limit=12')
       .then((res) => {
         const venues = extractFeaturedVenues((res.data as Record<string, unknown>)?.data ?? res.data);
         setFeaturedVenues(venues);
@@ -532,6 +532,9 @@ export default function HomePage() {
   const [conditions, setConditions] = useState<DetailedSearchCondition[]>([
     { field: 'title', keyword: '', operator: 'AND' },
   ]);
+
+  const [venueSlideIndex, setVenueSlideIndex] = useState(0);
+  const [venueNoTransition, setVenueNoTransition] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -954,66 +957,159 @@ export default function HomePage() {
             가장 많이 읽힌 저널을 만나보세요.
           </p>
 
-          {/* 6열 그리드 (모바일 3열) */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)',
-              gap: isMobile ? 12 : 24,
-            }} 
-          >
-            {featuredVenues.map((venue, i) => {
-              const title = venue.name ?? venue.title ?? '';
-              const publisher = venue.publisher ?? venue.publisher_name ?? '';
-              const rawCoverUrl = venue.cover_url;
-              const coverUrl = rawCoverUrl
-                ? (rawCoverUrl.startsWith('http') ? rawCoverUrl : `${API_BASE_URL}${rawCoverUrl}`)
-                : null;
-              return (
-                <div key={venue.id ?? i} style={{ cursor: 'pointer' }} onClick={() => venue.id && navigate(`/journal/${venue.id}`)}>
+          {/* 저널 슬라이더 */}
+          {(() => {
+            const gap = isMobile ? 12 : 24;
+            const itemsPerPage = isMobile ? 3 : 6;
+            const n = featuredVenues.length;
+            const canScroll = n > itemsPerPage;
+            const arrowSize = isMobile ? 32 : 40;
+            const arrowOffset = isMobile ? -14 : -20;
+
+            // 무한 순환을 위해 앞뒤에 itemsPerPage만큼 복제
+            const clonedItems = canScroll
+              ? [...featuredVenues.slice(-itemsPerPage), ...featuredVenues, ...featuredVenues.slice(0, itemsPerPage)]
+              : featuredVenues;
+
+            // 실제 화면에 표시되는 위치 (복제 아이템 offset 포함)
+            const displayIndex = canScroll ? venueSlideIndex + itemsPerPage : 0;
+
+            const goLeft = () => {
+              if (venueNoTransition) return;
+              const next = venueSlideIndex - 1;
+              setVenueSlideIndex(next);
+              if (next < 0) {
+                setTimeout(() => {
+                  setVenueNoTransition(true);
+                  setVenueSlideIndex(n - 1);
+                  requestAnimationFrame(() => requestAnimationFrame(() => setVenueNoTransition(false)));
+                }, 360);
+              }
+            };
+
+            const goRight = () => {
+              if (venueNoTransition) return;
+              const next = venueSlideIndex + 1;
+              setVenueSlideIndex(next);
+              if (next >= n) {
+                setTimeout(() => {
+                  setVenueNoTransition(true);
+                  setVenueSlideIndex(0);
+                  requestAnimationFrame(() => requestAnimationFrame(() => setVenueNoTransition(false)));
+                }, 360);
+              }
+            };
+
+            const ArrowBtn = ({ dir }: { dir: 'left' | 'right' }) => (
+              <button
+                onClick={dir === 'left' ? goLeft : goRight}
+                style={{
+                  position: 'absolute',
+                  [dir]: arrowOffset,
+                  top: '38%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 2,
+                  width: arrowSize,
+                  height: arrowSize,
+                  borderRadius: '50%',
+                  background: '#FFFFFF',
+                  border: '1px solid #E5E7EB',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                  padding: 0,
+                  flexShrink: 0,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  {dir === 'left'
+                    ? <path d="M10 3L5 8L10 13" stroke="#1E2124" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    : <path d="M6 3L11 8L6 13" stroke="#1E2124" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />}
+                </svg>
+              </button>
+            );
+
+            return (
+              <div style={{ position: 'relative' }}>
+                {canScroll && <ArrowBtn dir="left" />}
+                {canScroll && <ArrowBtn dir="right" />}
+
+                <div style={{ overflow: 'hidden' }}>
                   <div
                     style={{
-                      width: '100%',
-                      aspectRatio: '3 / 4',
-                      borderRadius: 4,
-                      background: coverUrl ? 'transparent' : '#F3F4F5',
-                      border: '1px solid #E5E7EB',
-                      overflow: 'hidden',
-                      marginBottom: 10,
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
+                      gap,
+                      // 아이템 하나의 폭 + gap = (100% + gap) / itemsPerPage
+                      transform: `translateX(calc(-${displayIndex} * (100% + ${gap}px) / ${itemsPerPage}))`,
+                      transition: venueNoTransition ? 'none' : 'transform 0.35s ease',
+                      width: '100%',
                     }}
                   >
-                    {coverUrl ? (
-                      <img
-                        src={coverUrl}
-                        alt={title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = 'none';
-                          (e.currentTarget.parentElement as HTMLElement).style.background = '#F3F4F5';
-                        }}
-                      />
-                    ) : (
-                      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                        <rect x="4" y="4" width="32" height="32" rx="2" stroke="#D1D5DB" strokeWidth="1" fill="none" />
-                        <line x1="12" y1="12" x2="28" y2="28" stroke="#D1D5DB" strokeWidth="1" />
-                        <line x1="28" y1="12" x2="12" y2="28" stroke="#D1D5DB" strokeWidth="1" />
-                      </svg>
-                    )}
+                    {clonedItems.map((venue, i) => {
+                      const title = venue.name ?? venue.title ?? '';
+                      const publisher = venue.publisher ?? venue.publisher_name ?? '';
+                      const rawCoverUrl = venue.cover_url;
+                      const coverUrl = rawCoverUrl
+                        ? (rawCoverUrl.startsWith('http') ? rawCoverUrl : `${API_BASE_URL}${rawCoverUrl}`)
+                        : null;
+                      return (
+                        <div
+                          key={`${venue.id ?? i}-${i}`}
+                          style={{
+                            flex: `0 0 calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => venue.id && navigate(`/journal/${venue.id}`)}
+                        >
+                          <div
+                            style={{
+                              width: '100%',
+                              aspectRatio: '3 / 4',
+                              borderRadius: 4,
+                              background: coverUrl ? 'transparent' : '#F3F4F5',
+                              border: '1px solid #E5E7EB',
+                              overflow: 'hidden',
+                              marginBottom: 10,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              position: 'relative',
+                            }}
+                          >
+                            {coverUrl ? (
+                              <img
+                                src={coverUrl}
+                                alt={title}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                  (e.currentTarget.parentElement as HTMLElement).style.background = '#F3F4F5';
+                                }}
+                              />
+                            ) : (
+                              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                                <rect x="4" y="4" width="32" height="32" rx="2" stroke="#D1D5DB" strokeWidth="1" fill="none" />
+                                <line x1="12" y1="12" x2="28" y2="28" stroke="#D1D5DB" strokeWidth="1" />
+                                <line x1="28" y1="12" x2="12" y2="28" stroke="#D1D5DB" strokeWidth="1" />
+                              </svg>
+                            )}
+                          </div>
+                          <p style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: '#1E2124', marginBottom: 3, lineHeight: 1.35, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                            {title}
+                          </p>
+                          <p style={{ fontSize: isMobile ? 11 : 12, color: '#8A949E', fontWeight: 400, margin: 0 }}>
+                            {publisher}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <p style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: '#1E2124', marginBottom: 3, lineHeight: 1.35, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                    {title}
-                  </p>
-                  <p style={{ fontSize: isMobile ? 11 : 12, color: '#8A949E', fontWeight: 400, margin: 0 }}>
-                    {publisher}
-                  </p>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
 

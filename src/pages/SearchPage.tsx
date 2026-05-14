@@ -94,16 +94,16 @@ function OpenSearchTextContent() {
   const { data: scrappedIds = new Set<string>() } = useQuery({
     queryKey: ['scrap-batch', scrapIds],
     queryFn: () => checkScrapBatch(scrapIds),
+    select: (data) => new Set(data),
     enabled: isLoggedIn && scrapIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 
   const handleScrapToggle = (id: string, isScrapped: boolean) => {
-    queryClient.setQueryData<Set<string>>(['scrap-batch', scrapIds], (old = new Set()) => {
-      const next = new Set(old);
-      if (isScrapped) next.add(id);
-      else next.delete(id);
-      return next;
+    queryClient.setQueryData<string[]>(['scrap-batch', scrapIds], (old) => {
+      const prev = Array.isArray(old) ? old : [];
+      if (isScrapped) return prev.includes(id) ? prev : [...prev, id];
+      return prev.filter(v => v !== id);
     });
   };
 

@@ -218,14 +218,14 @@ export function SearchResultCard({
       );
     }
     return (
-      <div className="flex flex-col items-stretch gap-2 w-[112px]">
-        <div className="h-9 w-full flex items-center justify-center border border-[#AB2B36] rounded-md">
+      <div className="flex flex-row items-center gap-2">
+        <div className="h-9 px-3 flex items-center justify-center border border-[#AB2B36] rounded-md shrink-0">
           <span className="text-[14px] font-bold text-[#AB2B36]">￦ 7,000</span>
         </div>
         <button
           onClick={(e) => onBuyNow(e, result.id)}
           disabled={buyLoading}
-          className="h-9 w-full bg-[#256EF4] text-white text-[13px] font-semibold rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50"
+          className="h-9 px-4 bg-[#256EF4] text-white text-[13px] font-semibold rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           {buyLoading ? '처리 중...' : '구매하기'}
         </button>
@@ -356,7 +356,7 @@ export function SearchResultCard({
             </div>
           </div>
 
-          <div className="flex md:hidden justify-end mt-2">
+          <div className="flex md:hidden justify-end mt-4">
             {renderPurchaseButtons()}
           </div>
 

@@ -57,34 +57,34 @@ export const getScraps = async (page = 1, perPage = 10): Promise<GetScrapsRespon
  * 여러 논문의 스크랩 여부를 한 번에 확인합니다.
  * 응답: 스크랩된 publication_id 배열
  */
-export const checkScrapBatch = async (publicationIds: string[]): Promise<Set<string>> => {
+export const checkScrapBatch = async (publicationIds: string[]): Promise<string[]> => {
   const token = getToken();
-  if (!token || publicationIds.length === 0) return new Set();
+  if (!token || publicationIds.length === 0) return [];
 
-  const response = await fetch(`${API_BASE_URL}/api/scraps/batch`, {
+  const params = new URLSearchParams();
+  publicationIds.forEach(id => params.append('publication_ids[]', id));
+
+  const response = await fetch(`${API_BASE_URL}/api/scraps/batch?${params.toString()}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
     credentials: 'include',
-    body: JSON.stringify({ publication_ids: publicationIds }),
   });
 
-  if (response.status === 401) { handleAuthExpired(); return new Set(); }
-  if (!response.ok) return new Set();
+  if (response.status === 401) { handleAuthExpired(); return []; }
+  if (!response.ok) return [];
 
   try {
     const json = await response.json();
     // { scrapped: { "uuid": true, "uuid2": false } } 형태
     const scrapped: Record<string, boolean> = json.scrapped ?? {};
-    const ids = Object.entries(scrapped)
+    return Object.entries(scrapped)
       .filter(([, v]) => v === true)
       .map(([k]) => k);
-    return new Set(ids);
   } catch {
-    return new Set();
+    return [];
   }
 };
 

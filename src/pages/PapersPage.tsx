@@ -103,6 +103,7 @@ function PaperDetailContent() {
   const { data: scrappedIds = new Set<string>() } = useQuery({
     queryKey: ['scrap-batch', id ? [id] : []],
     queryFn: () => checkScrapBatch([id!]),
+    select: (data) => new Set(data),
     enabled: loggedIn && !!id,
     staleTime: 1000 * 60 * 5,
   });
