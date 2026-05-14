@@ -21,12 +21,12 @@ type OSPaperDetail = PaperDetail & {
 };
 
 const AWARD_BADGE_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  kci:           { label: 'KCI등재',     bg: '#ECF2FE', color: '#0B50D0' },
-  kci_candidate: { label: 'KCI등재후보', bg: '#EEF6FF', color: '#2563EB' },
-  scopus:        { label: 'SCOPUS',      bg: '#F0FDF4', color: '#166534' },
-  scie:          { label: 'SCIE',        bg: '#FFF7ED', color: '#C2410C' },
-  ssci:          { label: 'SSCI',        bg: '#FDF4FF', color: '#7E22CE' },
-  esci:          { label: 'ESCI',        bg: '#FFFBEB', color: '#B45309' },
+  thesis:        { label: '개인논문',    bg: '#F5F3FF', color: '#6D28D9' },
+  journal:       { label: '정기간행물',  bg: '#EFF6FF', color: '#1D4ED8' },
+  report:        { label: '연구보고서',  bg: '#FFF7ED', color: '#C2410C' },
+  conference:    { label: '학술대회지',  bg: '#ECFDF5', color: '#065F46' },
+  book:          { label: '도서',        bg: '#FEF9C3', color: '#92400E' },
+  other:         { label: '기타',        bg: '#F3F4F6', color: '#6B7280' },
 };
 import { getPayments } from '../api/payment';
 import { isAuthenticated } from '../lib/auth';
@@ -162,6 +162,8 @@ function PaperDetailContent() {
       console.log('[PaperDetail] keywords_en:', (paper as OSPaperDetail).keywords_en);
       console.log('[PaperDetail] references:', paper.references);
       console.log('[PaperDetail] body_content:', paper.body_content);
+      console.log('[PaperDetail] venue (전체):', JSON.stringify(paper.venue));
+      console.log('[PaperDetail] venue.type:', paper.venue?.type);
       console.log('[PaperDetail] venue.settings.award:', paper.venue?.settings?.award);
       console.log('[PaperDetail] JSON:', JSON.stringify(paper));
       addRecentPaper({
@@ -418,28 +420,21 @@ function PaperDetailContent() {
                   <div className="flex flex-row justify-between items-center">
                     {/* badge-box : gap 8px */}
                     <div className="flex flex-row items-start gap-[8px]">
-                      {/* 학술저널 badge : 항상 표시 */}
-                      <span
-                        className="papers-badge inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
-                        style={{ background: '#E7F4FE', color: '#096AB3' }}
-                      >
-                        학술저널
-                      </span>
-                      {/* venue.settings.award 기반 동적 배지 */}
-                      {paper.venue?.settings?.award?.map((award: string) => {
-                        const key = award.trim().toLowerCase();
-                        const badge = AWARD_BADGE_MAP[key];
+                      {/* venue.type 기반 동적 배지 */}
+                      {(() => {
+                        const key = paper.venue?.type?.trim().toLowerCase();
+                        const badge = key ? AWARD_BADGE_MAP[key] : null;
                         if (!badge) return null;
                         return (
                           <span
-                            key={award}
+                            key={key}
                             className="papers-badge inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
                             style={{ background: badge.bg, color: badge.color }}
                           >
                             {badge.label}
                           </span>
                         );
-                      })}
+                      })()}
                     </div>
 
                     {/* btn-icon-box : share, heart, bag icons (gap 16px) */}

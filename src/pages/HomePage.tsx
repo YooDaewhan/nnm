@@ -43,6 +43,7 @@ type ApiPaper = {
   journal_title?: string;
   venue_name?: string;
   venue_abbr?: string;
+  venue_type?: string;
   volume?: string | number;
   issue?: string | number;
   year?: number;
@@ -68,26 +69,36 @@ function extractPapersArray(v: unknown): ApiPaper[] {
   return [];
 }
 
-/* { 심리학: [...] } / { 심리학: { papers: [...] } } / [ { name_ko, papers } ] 모두 지원 */
+const PAPER_ARRAY_KEYS = new Set(['papers', 'data', 'items', 'results']);
+
+/* API 응답 형태 무관하게 있는 데이터 전부 추출 */
 function normalizeCategoryData(raw: unknown): ApiCategoryData {
   if (!raw) return {};
 
   // 배열 스타일: [{ name_ko: '심리학', papers: [...] }, ...]
   if (Array.isArray(raw)) {
     const out: ApiCategoryData = {};
-    for (const item of raw) {
-      if (item && typeof item === 'object') {
-        const obj = item as Record<string, unknown>;
-        const name =
-          (obj.name_ko as string) ??
-          (obj.category as string) ??
-          (obj.name as string) ??
-          (obj.title as string) ??
-          (obj.category_name as string);
-        const papers = extractPapersArray(obj);
-        if (name && papers.length > 0) out[name] = papers;
-      }
-    }
+    raw.forEach((item, idx) => {
+      if (!item || typeof item !== 'object') return;
+      const obj = item as Record<string, unknown>;
+      const papers = extractPapersArray(obj);
+
+      // 알려진 이름 키를 우선 시도, 그 다음 어떤 문자열 값이든 사용
+      const knownName =
+        (obj.name_ko as string | undefined) ??
+        (obj.category as string | undefined) ??
+        (obj.name as string | undefined) ??
+        (obj.title as string | undefined) ??
+        (obj.category_name as string | undefined) ??
+        (obj.type as string | undefined);
+
+      const fallbackName =
+        knownName ??
+        (Object.entries(obj).find(([k, v]) => !PAPER_ARRAY_KEYS.has(k) && typeof v === 'string')?.[1] as string | undefined) ??
+        `카테고리 ${idx + 1}`;
+
+      out[fallbackName] = papers;
+    });
     return out;
   }
 
@@ -95,8 +106,7 @@ function normalizeCategoryData(raw: unknown): ApiCategoryData {
   if (typeof raw === 'object') {
     const out: ApiCategoryData = {};
     for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-      const papers = extractPapersArray(value);
-      if (papers.length > 0) out[key] = papers;
+      out[key] = extractPapersArray(value);
     }
     return out;
   }
@@ -126,6 +136,10 @@ type Paper = {
 };
 
 function getBadgeInfo(paper: ApiPaper): { badge: string; badgeColor: string; badgeBg: string } {
+  if (paper.venue_type) {
+    return { badge: paper.venue_type, badgeColor: '#2563EB', badgeBg: '#EFF4FF' };
+  }
+
   const raw = (
     paper.accreditation ??
     paper.kci_status ??
@@ -946,7 +960,7 @@ export default function HomePage() {
               display: 'grid',
               gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)',
               gap: isMobile ? 12 : 24,
-            }}
+            }} 
           >
             {featuredVenues.map((venue, i) => {
               const title = venue.name ?? venue.title ?? '';
