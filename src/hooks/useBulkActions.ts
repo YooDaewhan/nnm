@@ -69,11 +69,7 @@ export function useBulkActions(
     const ids = [...selectedIds];
     try {
       await addScrapBatch(ids);
-      queryClient.setQueryData<Set<string>>(['scrap-batch', scrapIds], (old = new Set()) => {
-        const next = new Set(old);
-        ids.forEach(id => next.add(id));
-        return next;
-      });
+      queryClient.invalidateQueries({ queryKey: ['scrap-batch', scrapIds] });
       alert(`${ids.length}개를 스크랩에 추가했습니다.`);
     } catch (err) {
       alert(err instanceof Error ? err.message : '스크랩 추가에 실패했습니다.');

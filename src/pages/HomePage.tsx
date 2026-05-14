@@ -741,7 +741,6 @@ export default function HomePage() {
                             <option value="author">저자</option>
                             <option value="abstract">초록</option>
                             <option value="keyword">키워드</option>
-                            <option value="doi">DOI</option>
                             <option value="full_text">전문</option>
                           </select>
                           <input

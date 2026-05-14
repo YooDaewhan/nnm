@@ -26,6 +26,7 @@ export function useSearchSubmit() {
 
   useEffect(() => {
     if (!qParam) return;
+    setDetailedSort('relevance');
     setSubmittedState({
       conditions: [{ field: 'title', keyword: qParam, operator: 'AND' }],
       sort: 'relevance',

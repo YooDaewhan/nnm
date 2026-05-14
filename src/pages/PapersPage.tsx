@@ -67,6 +67,25 @@ function BreadcrumbItem({ label, to, isLast }: { label: string; to?: string; isL
   );
 }
 
+function renderTextWithLinks(text: string): React.ReactNode[] {
+  const urlRegex = /(https?:\/\/[^\s,，。\]）)]+)/g;
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = urlRegex.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    parts.push(
+      <a key={match.index} href={match[1]} target="_blank" rel="noopener noreferrer"
+        className="text-[#256EF4] underline break-all hover:opacity-80">
+        {match[1]}
+      </a>
+    );
+    last = match.index + match[1].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
 function PaperDetailContent() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -755,10 +774,18 @@ function PaperDetailContent() {
                 <div className="flex flex-col gap-[20px]">
                   <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">참고문헌</h2>
                   {paper.references && paper.references.length > 0 ? (
-                    <div className="text-[17px] font-normal leading-[150%] text-[#131416]">
-                      {paper.references.map((ref, idx) => (
-                        <p key={idx}>{typeof ref === 'string' ? ref : (ref as { raw_text?: string }).raw_text ?? ''}</p>
-                      ))}
+                    <div className="flex flex-col">
+                      {paper.references.map((ref, idx) => {
+                        const text = typeof ref === 'string' ? ref : (ref as { raw_text?: string }).raw_text ?? '';
+                        return (
+                          <div key={idx}>
+                            <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] py-[12px]">
+                              {renderTextWithLinks(text)}
+                            </p>
+                            <div className="w-full h-px bg-[#CDD1D5]" />
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-[17px] font-normal leading-[150%] text-[#131416]">등록된 참고문헌 정보가 없습니다.</p>

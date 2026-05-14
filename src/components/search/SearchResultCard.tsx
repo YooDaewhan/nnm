@@ -21,7 +21,7 @@ interface SearchResultCardProps {
   buyLoading: boolean;
   highlightTerms?: string[];
   isScraped: boolean;
-  onScrapToggle: (id: string, isScrapped: boolean) => void;
+  onScrapToggle: () => void;
   isPurchased?: boolean;
 }
 
@@ -57,7 +57,7 @@ export function SearchResultCard({
   const scrapMutation = useMutation({
     mutationFn: () =>
       isScraped ? deleteScrapBatch([result.id]) : addScrapBatch([result.id]),
-    onSuccess: () => onScrapToggle(result.id, !isScraped),
+    onSuccess: () => onScrapToggle(),
     onError: (err) => alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.'),
   });
 
@@ -218,14 +218,14 @@ export function SearchResultCard({
       );
     }
     return (
-      <div className="flex flex-row items-center gap-2">
-        <div className="h-9 px-3 flex items-center justify-center border border-[#AB2B36] rounded-md shrink-0">
+      <div className="flex flex-row md:flex-col items-center gap-2">
+        <div className="h-9 px-3 md:w-full flex items-center justify-center border border-[#AB2B36] rounded-md shrink-0">
           <span className="text-[14px] font-bold text-[#AB2B36]">￦ 7,000</span>
         </div>
         <button
           onClick={(e) => onBuyNow(e, result.id)}
           disabled={buyLoading}
-          className="h-9 px-4 bg-[#256EF4] text-white text-[13px] font-semibold rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
+          className="h-9 px-4 md:w-full bg-[#256EF4] text-white text-[13px] font-semibold rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           {buyLoading ? '처리 중...' : '구매하기'}
         </button>

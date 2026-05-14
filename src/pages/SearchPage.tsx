@@ -99,12 +99,8 @@ function OpenSearchTextContent() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const handleScrapToggle = (id: string, isScrapped: boolean) => {
-    queryClient.setQueryData<string[]>(['scrap-batch', scrapIds], (old) => {
-      const prev = Array.isArray(old) ? old : [];
-      if (isScrapped) return prev.includes(id) ? prev : [...prev, id];
-      return prev.filter(v => v !== id);
-    });
+  const handleScrapToggle = () => {
+    queryClient.invalidateQueries({ queryKey: ['scrap-batch', scrapIds] });
   };
 
   const handleToggleSelect = (e: React.MouseEvent, id: string) => {
