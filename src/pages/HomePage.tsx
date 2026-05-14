@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DetailedSearchCondition } from '@/api/search';
-import { customFetch } from '@/api/client';
+import { customFetch, API_BASE_URL } from '@/api/client';
 
 /* ───────────────────────────────────────────
    반응형 훅
@@ -965,7 +965,10 @@ export default function HomePage() {
             {featuredVenues.map((venue, i) => {
               const title = venue.name ?? venue.title ?? '';
               const publisher = venue.publisher ?? venue.publisher_name ?? '';
-              const coverUrl = venue.cover_url;
+              const rawCoverUrl = venue.cover_url;
+              const coverUrl = rawCoverUrl
+                ? (rawCoverUrl.startsWith('http') ? rawCoverUrl : `${API_BASE_URL}${rawCoverUrl}`)
+                : null;
               return (
                 <div key={venue.id ?? i} style={{ cursor: 'pointer' }} onClick={() => venue.id && navigate(`/journal/${venue.id}`)}>
                   <div

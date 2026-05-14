@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
+import { API_BASE_URL } from '../api/client';
 import { PdfPreviewModal } from '../components/PdfPreviewModal';
 import { PdfFullViewerModal } from '../components/PdfFullViewerModal';
 import { addToCart } from '../api/cart';
@@ -18,6 +19,9 @@ type OSPaperDetail = PaperDetail & {
   source?: string;
   indexing?: { kci?: string; kci_status?: number; index_info?: string };
   venue?: PaperDetail['venue'] & { settings?: { award?: string[]; kci?: boolean } };
+  price?: number | null;
+  is_free?: boolean;
+  is_purchasable?: boolean;
 };
 
 const AWARD_BADGE_MAP: Record<string, { label: string; bg: string; color: string }> = {
@@ -72,6 +76,7 @@ function PaperDetailContent() {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [buyBtnHovered, setBuyBtnHovered] = useState(false);
 
   const [citeOpen, setCiteOpen] = useState(false);
   const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
@@ -167,6 +172,8 @@ function PaperDetailContent() {
       console.log('[PaperDetail] venue (전체):', JSON.stringify(paper.venue));
       console.log('[PaperDetail] venue.type:', paper.venue?.type);
       console.log('[PaperDetail] venue.settings.award:', paper.venue?.settings?.award);
+      console.log('[PaperDetail] cover_url (paper):', paper.cover_url);
+      console.log('[PaperDetail] cover_url (venue):', paper.venue?.cover_url);
       console.log('[PaperDetail] JSON:', JSON.stringify(paper));
       addRecentPaper({
         id: paper.id,
@@ -396,23 +403,29 @@ function PaperDetailContent() {
                   className="hidden lg:flex flex-shrink-0 flex-col justify-center items-center w-[320px] h-[340px] rounded-[12px]"
                   style={{ background: '#F4F5F6', padding: '16px' }}
                 >
-                  {paper.cover_url ? (
-                    <img
-                      src={paper.cover_url ?? ''}
-                      alt="저널 커버"
-                      className="w-[200px] h-[300px] rounded object-cover"
-                    />
-                  ) : (
-                    /* journal-cover placeholder 200×276 */
-                    <div className="w-[200px] h-[276px] bg-[#D9DDE1] rounded flex items-center justify-center">
-                      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                        <rect x="8" y="4" width="32" height="40" rx="3" stroke="#A0A8B0" strokeWidth="2" fill="none" />
-                        <line x1="14" y1="14" x2="34" y2="14" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
-                        <line x1="14" y1="20" x2="34" y2="20" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
-                        <line x1="14" y1="26" x2="28" y2="26" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                  )}
+                  {(() => {
+                    const rawCover = paper.cover_url ?? paper.venue?.cover_url;
+                    const coverSrc = rawCover
+                      ? (rawCover.startsWith('http') ? rawCover : `${API_BASE_URL}${rawCover}`)
+                      : null;
+                    return coverSrc ? (
+                      <img
+                        src={coverSrc}
+                        alt="저널 커버"
+                        className="w-[200px] h-[300px] rounded object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-[200px] h-[276px] bg-[#D9DDE1] rounded flex items-center justify-center">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                          <rect x="8" y="4" width="32" height="40" rx="3" stroke="#A0A8B0" strokeWidth="2" fill="none" />
+                          <line x1="14" y1="14" x2="34" y2="14" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
+                          <line x1="14" y1="20" x2="34" y2="20" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
+                          <line x1="14" y1="26" x2="28" y2="26" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* article-info : flex col, gap 16px, flex-grow */}
@@ -622,10 +635,29 @@ function PaperDetailContent() {
                       {/* 구매하기 / 원문보기 button : h-48px, bg #256EF4, rounded-[6px], px-24, font 17px, white */}
                       <button
                         onClick={isPurchased ? handleViewFull : handlePurchase}
-                        className="inline-flex items-center justify-center px-[24px] h-[48px] rounded-[6px] text-[17px] leading-[150%] text-white transition-colors"
-                        style={{ background: '#256EF4' }}
+                        onMouseEnter={() => setBuyBtnHovered(true)}
+                        onMouseLeave={() => setBuyBtnHovered(false)}
+                        className="inline-flex items-center justify-center px-[24px] h-[48px] rounded-[6px] text-[17px] leading-[150%] text-white"
+                        style={{ background: '#256EF4', overflow: 'hidden', position: 'relative' }}
                       >
-                        {isPurchased ? '원문보기' : '구매하기'}
+                        <span style={{
+                          display: 'inline-block',
+                          transition: 'transform 0.2s ease, opacity 0.2s ease',
+                          transform: !isPurchased && buyBtnHovered ? 'translateY(-120%)' : 'translateY(0)',
+                          opacity: !isPurchased && buyBtnHovered ? 0 : 1,
+                        }}>
+                          {isPurchased ? '원문보기' : '구매하기'}
+                        </span>
+                        {!isPurchased && (
+                          <span style={{
+                            position: 'absolute',
+                            transition: 'transform 0.2s ease, opacity 0.2s ease',
+                            transform: buyBtnHovered ? 'translateY(0)' : 'translateY(120%)',
+                            opacity: buyBtnHovered ? 1 : 0,
+                          }}>
+                            {paper.price ? `₩${paper.price.toLocaleString()}` : '구매하기'}
+                          </span>
+                        )}
                       </button>
                       {isPurchased && (
                         <button

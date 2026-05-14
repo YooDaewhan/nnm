@@ -367,6 +367,7 @@ export type PaperVenue = {
   id: string;
   name: string;
   type: string;
+  cover_url?: string | null;
 };
 
 export type PaperProvider = {
