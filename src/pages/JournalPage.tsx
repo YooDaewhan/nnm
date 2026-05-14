@@ -243,20 +243,6 @@ export default function JournalPage() {
                 >
                   {venue.name}
                 </h1>
-                {venue.abbr && (
-                  <p
-                    style={{
-                      fontFamily: "'Pretendard GOV', sans-serif",
-                      fontWeight: 400,
-                      fontSize: 19,
-                      lineHeight: '150%',
-                      color: '#CDD1D5',
-                      margin: 0,
-                    }}
-                  >
-                    {venue.abbr}
-                  </p>
-                )}
               </div>
 
               {/* Detail Grid */}

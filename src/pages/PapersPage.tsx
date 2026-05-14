@@ -67,6 +67,7 @@ function PaperDetailContent() {
   const { id } = useParams();
   const navigate = useNavigate();
   const abstractRef = useRef<HTMLDivElement>(null);
+  const loggedPaperIdRef = useRef<string | null>(null);
 
   const [pdfOpen, setPdfOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -153,7 +154,8 @@ function PaperDetailContent() {
   }, [id]);
 
   useEffect(() => {
-    if (paper) {
+    if (paper && loggedPaperIdRef.current !== paper.id) {
+      loggedPaperIdRef.current = paper.id;
       console.log('[PaperDetail] 전체 응답:', paper);
       console.log('[PaperDetail] table_of_contents:', paper.table_of_contents);
       console.log('[PaperDetail] abstract:', paper.abstract);

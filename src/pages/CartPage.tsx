@@ -180,12 +180,16 @@ export default function CartPage() {
                         <h3 className="text-[19px] font-bold leading-[1.5] text-[#1E2124]">
                           {item.title}
                         </h3>
-                        <div className="flex items-center gap-0.5 flex-wrap">
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">저자1</span>
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">저자2</span>
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">저자3</span>
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">외 1명</span>
-                        </div>
+                        {item.authors && item.authors.length > 0 && (
+                          <div className="flex items-center gap-0.5 flex-wrap">
+                            {item.authors.slice(0, 3).map((author, idx) => (
+                              <span key={idx} className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">{author}</span>
+                            ))}
+                            {item.authors.length > 3 && (
+                              <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">외 {item.authors.length - 3}명</span>
+                            )}
+                          </div>
+                        )}
                         <div className="flex items-center gap-0.5 flex-wrap">
                           <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">발행년월</span>
                           <svg className="w-4 h-4 text-[#CDD1D5]" viewBox="0 0 16 16" fill="none">

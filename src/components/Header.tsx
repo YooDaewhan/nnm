@@ -92,7 +92,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
         <div className="max-w-[1248px] mx-auto flex items-center py-[10px] md:py-[15px] gap-3 md:gap-6 px-4 md:px-0">
           {/* 로고 */}
           <button
-            onClick={() => navigate('/')}
+            onClick={() => { setSearchQuery(''); navigate('/'); }}
             className="shrink-0 hover:opacity-80 transition-opacity"
             aria-label="홈으로 이동"
           >
