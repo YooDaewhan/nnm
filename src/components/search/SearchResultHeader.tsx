@@ -8,11 +8,12 @@ const FIELD_LABELS: Record<string, string> = {
 interface SubmittedState {
   conditions: DetailedSearchCondition[];
   sort: 'relevance' | 'latest';
-  filters: { year_from?: number; year_to?: number };
+  filters: { year_from?: number; year_to?: number; year_label?: string };
 }
 
 interface SearchResultHeaderProps {
   submittedState: SubmittedState | null;
+  yearLabel: string;
   onReset: () => void;
   onRemoveCondition: (idx: number) => void;
   onRemoveYearFilter: () => void;
@@ -30,7 +31,7 @@ const CloseIcon = () => (
   </svg>
 );
 
-export function SearchResultHeader({ submittedState, onReset, onRemoveCondition, onRemoveYearFilter }: SearchResultHeaderProps) {
+export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemoveCondition, onRemoveYearFilter }: SearchResultHeaderProps) {
   const hasYearFilter = !!(submittedState?.filters.year_from || submittedState?.filters.year_to);
 
   return (
@@ -76,7 +77,7 @@ export function SearchResultHeader({ submittedState, onReset, onRemoveCondition,
             </button>
             {hasYearFilter ? (
               <span className="h-7 px-3 flex items-center gap-1.5 bg-white/70 border border-[#C4D8FF] rounded-full text-[13px] text-[#464C53]">
-                {submittedState.filters.year_from ?? ''}~{submittedState.filters.year_to ?? ''}
+                {yearLabel || `${submittedState.filters.year_from ?? ''}~${submittedState.filters.year_to ?? ''}`}
                 <button onClick={onRemoveYearFilter} className="text-[#8A949E] hover:text-[#E32929] transition-colors flex items-center">
                   <CloseIcon />
                 </button>

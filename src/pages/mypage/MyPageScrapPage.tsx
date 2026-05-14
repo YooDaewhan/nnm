@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
-import { getScraps, deleteScrap } from '../../api/scraps';
+import { getScraps, deleteScrapBatch } from '../../api/scraps';
 
 const PER_PAGE = 10;
 
@@ -32,7 +32,7 @@ export default function MyPageScrapPage() {
   const error = fetchError instanceof Error ? fetchError.message : fetchError ? '스크랩 목록을 불러오지 못했습니다.' : null;
 
   const deleteMutation = useMutation({
-    mutationFn: (publicationId: string) => deleteScrap(publicationId),
+    mutationFn: (publicationId: string) => deleteScrapBatch([publicationId]),
     onSuccess: (_, publicationId) => {
       queryClient.setQueryData(['scraps', currentPage], (old: typeof data) =>
         old ? { ...old, data: old.data.filter((s) => s.publication_id !== publicationId) } : old

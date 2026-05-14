@@ -49,7 +49,7 @@ const UtilLink = ({ label, onClick }: { label: string; onClick?: () => void }) =
   </button>
 );
 
-/* ─── 유틸리티 구분선 ─── */
+/* ─── 유틸리티 구분선 ─── */ 
 const UtilDivider = () => (
   <div className="w-px h-4 bg-[#CDD1D5] shrink-0" />
 );

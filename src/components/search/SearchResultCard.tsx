@@ -344,9 +344,9 @@ export function SearchResultCard({
                 <span>KCI등재</span>
               </div>
               <PublicationMeta metadata={result.metadata} />
-              {result.abstract && (
+              {(
                 <p className="text-[13px] text-[#C0392B] mt-1.5 line-clamp-1 leading-snug">
-                  • {result.abstract}
+                  • 이 자료는 연계기관과의 협약에 따라 무료로 제공되며, 원문 이용방식은 연계기관의 정책을 따르고 있습니다.
                 </p>
               )}
             </div>

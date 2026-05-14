@@ -210,7 +210,7 @@ export default function JournalPage() {
             >
               {venue?.cover_url ? (
                 <img
-                  src={venue.cover_url}
+                  src={venue.cover_url ?? ''}
                   alt="저널 커버"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

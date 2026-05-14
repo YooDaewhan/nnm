@@ -398,7 +398,7 @@ function PaperDetailContent() {
                 >
                   {paper.cover_url ? (
                     <img
-                      src={paper.cover_url}
+                      src={paper.cover_url ?? ''}
                       alt="저널 커버"
                       className="w-[200px] h-[300px] rounded object-cover"
                     />
@@ -680,7 +680,8 @@ function PaperDetailContent() {
                       {paper.keywords.map((kw, idx) => (
                         <button
                           key={idx}
-                          className="inline-flex items-center justify-center h-[39px] rounded-[1000px] text-[15px] leading-[150%] font-normal hover:opacity-80 transition-opacity"
+                          onClick={() => navigate(`/search?q=${encodeURIComponent(kw)}`)}
+                          className="inline-flex items-center justify-center h-[39px] rounded-[1000px] text-[15px] leading-[150%] font-normal hover:opacity-80 transition-opacity cursor-pointer"
                           style={{ background: '#EFF2F5', color: '#052B57', padding: '8px 20px' }}
                         >
                           {kw}
@@ -698,7 +699,8 @@ function PaperDetailContent() {
                       {paper.keywords_en.map((kw, idx) => (
                         <button
                           key={idx}
-                          className="inline-flex items-center justify-center h-[39px] rounded-[1000px] text-[15px] leading-[150%] font-normal hover:opacity-80 transition-opacity"
+                          onClick={() => navigate(`/search?q=${encodeURIComponent(kw)}`)}
+                          className="inline-flex items-center justify-center h-[39px] rounded-[1000px] text-[15px] leading-[150%] font-normal hover:opacity-80 transition-opacity cursor-pointer"
                           style={{ background: '#EFF2F5', color: '#052B57', padding: '8px 20px' }}
                         >
                           {kw}

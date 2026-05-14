@@ -5,6 +5,7 @@ export interface Filters {
   venueName: string;
   yearFrom: string;
   yearTo: string;
+  yearLabel: string;
 }
 
 export interface ProviderOption {
@@ -18,6 +19,7 @@ const DEFAULT_FILTERS: Filters = {
   venueName: '',
   yearFrom: '',
   yearTo: '',
+  yearLabel: '',
 };
 
 interface Props {
@@ -132,6 +134,7 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
                             ...prev,
                             yearFrom: isActive ? '' : fromYear,
                             yearTo: isActive ? '' : String(currentYear),
+                            yearLabel: isActive ? '' : label,
                           }));
                         }}
                         className={`h-8 px-3 rounded-md text-[13px] font-normal transition-colors border ${

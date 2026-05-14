@@ -35,7 +35,7 @@ function OpenSearchTextContent() {
   const pageParam = searchParams.get('page');
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
 
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>({});
+  const [yearLabel, setYearLabel] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -180,11 +180,12 @@ function OpenSearchTextContent() {
       <main className="max-w-[1280px] mx-auto px-4 py-10">
         <SearchResultHeader
           submittedState={submittedState}
+          yearLabel={yearLabel}
           onReset={handleReset}
           onRemoveCondition={removeConditionBadge}
           onRemoveYearFilter={() => {
             removeYearFilter();
-            setAppliedFilters(prev => ({ ...prev, yearFrom: '', yearTo: '' }));
+            setYearLabel('');
           }}
         />
 
@@ -209,6 +210,7 @@ function OpenSearchTextContent() {
               onApply={(filters) => {
                 const yearFrom = filters.yearFrom ? parseInt(filters.yearFrom) : undefined;
                 const yearTo = filters.yearTo ? parseInt(filters.yearTo) : undefined;
+                setYearLabel(filters.yearLabel);
                 setSubmittedState(prev => prev ? {
                   ...prev,
                   filters: { ...(yearFrom && { year_from: yearFrom }), ...(yearTo && { year_to: yearTo }) },
