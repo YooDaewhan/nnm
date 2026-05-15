@@ -388,9 +388,9 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
       onClick={() => navigate(`/papers/${paper.id}`)}
       style={{
         background: '#FFFFFF',
-        border: '1px solid #E4E7EA',
-        borderRadius: 10,
-        padding: isMobile ? '16px 14px' : '20px',
+        border: '1px solid #CDD1D5',
+        borderRadius: '0',
+        padding: '1.5rem',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
@@ -412,15 +412,15 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          fontSize: 11,
-          fontWeight: 700,
+          fontSize: 13,
+          fontWeight: 500,
           color: paper.badgeColor,
           background: paper.badgeBg,
-          borderRadius: 4,
-          padding: '3px 8px',
-          lineHeight: '16px',
+          borderRadius: 2,
+          padding: '2px 8px',
+          lineHeight: '16px ',
           alignSelf: 'flex-start',
-          letterSpacing: '-0.01em',
+          // letterSpacing: '-0.01em',
         }}
       >
         {paper.badge}
@@ -429,10 +429,10 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
       {/* 제목 — 2줄 */}
       <p
         style={{
-          fontSize: isMobile ? 14 : 15,
+          fontSize: isMobile ? 15 : 17,
           fontWeight: 700,
           color: '#1E2124',
-          lineHeight: 1.55,
+          lineHeight: 1.35,
           margin: 0,
           display: '-webkit-box',
           WebkitLineClamp: 2,
@@ -447,9 +447,9 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
       {/* 초록 — 2줄, 작은 회색 */}
       <p
         style={{
-          fontSize: isMobile ? 12 : 13,
-          color: '#8A949E',
-          lineHeight: 1.65,
+          fontSize: isMobile ? 13 : 15,
+          color: '#464C53',
+          lineHeight: 1.5,
           margin: 0,
           display: '-webkit-box',
           WebkitLineClamp: 2,
@@ -462,10 +462,10 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
 
       {/* 저자 + 저널/권호 — 하단 고정 */}
       <div style={{ marginTop: 'auto', paddingTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <span style={{ fontSize: 12, color: '#8A949E', fontWeight: 400 }}>{paper.author}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#8A949E' }}>
+        <span style={{ fontSize: 15, color: '#464C53', fontWeight: 400 }}>{paper.author}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 15, color: '#464C53' }}>
           <span>{paper.journal}</span>
-          <span style={{ color: '#CDD1D5', fontSize: 10 }}>&gt;</span>
+          <span style={{ color: '#8A949E', fontSize: 10 }}>&gt;</span>
           <span>{paper.volume}</span>
         </div>
       </div>
@@ -580,19 +580,24 @@ export default function HomePage() {
           background: 'linear-gradient(135deg, #1B1F3B 0%, #2B3260 35%, #3D4F8A 100%)',
           position: 'relative',
           zIndex: 10,
+          height: '400px',
+          display: 'flex',
+
         }}
       >
-        {/* 배경 반원 장식 (PNG 참고) */}
+        {/* 배경 */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
-          <div style={{ position: 'absolute', top: -80, right: -60, width: 320, height: 320, borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
-          <div style={{ position: 'absolute', bottom: -50, left: '35%', width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.02)' }} />
+          <div style={{ position: 'absolute', top: 50, right: -100, width: 900, height: 320, }}>
+            <img src="https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/tid024t009346%402x.png" />
+          </div>
         </div>
 
         <div
           style={{
+            width: '100%',
             maxWidth: 1280,
             margin: '0 auto',
-            padding: isMobile ? '44px 16px 40px' : '72px 40px 80px',
+            padding: '0 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -602,11 +607,11 @@ export default function HomePage() {
           }}
         >
           {/* ── 좌측: 타이틀 + 검색바 ── */}
-          <div style={{ flex: 1, maxWidth: isMobile ? '100%' : 520 }}>
+          <div style={{ flex: 1, maxWidth: isMobile ? '100%' : 640 }}>
             <h1
               style={{
-                fontSize: isMobile ? 28 : 38,
-                fontWeight: 800,
+                fontSize: isMobile ? 32 : 48,
+                fontWeight: 700,
                 color: '#FFFFFF',
                 marginBottom: isMobile ? 8 : 14,
                 lineHeight: 1.3,
@@ -617,8 +622,8 @@ export default function HomePage() {
             </h1>
             <p
               style={{
-                fontSize: isMobile ? 14 : 16,
-                color: 'rgba(255,255,255,0.7)',
+                fontSize: isMobile ? 17 : 28,
+                color: '#FFFFFF',
                 marginBottom: isMobile ? 28 : 40,
                 fontWeight: 400,
                 lineHeight: 1.5,
@@ -628,17 +633,19 @@ export default function HomePage() {
             </p>
 
             {/* 검색 바 */}
-            <div style={{ position: 'relative', width: '100%', maxWidth: isMobile ? '100%' : 480, zIndex: 100 }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: isMobile ? '100%' : 640, zIndex: 100 }}>
               <form onSubmit={handleSearch}>
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     background: '#FFFFFF',
-                    borderRadius: 12,
+                    border: '1px solid #D8E5FD',
+                    borderRadius: 1000,
                     overflow: 'hidden',
                     width: '100%',
                     boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                    padding: '8px 8px 8px 32px',
                   }}
                 >
                   <input
@@ -649,11 +656,11 @@ export default function HomePage() {
                     style={{
                       flex: 1,
                       minWidth: 0,
-                      padding: isMobile ? '14px 12px' : '18px 20px',
+                      padding: '8px 28px',
                       border: 'none',
                       outline: 'none',
-                      fontSize: isMobile ? 13 : 14,
-                      color: '#1E2124',
+                      fontSize: isMobile ? 17 : 19,
+                      color: '#464C53',
                       background: 'transparent',
                       fontFamily: ff,
                     }}
@@ -668,17 +675,17 @@ export default function HomePage() {
                       height: isMobile ? 50 : 58,
                       background: showDetailedSearch ? '#F0F4FF' : 'transparent',
                       border: 'none',
-                      borderLeft: '1px solid #E4E7EA',
+                      // borderLeft: '1px solid #E4E7EA',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      color: showDetailedSearch ? '#256EF4' : '#8A949E',
+                      color: showDetailedSearch ? '#256EF4' : '#33363D',
                       transition: 'background 0.15s, color 0.15s',
                     }}
                   >
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <svg width="32" height="32" viewBox="0 0 20 20" fill="none">
                       <circle cx="4" cy="10" r="1.5" fill="currentColor"/>
                       <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
                       <circle cx="16" cy="10" r="1.5" fill="currentColor"/>
@@ -697,10 +704,10 @@ export default function HomePage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      borderRadius: '0 12px 12px 0',
+                      borderRadius: '1000px',
                     }}
                   >
-                    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                    <svg width="24" height="24" viewBox="0 0 22 22" fill="none">
                       <circle cx="10" cy="10" r="7" stroke="white" strokeWidth="2.2" />
                       <line x1="15.5" y1="15.5" x2="20" y2="20" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
                     </svg>
@@ -773,25 +780,25 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── 우측: 일러스트 (PC only) ── */}
+          {/* ── 우측: 일러스트 (PC only) ──
           {!isMobile && (
             <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               <HeroIllustration />
             </div>
-          )}
+          )} */}
         </div>
       </section>
 
       {/* ════════════════════════════════════════
           2. 주제별 인기논문 — 흰 배경, 탭 + 4열 카드
       ════════════════════════════════════════ */}
-      <section style={{ backgroundColor: '#FFFFFF', padding: isMobile ? '36px 0 40px' : '60px 0 64px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: `0 ${px}` }}>
+      <section style={{ backgroundColor: '#F8FAFF', padding: '64px 0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
           {/* 섹션 타이틀 */}
-          <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#1E2124', marginBottom: 6, letterSpacing: '-0.3px' }}>
+          <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#1E2124', marginBottom: 6, letterSpacing: '0px' }}>
             주제별 인기논문
           </h2>
-          <p style={{ fontSize: isMobile ? 13 : 14, color: '#8A949E', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
+          <p style={{ fontSize: isMobile ? 15 : 17, color: '#464C53', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
             최근 7일, 분야별 핫한 논문들을 모았습니다.
           </p>
 
@@ -804,7 +811,7 @@ export default function HomePage() {
                     style={{
                       width: isMobile ? 64 : 80,
                       height: isMobile ? 36 : 38,
-                      borderRadius: 6,
+                      borderRadius: 0,
                       background: '#F3F4F6',
                       animation: 'pulse 1.5s ease-in-out infinite',
                     }}
@@ -817,17 +824,17 @@ export default function HomePage() {
                       key={tab}
                       onClick={() => setSelectedTab(tab)}
                       style={{
-                        padding: isMobile ? '8px 16px' : '9px 20px',
-                        borderRadius: 6,
+                        padding: '8px 16px',
+                        borderRadius: 0,
                         border: isActive ? 'none' : '1px solid #D1D5DB',
-                        background: isActive ? '#2D3560' : '#FFFFFF',
+                        background: isActive ? '#083891' : '#FFFFFF',
                         color: isActive ? '#FFFFFF' : '#6B7280',
-                        fontSize: isMobile ? 13 : 14,
+                        fontSize: 17,
                         fontWeight: isActive ? 600 : 500,
                         cursor: 'pointer',
                         fontFamily: ff,
                         transition: 'all 0.15s',
-                        lineHeight: '20px',
+                        lineHeight: '1.5rem',
                       }}
                     >
                       {tab}
@@ -881,12 +888,12 @@ export default function HomePage() {
       {/* ════════════════════════════════════════
           3. 인기 검색 키워드 — 연회색 배경
       ════════════════════════════════════════ */}
-      <section style={{ backgroundColor: '#F5F6F7', padding: isMobile ? '36px 0' : '56px 0' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: `0 ${px}` }}>
-          <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#1E2124', marginBottom: 6, letterSpacing: '-0.3px' }}>
+      <section style={{ backgroundColor: '#FFFFFF', padding: '64px 0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
+          <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#1E2124', marginBottom: 6, letterSpacing: '0px' }}>
             인기 검색 키워드
           </h2>
-          <p style={{ fontSize: isMobile ? 13 : 14, color: '#8A949E', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
+          <p style={{ fontSize: isMobile ? 15 : 17, color: '#464C53', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
             다른 연구자들은 어떤 키워드에 주목하고 있을까요?
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 8 : 10 }}>
@@ -895,20 +902,20 @@ export default function HomePage() {
                 key={i}
                 onClick={() => { setQuery(kw); navigate(`/search?q=${encodeURIComponent(kw)}`); }}
                 style={{
-                  padding: isMobile ? '9px 18px' : '10px 24px',
+                  padding: isMobile ? '8px 20px' : '10px 24px',
                   borderRadius: 100,
-                  border: '1px solid #D1D5DB',
-                  background: '#FFFFFF',
-                  fontSize: isMobile ? 13 : 14,
+                  // border: '1px solid #D1D5DB',
+                  background: '#EFF2F5',
+                  fontSize: isMobile ? 15 : 17,
                   fontWeight: 500,
-                  color: '#4B5563',
+                  color: '#052B57',
                   cursor: 'pointer',
                   fontFamily: ff,
                   transition: 'all 0.15s',
-                  lineHeight: '20px',
+                  lineHeight: '1.5rem',
                 }}
-                onMouseEnter={(e) => { const b = e.currentTarget; b.style.background = '#2D3560'; b.style.color = '#FFFFFF'; b.style.borderColor = '#2D3560'; }}
-                onMouseLeave={(e) => { const b = e.currentTarget; b.style.background = '#FFFFFF'; b.style.color = '#4B5563'; b.style.borderColor = '#D1D5DB'; }}
+                onMouseEnter={(e) => { const b = e.currentTarget; b.style.background = '#052B57'; b.style.color = '#FFFFFF'; }}
+                onMouseLeave={(e) => { const b = e.currentTarget; b.style.background = '#EFF2F5'; b.style.color = '#052B57'; }}
               >
                 {kw}
               </button>
@@ -922,7 +929,8 @@ export default function HomePage() {
       ════════════════════════════════════════ */}
       <section
         style={{
-          background: '#111111',
+          background: '#111111', // 기본 배경색
+          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)), url('https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/ti375a45215_nn.png')`,
           padding: isMobile ? '52px 16px' : '72px 40px',
           textAlign: 'center',
           position: 'relative',
@@ -947,12 +955,12 @@ export default function HomePage() {
       {/* ════════════════════════════════════════
           5. 추천 저널 — 커버 + 타이틀 + 발행기관
       ════════════════════════════════════════ */}
-      <section style={{ backgroundColor: '#FFFFFF', padding: isMobile ? '40px 0 52px' : '60px 0 80px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: `0 ${px}` }}>
-          <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#1E2124', marginBottom: 6, letterSpacing: '-0.3px' }}>
+      <section style={{ backgroundColor: '#FFFFFF', padding: '64px 0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
+          <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#1E2124', marginBottom: 6, letterSpacing: '0px' }}>
             추천 저널
           </h2>
-          <p style={{ fontSize: isMobile ? 13 : 14, color: '#8A949E', marginBottom: isMobile ? 20 : 32, fontWeight: 400 }}>
+          <p style={{ fontSize: isMobile ? 15 : 17, color: '#464C53', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
             가장 많이 읽힌 저널을 만나보세요.
           </p>
 
@@ -1066,11 +1074,11 @@ export default function HomePage() {
                             style={{
                               width: '100%',
                               aspectRatio: '3 / 4',
-                              borderRadius: 4,
+                              borderRadius: 8,
                               background: coverUrl ? 'transparent' : '#F3F4F5',
                               border: '1px solid #E5E7EB',
                               overflow: 'hidden',
-                              marginBottom: 10,
+                              marginBottom: 16,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -1095,10 +1103,10 @@ export default function HomePage() {
                               </svg>
                             )}
                           </div>
-                          <p style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600, color: '#1E2124', marginBottom: 3, lineHeight: 1.35, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                          <p style={{ fontSize: isMobile ? 15 : 17, fontWeight: 500, color: '#1E2124', lineHeight: 1.5, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                             {title}
                           </p>
-                          <p style={{ fontSize: isMobile ? 11 : 12, color: '#8A949E', fontWeight: 400, margin: 0 }}>
+                          <p style={{ fontSize: isMobile ? 13 : 15, color: '#464C53', fontWeight: 400, margin: 0 }}>
                             {publisher}
                           </p>
                         </div>
