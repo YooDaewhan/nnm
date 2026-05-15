@@ -122,7 +122,7 @@ export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemov
   const { data: analyzeData, isLoading: analyzeLoading, error: analyzeError } = useQuery({
     queryKey: ['ai-analyze', topic],
     queryFn: () => postAnalyze({ topic, top_k: 12, min_similarity: 0.3 }),
-    enabled: !!topic,
+    enabled: isExpanded && !!topic,
     staleTime: 1000 * 60 * 60,
     retry: 1,
   });
