@@ -3,12 +3,11 @@ interface FloatingActionBarProps {
   bulkScrapLoading: boolean;
   bulkCartLoading: boolean;
   onScrap: () => void;
-  onCite: () => void;
   onBuy: () => void;
   onClear: () => void;
 }
 
-export function FloatingActionBar({ selectedCount, bulkScrapLoading, bulkCartLoading, onScrap, onCite, onBuy, onClear }: FloatingActionBarProps) {
+export function FloatingActionBar({ selectedCount, bulkScrapLoading, bulkCartLoading, onScrap, onBuy, onClear }: FloatingActionBarProps) {
   if (selectedCount === 0) return null;
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-0 bg-[#1E2124] text-white rounded-2xl px-5 py-3 shadow-2xl">
@@ -16,10 +15,6 @@ export function FloatingActionBar({ selectedCount, bulkScrapLoading, bulkCartLoa
       <div className="w-px h-4 bg-white/20" />
       <button onClick={onScrap} disabled={bulkScrapLoading} className="px-4 text-[14px] text-white/80 hover:text-white disabled:text-white/30 transition-colors whitespace-nowrap">
         {bulkScrapLoading ? '추가 중...' : '스크랩'}
-      </button>
-      <div className="w-px h-4 bg-white/20" />
-      <button onClick={onCite} disabled={selectedCount === 0} className="px-4 text-[14px] text-white/80 hover:text-white transition-colors whitespace-nowrap">
-        인용하기
       </button>
       <div className="w-px h-4 bg-white/20" />
       <button onClick={onBuy} disabled={bulkCartLoading} className="px-4 text-[14px] text-white/80 hover:text-white disabled:text-white/30 transition-colors whitespace-nowrap">

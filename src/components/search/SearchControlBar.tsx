@@ -12,7 +12,6 @@ interface SearchControlBarProps {
   bulkCartLoading: boolean;
   onSelectAll: () => void;
   onBulkScrap: () => void;
-  onBulkCite: () => void;
   onBulkBuy: () => void;
   onSortChange: (sort: 'relevance' | 'latest') => void;
   onItemsPerPageChange: (size: number) => void;
@@ -28,7 +27,6 @@ export function SearchControlBar({
   bulkCartLoading,
   onSelectAll,
   onBulkScrap,
-  onBulkCite,
   onBulkBuy,
   onSortChange,
   onItemsPerPageChange,
@@ -81,21 +79,6 @@ export function SearchControlBar({
               <path d="M8 12.5L4.5 10 2 11V4C2 3.45 2.45 3 3 3H13C13.55 3 14 3.45 14 4V11L11.5 10 8 12.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
             </svg>
             보관함 담기
-          </button>
-
-          <div className="w-px h-4 bg-[#CDD1D5]" />
-
-          {/* 인용하기 */}
-          <button
-            onClick={onBulkCite}
-            disabled={selectedIds.size === 0}
-            className="px-4 text-[14px] text-[#464C53] hover:text-[#1E2124] disabled:text-[#CDD1D5] transition-colors flex items-center gap-1.5"
-          >
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <path d="M2.5 5.5C2.5 4.67 3.17 4 4 4H5.5V7.5H2.5V5.5ZM8.5 5.5C8.5 4.67 9.17 4 10 4H11.5V7.5H8.5V5.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
-              <path d="M2.5 7.5V12H5.5V7.5M8.5 7.5V12H11.5V7.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
-            </svg>
-            인용하기
           </button>
 
           <div className="w-px h-4 bg-[#CDD1D5]" />

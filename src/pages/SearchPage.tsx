@@ -27,7 +27,6 @@ function OpenSearchTextContent() {
     setDetailedSort,
     searchParams,
     setSearchParams,
-    handleReset,
     removeConditionBadge,
     removeYearFilter,
   } = useSearchSubmit();
@@ -35,7 +34,6 @@ function OpenSearchTextContent() {
   const pageParam = searchParams.get('page');
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
 
-  const [yearLabel, setYearLabel] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -118,7 +116,7 @@ function OpenSearchTextContent() {
     else setSelectedIds(new Set(searchResults.map(r => r.id)));
   };
 
-  const { bulkCartLoading, bulkScrapLoading, handleBulkCite, handleBulkBuy, handleBulkScrap } =
+  const { bulkCartLoading, bulkScrapLoading, handleBulkBuy, handleBulkScrap } =
     useBulkActions(selectedIds, searchResults, scrapIds, isLoggedIn);
 
   const cartMutation = useMutation({
@@ -169,6 +167,11 @@ function OpenSearchTextContent() {
 
   const goToPage = (page: number) => setSearchParams({ page: String(page) });
 
+  const handleResetFilters = () => {
+    setSubmittedState(prev => prev ? { ...prev, conditions: prev.conditions.slice(0, 1), filters: {} } : prev);
+    setSearchParams({ page: '1' });
+  };
+
   const highlightTerms = submittedState?.conditions.map(c => c.keyword).filter(Boolean) ?? [];
 
   return (
@@ -176,13 +179,10 @@ function OpenSearchTextContent() {
       <main className="max-w-[1280px] mx-auto px-4 py-10">
         <SearchResultHeader
           submittedState={submittedState}
-          yearLabel={yearLabel}
-          onReset={handleReset}
+          yearLabel={submittedState?.filters?.year_label ?? ''}
+          onReset={handleResetFilters}
           onRemoveCondition={removeConditionBadge}
-          onRemoveYearFilter={() => {
-            removeYearFilter();
-            setYearLabel('');
-          }}
+          onRemoveYearFilter={removeYearFilter}
         />
 
         <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -206,14 +206,17 @@ function OpenSearchTextContent() {
               onApply={(filters) => {
                 const yearFrom = filters.yearFrom ? parseInt(filters.yearFrom) : undefined;
                 const yearTo = filters.yearTo ? parseInt(filters.yearTo) : undefined;
-                setYearLabel(filters.yearLabel);
                 setSubmittedState(prev => prev ? {
                   ...prev,
-                  filters: { ...(yearFrom && { year_from: yearFrom }), ...(yearTo && { year_to: yearTo }) },
+                  filters: {
+                    ...(yearFrom && { year_from: yearFrom }),
+                    ...(yearTo && { year_to: yearTo }),
+                    ...(filters.yearLabel && { year_label: filters.yearLabel }),
+                  },
                 } : prev);
                 setSearchParams({ page: '1' });
               }}
-              onReset={handleReset}
+              onReset={handleResetFilters}
               onWithinSearch={(keyword) => {
                 if (!keyword.trim()) return;
                 const newCond: DetailedSearchCondition = { field: 'title', keyword: keyword.trim(), operator: 'AND' };
@@ -239,7 +242,6 @@ function OpenSearchTextContent() {
                 bulkCartLoading={bulkCartLoading}
                 onSelectAll={handleSelectAll}
                 onBulkScrap={handleBulkScrap}
-                onBulkCite={handleBulkCite}
                 onBulkBuy={handleBulkBuy}
                 onSortChange={handleSortChange}
                 onItemsPerPageChange={handleItemsPerPageChange}
@@ -294,7 +296,6 @@ function OpenSearchTextContent() {
               bulkScrapLoading={bulkScrapLoading}
               bulkCartLoading={bulkCartLoading}
               onScrap={handleBulkScrap}
-              onCite={handleBulkCite}
               onBuy={handleBulkBuy}
               onClear={() => setSelectedIds(new Set())}
             />

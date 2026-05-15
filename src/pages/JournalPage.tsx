@@ -105,7 +105,7 @@ export default function JournalPage() {
     return ids;
   }, [ordersData]);
 
-  const { bulkCartLoading, bulkScrapLoading, handleBulkCite, handleBulkBuy, handleBulkScrap } =
+  const { bulkCartLoading, bulkScrapLoading, handleBulkBuy, handleBulkScrap } =
     useBulkActions(selectedIds, rawSearchResults ?? [], scrapIds, isLoggedIn);
 
   const cartMutation = useMutation({
@@ -482,7 +482,6 @@ export default function JournalPage() {
               bulkCartLoading={bulkCartLoading}
               onSelectAll={handleSelectAll}
               onBulkScrap={handleBulkScrap}
-              onBulkCite={handleBulkCite}
               onBulkBuy={handleBulkBuy}
               onSortChange={handleSortChange}
               onItemsPerPageChange={handleItemsPerPageChange}
@@ -530,7 +529,6 @@ export default function JournalPage() {
               bulkScrapLoading={bulkScrapLoading}
               bulkCartLoading={bulkCartLoading}
               onScrap={handleBulkScrap}
-              onCite={handleBulkCite}
               onBuy={handleBulkBuy}
               onClear={() => setSelectedIds(new Set())}
             />
