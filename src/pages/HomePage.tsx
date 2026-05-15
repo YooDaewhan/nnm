@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { DetailedSearchCondition } from '@/api/search';
 import { customFetch, API_BASE_URL } from '@/api/client';
 
@@ -482,52 +483,37 @@ export default function HomePage() {
   const [query, setQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('');
   const [showDetailedSearch, setShowDetailedSearch] = useState(false);
-  const [categoryData, setCategoryData] = useState<ApiCategoryData>({});
-  const [papersLoading, setPapersLoading] = useState(true);
-  const [papersError, setPapersError] = useState(false);
-  const [featuredVenues, setFeaturedVenues] = useState<FeaturedVenue[]>([]);
+
+  const { data: categoryData = {}, isLoading: papersLoading, isError: papersError } = useQuery<ApiCategoryData>({
+    queryKey: ['home', 'popular-papers-by-category'],
+    queryFn: async () => {
+      const res = await customFetch<{ data: unknown; status: number }>(
+        '/api/home/popular-papers-by-category?per_category=4'
+      );
+      const body = res.data as Record<string, unknown>;
+      const rawCategories: unknown =
+        (body && typeof body === 'object' && 'data' in body ? body.data : undefined) ??
+        (body && typeof body === 'object' && 'categories' in body ? body.categories : undefined) ??
+        body;
+      return normalizeCategoryData(rawCategories);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    const fetchPopularPapers = async () => {
-      setPapersLoading(true);
-      setPapersError(false);
-      try {
-        const res = await customFetch<{ data: unknown; status: number }>(
-          '/api/home/popular-papers-by-category?per_category=4'
-        );
-        console.log('[HomePage] API 응답 전체:', JSON.parse(JSON.stringify(res)));
+    if (!selectedTab && Object.keys(categoryData).length > 0) {
+      setSelectedTab(Object.keys(categoryData)[0]);
+    }
+  }, [categoryData, selectedTab]);
 
-        const body = res.data as Record<string, unknown>;
-
-        // 응답 구조 후보: body.data / body.categories / body 자체
-        const rawCategories: unknown =
-          (body && typeof body === 'object' && 'data' in body ? body.data : undefined) ??
-          (body && typeof body === 'object' && 'categories' in body ? body.categories : undefined) ??
-          body;
-
-        const normalized = normalizeCategoryData(rawCategories);
-
-        setCategoryData(normalized);
-        const firstCategory = Object.keys(normalized)[0];
-        if (firstCategory) setSelectedTab(firstCategory);
-      } catch (err) {
-        console.error('[HomePage] popular-papers-by-category fetch failed:', err);
-        setPapersError(true);
-      } finally {
-        setPapersLoading(false);
-      }
-    };
-    fetchPopularPapers();
-  }, []);
-
-  useEffect(() => {
-    customFetch<{ data: unknown }>('/api/home/featured-venues?limit=12')
-      .then((res) => {
-        const venues = extractFeaturedVenues((res.data as Record<string, unknown>)?.data ?? res.data);
-        setFeaturedVenues(venues);
-      })
-      .catch(() => {});
-  }, []);
+  const { data: featuredVenues = [] } = useQuery<FeaturedVenue[]>({
+    queryKey: ['home', 'featured-venues'],
+    queryFn: async () => {
+      const res = await customFetch<{ data: unknown }>('/api/home/featured-venues?limit=12');
+      return extractFeaturedVenues((res.data as Record<string, unknown>)?.data ?? res.data);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [conditions, setConditions] = useState<DetailedSearchCondition[]>([
     { field: 'title', keyword: '', operator: 'AND' },
