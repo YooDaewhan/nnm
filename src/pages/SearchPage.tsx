@@ -130,7 +130,7 @@ function OpenSearchTextContent() {
   const buyNowMutation = useMutation({
     mutationFn: async (resultId: string) => {
       const result = searchResults.find((r) => r.id === resultId);
-      sessionStorage.setItem('directBuyItem', JSON.stringify({
+      sessionStorage.setItem('directBuyItem', JSON.stringify({ 
         publication_id: resultId,
         title: result?.title ?? '',
         unit_price: result?.price ?? result?.metadata?.price ?? 7000,

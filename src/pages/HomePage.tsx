@@ -620,11 +620,12 @@ export default function HomePage() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    background: '#FFFFFF',
-                    borderRadius: 12,
-                    overflow: 'hidden',
+                    background: '#F0F2F5',
+                    borderRadius: 999,
                     width: '100%',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                    padding: isMobile ? '4px 4px 4px 20px' : '6px 6px 6px 24px',
+                    boxSizing: 'border-box' as const,
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
                   }}
                 >
                   <input
@@ -635,47 +636,20 @@ export default function HomePage() {
                     style={{
                       flex: 1,
                       minWidth: 0,
-                      padding: isMobile ? '14px 12px' : '18px 20px',
+                      padding: isMobile ? '10px 0' : '12px 0',
                       border: 'none',
                       outline: 'none',
-                      fontSize: isMobile ? 13 : 14,
-                      color: '#1E2124',
+                      fontSize: isMobile ? 13 : 15,
+                      color: '#4B5563',
                       background: 'transparent',
                       fontFamily: ff,
                     }}
                   />
-                  {/* 상세검색 토글 */}
-                  <button
-                    type="button"
-                    onClick={() => setShowDetailedSearch(v => !v)}
-                    title="상세 검색"
-                    style={{
-                      width: 44,
-                      height: isMobile ? 50 : 58,
-                      background: showDetailedSearch ? '#F0F4FF' : 'transparent',
-                      border: 'none',
-                      borderLeft: '1px solid #E4E7EA',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      color: showDetailedSearch ? '#256EF4' : '#8A949E',
-                      transition: 'background 0.15s, color 0.15s',
-                    }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                      <circle cx="4" cy="10" r="1.5" fill="currentColor"/>
-                      <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
-                      <circle cx="16" cy="10" r="1.5" fill="currentColor"/>
-                    </svg>
-                  </button>
-                  {/* 검색 버튼 (파란색 동그란 아이콘, PNG 참고) */}
                   <button
                     type="submit"
                     style={{
-                      width: isMobile ? 50 : 58,
-                      height: isMobile ? 50 : 58,
+                      width: isMobile ? 42 : 50,
+                      height: isMobile ? 42 : 50,
                       background: '#3B5BDB',
                       border: 'none',
                       cursor: 'pointer',
@@ -683,7 +657,7 @@ export default function HomePage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      borderRadius: '0 12px 12px 0',
+                      borderRadius: '50%',
                     }}
                   >
                     <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
@@ -1023,6 +997,7 @@ export default function HomePage() {
 
                 <div style={{ overflow: 'hidden' }}>
                   <div
+                    className="predictive-smooth"
                     style={{
                       display: 'flex',
                       gap,
