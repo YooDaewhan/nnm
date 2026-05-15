@@ -74,12 +74,14 @@ export async function osSearchText(params: OsSearchTextParams): Promise<OpenSear
     filterClauses.push({ term: { venue_name } });
   }
 
-  const textQuery = {
-    multi_match: {
-      query,
-      fields: ['title^2', 'abstract', 'authors'],
-    },
-  };
+  if (filters?.journal) {
+    filterClauses.push({ match_phrase: { journal: filters.journal } });
+  }
+
+  const hasQuery = query.trim().length > 0;
+  const textQuery: object = hasQuery
+    ? { multi_match: { query: query.trim(), fields: ['title^2', 'abstract', 'authors'] } }
+    : { match_all: {} };
 
   const mustClauses: object[] = [textQuery];
   if (within_query?.trim()) {
@@ -129,7 +131,7 @@ export async function osSearchText(params: OsSearchTextParams): Promise<OpenSear
   };
 
   const results = json.hits.hits.map((hit) => ({
-    id: hit._id,
+    id: hit._source.publication_uuid ?? hit._id,
     title: hit._source.title ?? '',
     abstract: hit._source.abstract ?? '',
     authors: Array.isArray(hit._source.authors)

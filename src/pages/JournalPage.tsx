@@ -1,24 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '../api/client';
-
-/* ───────────────────────────────────────────
-   Types
-   ─────────────────────────────────────────── */
-interface Author {
-  id: string | number;
-  name: string;
-}
-
-interface FeaturedPaper {
-  id: string | number;
-  title: string;
-  authors: (string | Author)[];
-  published_at?: string;
-  view_count?: number;
-  citation_count?: number;
-  doi?: string;
-}
+import JournalFilterSidebar from '@/components/JournalFilterSidebar';
+import { OpenSearchTextResultItem } from '@/api/search';
+import { osSearchText } from '@/api/opensearch-direct';
+import { SearchResultCard } from '@/components/search/SearchResultCard';
+import { SearchControlBar } from '@/components/search/SearchControlBar';
+import { FloatingActionBar } from '@/components/search/FloatingActionBar';
+import { SearchPagination } from '@/components/search/SearchPagination';
+import { isAuthenticated } from '@/lib/auth';
+import { addToCart } from '@/api/cart';
+import { checkScrapBatch } from '@/api/scraps';
+import { getPayments } from '@/api/payment';
+import { useBulkActions } from '@/hooks/useBulkActions';
 
 interface VenueSettings {
   pissn?: string;
@@ -44,7 +39,9 @@ interface VenueDetail {
   eissn?: string;
   cover_url?: string | null;
   settings?: VenueSettings;
+  provider_id?: number;
   provider?: {
+    id?: number;
     name?: string;
     website_url?: string;
   };
@@ -59,34 +56,166 @@ interface VenueDetail {
     citation_count?: number;
     synced_at?: string;
   };
-  featured_papers?: {
-    recent?: FeaturedPaper[];
-    most_cited?: FeaturedPaper[];
-    most_viewed?: FeaturedPaper[];
-  };
 }
 
-const MENU_ITEMS = [
-  { label: '홈', hasDropdown: false },
-  { label: '논문 검색', hasDropdown: true },
-  { label: '투고 안내', hasDropdown: true },
-  { label: '편집위원회 소개', hasDropdown: true },
-  { label: '이용안내', hasDropdown: false },
-];
-
-const TABS = ['최신 논문', '인용 많은 논문', '조회 많은 논문'] as const;
-type TabType = (typeof TABS)[number];
-
-/* ───────────────────────────────────────────
-   Component
-   ─────────────────────────────────────────── */
 export default function JournalPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const isLoggedIn = isAuthenticated();
   const [venue, setVenue] = useState<VenueDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('최신 논문');
+
+  const [itemsPerPage, setItemsPerPage] = useState(4);
+  const [detailedSort, setDetailedSort] = useState<'relevance' | 'latest'>('latest');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchYearFrom, setSearchYearFrom] = useState('');
+  const [searchYearTo, setSearchYearTo] = useState('');
+  const [lastSearchParams, setLastSearchParams] = useState<{ keyword: string; yearFrom: string; yearTo: string } | null>(null);
+  const [rawSearchResults, setRawSearchResults] = useState<OpenSearchTextResultItem[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchPage, setSearchPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const scrapIds = rawSearchResults?.map(r => r.id) ?? [];
+  const { data: scrappedIds = new Set<string>() } = useQuery({
+    queryKey: ['scrap-batch', scrapIds],
+    queryFn: () => checkScrapBatch(scrapIds),
+    select: (data) => new Set(data),
+    enabled: isLoggedIn && scrapIds.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: ordersData } = useQuery({
+    queryKey: ['orders-paid'],
+    queryFn: () => getPayments({ status: 'paid', per_page: 100 }),
+    enabled: isLoggedIn,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const purchasedIds = useMemo(() => {
+    const ids = new Set<string>();
+    const paidOrders = ordersData?.success ? ordersData.orders.data : [];
+    paidOrders.forEach((order) => {
+      const items = (order as any).metadata?.items as { publication_id?: string }[] ?? [];
+      items.forEach((item) => { if (item.publication_id) ids.add(item.publication_id); });
+    });
+    return ids;
+  }, [ordersData]);
+
+  const { bulkCartLoading, bulkScrapLoading, handleBulkCite, handleBulkBuy, handleBulkScrap } =
+    useBulkActions(selectedIds, rawSearchResults ?? [], scrapIds, isLoggedIn);
+
+  const cartMutation = useMutation({
+    mutationFn: async (resultId: string) => { await addToCart({ publication_id: resultId }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['cart'] }); alert('장바구니에 추가되었습니다.'); },
+    onError: (err) => alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
+  });
+
+  const buyNowMutation = useMutation({
+    mutationFn: async (resultId: string) => {
+      const result = rawSearchResults?.find(r => r.id === resultId);
+      sessionStorage.setItem('directBuyItem', JSON.stringify({
+        publication_id: resultId,
+        title: result?.title ?? '',
+        unit_price: result?.price ?? result?.metadata?.price ?? 7000,
+        quantity: 1,
+        authors: result?.authors ?? [],
+        publisher: result?.metadata?.publisher_name ?? null,
+        journal: result?.metadata?.journal ?? null,
+      }));
+    },
+    onSuccess: () => navigate('/pay?direct=true'),
+    onError: (err) => alert(err instanceof Error ? err.message : '구매하기에 실패했습니다.'),
+  });
+
+  const handleAddToCart = (e: React.MouseEvent, resultId: string) => {
+    e.stopPropagation();
+    if (!isLoggedIn) { navigate('/login'); return; }
+    cartMutation.mutate(resultId);
+  };
+
+  const handleBuyNow = (e: React.MouseEvent, resultId: string) => {
+    e.stopPropagation();
+    if (!isLoggedIn) { navigate('/login'); return; }
+    buyNowMutation.mutate(resultId);
+  };
+
+  const handleScrapToggle = () => {
+    queryClient.invalidateQueries({ queryKey: ['scrap-batch', scrapIds] });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === (rawSearchResults?.length ?? 0)) setSelectedIds(new Set());
+    else setSelectedIds(new Set(rawSearchResults?.map(r => r.id) ?? []));
+  };
+
+  const executeSearch = async (keyword: string, yearFrom: string, yearTo: string, page: number, sort?: 'relevance' | 'latest', size?: number) => {
+    if (!venue) return;
+    setSearchLoading(true);
+    setSelectedIds(new Set());
+    const perPage = size ?? itemsPerPage;
+    try {
+      const res = await osSearchText({
+        query: keyword,
+        filters: {
+          journal: venue.name,
+          ...(yearFrom || yearTo ? {
+            year: {
+              ...(yearFrom ? { gte: parseInt(yearFrom) } : {}),
+              ...(yearTo ? { lte: parseInt(yearTo) } : {}),
+            },
+          } : {}),
+        },
+        limit: perPage,
+        offset: (page - 1) * perPage,
+        sort: sort ?? detailedSort,
+      });
+      setRawSearchResults(res.results ?? []);
+      setSearchTotal(res.total ?? res.count ?? 0);
+      setSearchPage(page);
+    } catch {
+      setRawSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSearch = async (keyword: string, yearFrom: string, yearTo: string) => {
+    setSearchKeyword(keyword);
+    setSearchYearFrom(yearFrom);
+    setSearchYearTo(yearTo);
+    setLastSearchParams({ keyword, yearFrom, yearTo });
+    await executeSearch(keyword, yearFrom, yearTo, 1);
+  };
+
+  const goToSearchPage = (page: number) => {
+    if (!lastSearchParams) return;
+    executeSearch(lastSearchParams.keyword, lastSearchParams.yearFrom, lastSearchParams.yearTo, page);
+  };
+
+  const handleSearchReset = () => {
+    setSearchKeyword('');
+    setSearchYearFrom('');
+    setSearchYearTo('');
+    setSearchPage(1);
+    setLastSearchParams({ keyword: '', yearFrom: '', yearTo: '' });
+    executeSearch('', '', '', 1);
+  };
+
+  const handleSortChange = (sort: 'relevance' | 'latest') => {
+    setDetailedSort(sort);
+    if (!lastSearchParams) return;
+    executeSearch(lastSearchParams.keyword, lastSearchParams.yearFrom, lastSearchParams.yearTo, 1, sort);
+  };
+
+  const handleItemsPerPageChange = (size: number) => {
+    setItemsPerPage(size);
+    if (!lastSearchParams) return;
+    executeSearch(lastSearchParams.keyword, lastSearchParams.yearFrom, lastSearchParams.yearTo, 1, undefined, size);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -105,12 +234,18 @@ export default function JournalPage() {
         return res.json();
       })
       .then((data) => {
-        console.log('[JournalPage] full response:', JSON.stringify(data, null, 2));
         setVenue(data);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!venue) return;
+    const params = { keyword: '', yearFrom: '', yearTo: '' };
+    setLastSearchParams(params);
+    executeSearch('', '', '', 1);
+  }, [venue]);
 
   if (loading) {
     return (
@@ -137,14 +272,6 @@ export default function JournalPage() {
     { label: '발행 권수', value: venue.metrics?.volumes_count?.toLocaleString() ?? '-' },
     { label: '발행 연수', value: venue.metrics?.active_years?.toLocaleString() ?? '-' },
   ];
-
-  const fp = venue.featured_papers ?? {};
-  const tabMap: Record<TabType, FeaturedPaper[]> = {
-    '최신 논문': (fp as any).recent ?? [],
-    '인용 많은 논문': (fp as any).most_cited ?? [],
-    '조회 많은 논문': (fp as any).most_viewed ?? [],
-  };
-  const tabPapers = tabMap[activeTab];
 
   const pissn = venue.pissn ?? venue.settings?.pissn;
   const eissn = venue.eissn ?? venue.settings?.eissn;
@@ -188,7 +315,7 @@ export default function JournalPage() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M6 4l4 4-4 4" stroke="#F4F5F6" strokeWidth="1.5" />
             </svg>
-            <span 
+            <span
               className="underline px-1"
               style={{
                 fontFamily: "'Pretendard GOV', sans-serif",
@@ -323,120 +450,6 @@ export default function JournalPage() {
         </div>
       </section>
 
-      {/* ── Main Menu Bar ── */}
-      <nav
-        className="w-full flex justify-center"
-        style={{ background: '#FFFFFF', borderBottom: '1px solid #CDD1D5', height: 72 }}
-      >
-        <div
-          className="flex items-center gap-4"
-          style={{ maxWidth: 1280, width: '100%', padding: '8px 16px' }}
-        >
-          {MENU_ITEMS.map((item, i) => (
-            <button
-              key={i}
-              className="flex items-center gap-2 bg-transparent border-none cursor-pointer"
-              style={{
-                padding: '0 16px',
-                height: 56,
-                fontFamily: "'Pretendard GOV', sans-serif",
-                fontWeight: 600,
-                fontSize: 19,
-                lineHeight: '150%',
-                color: '#1E2124',
-              }}
-            >
-              {item.label}
-              {item.hasDropdown && (
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M4 6l4 4 4-4" stroke="#33363D" strokeWidth="1.5" />
-                </svg>
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      {/* ── Overview + Metrics Section ── */}
-      <section
-        className="w-full flex justify-center"
-        style={{ background: '#ECF2FE', borderTop: '1px solid #D8E5FD', padding: '64px 0' }}
-      >
-        <div
-          className="flex gap-20"
-          style={{ maxWidth: 1280, width: '100%', padding: '0 16px' }}
-        >
-          {/* Col 1: Overview */}
-          <div className="flex flex-col gap-5 flex-1">
-            <h2
-              style={{
-                fontFamily: "'Pretendard GOV', sans-serif",
-                fontWeight: 700,
-                fontSize: 19,
-                lineHeight: '150%',
-                color: '#131416',
-                margin: 0,
-              }}
-            >
-              Overview
-            </h2>
-            <p
-              style={{
-                fontFamily: "'Pretendard GOV', sans-serif",
-                fontWeight: 400,
-                fontSize: 17,
-                lineHeight: '150%',
-                color: venue.description ? '#1E2124' : '#8A949E',
-                margin: 0,
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {venue.description || '준비중입니다.'}
-            </p>
-          </div>
-
-          {/* Col 2: Journal Metrics */}
-          <div className="flex flex-col gap-4 flex-shrink-0" style={{ width: 300 }}>
-            <h3
-              style={{
-                fontFamily: "'Pretendard GOV', sans-serif",
-                fontWeight: 700,
-                fontSize: 19,
-                lineHeight: '150%',
-                color: '#131416',
-                margin: 0,
-              }}
-            >
-              Journal Metrics
-            </h3>
-
-            {metrics.map((m, i) => (
-              <div key={i}>
-                <div
-                  className="flex items-center gap-4 py-1"
-                  style={{
-                    fontFamily: "'Pretendard GOV', sans-serif",
-                    fontSize: 15,
-                    lineHeight: '150%',
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <rect x="3" y="2" width="14" height="16" rx="2" stroke="#33363D" strokeWidth="1.4" />
-                    <line x1="7" y1="7" x2="13" y2="7" stroke="#33363D" strokeWidth="1.2" />
-                    <line x1="7" y1="11" x2="11" y2="11" stroke="#33363D" strokeWidth="1.2" />
-                  </svg>
-                  <div className="flex items-center gap-4">
-                    <span style={{ color: '#1E2124', fontWeight: 400 }}>{m.label}</span>
-                    <span style={{ color: '#1E2124', fontWeight: 600 }}>{m.value}</span>
-                  </div>
-                </div>
-                <div style={{ height: 1, background: '#D8E5FD' }} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── Articles + Sidebar Section ── */}
       <section
         className="w-full flex justify-center"
@@ -446,254 +459,90 @@ export default function JournalPage() {
           className="flex gap-20"
           style={{ maxWidth: 1280, width: '100%', padding: '0 16px' }}
         >
-          {/* Col 1: Articles */}
-          <div className="flex flex-col gap-4 flex-1">
-            {/* Tab Bar */}
-            <div
-              className="flex overflow-hidden"
-              style={{ border: '1px solid #B1B8BE', borderRadius: 8, background: '#FFFFFF' }}
-            >
-              {TABS.map((tab, i) => {
-                const isActive = activeTab === tab;
-                return (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    style={{
-                      flex: 1,
-                      minWidth: 80,
-                      height: 56,
-                      border: 'none',
-                      borderRight: i < TABS.length - 1 ? '1px solid #B1B8BE' : 'none',
-                      background: isActive ? '#063A74' : 'transparent',
-                      fontFamily: "'Pretendard GOV', sans-serif",
-                      fontWeight: 700,
-                      fontSize: 17,
-                      lineHeight: '150%',
-                      color: isActive ? '#FFFFFF' : '#464C53',
-                      cursor: 'pointer',
-                      borderRadius:
-                        i === 0 ? '8px 0 0 8px' : i === TABS.length - 1 ? '0 8px 8px 0' : '0',
-                    }}
-                  >
-                    {tab}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Sidebar */}
+          <JournalFilterSidebar
+            venueName={venue.name}
+            submissionUrl={venue.submission_url}
+            onSearch={(keyword, yearFrom, yearTo) => handleSearch(keyword, yearFrom, yearTo)}
+            onReset={handleSearchReset}
+          />
 
-            {/* Article List */}
-            <div key={activeTab} className="flex flex-col">
-              {tabPapers.length === 0 ? (
-                <div
-                  style={{
-                    padding: '40px 0',
-                    textAlign: 'center',
-                    fontFamily: "'Pretendard GOV', sans-serif",
-                    fontSize: 15,
-                    color: '#8A949E',
-                  }}
-                >
-                  논문이 없습니다.
-                </div>
-              ) : (
-                tabPapers.map((paper, i) => (
-                  <div
-                    key={paper.id}
-                    className="flex items-start gap-4"
-                    style={{
-                      padding: '24px 0',
-                      borderTop: i > 0 ? '1px solid #CDD1D5' : 'none',
-                      background: '#FFFFFF',
-                    }}
-                  >
-                    <div className="flex flex-col gap-2 flex-1">
-                      <h4
-                        onClick={() => navigate(`/papers/${paper.id}`)}
-                        style={{
-                          fontFamily: "'Pretendard GOV', sans-serif",
-                          fontWeight: 700,
-                          fontSize: 19,
-                          lineHeight: '150%',
-                          color: '#1E2124',
-                          margin: 0,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {paper.title}
-                      </h4>
+          {/* Articles */}
+          <div
+            className="flex flex-col flex-1"
+            style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E4E7EA', padding: '20px 24px' }}
+          >
+            <SearchControlBar
+              searchResults={rawSearchResults ?? []}
+              totalResults={searchTotal}
+              selectedIds={selectedIds}
+              detailedSort={detailedSort}
+              itemsPerPage={itemsPerPage}
+              bulkScrapLoading={bulkScrapLoading}
+              bulkCartLoading={bulkCartLoading}
+              onSelectAll={handleSelectAll}
+              onBulkScrap={handleBulkScrap}
+              onBulkCite={handleBulkCite}
+              onBulkBuy={handleBulkBuy}
+              onSortChange={handleSortChange}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
 
-                      {paper.authors && paper.authors.length > 0 && (
-                        <div className="flex items-center gap-[2px]">
-                          {paper.authors.map((author, ai) => (
-                            <span
-                              key={ai}
-                              style={{
-                                fontFamily: "'Pretendard GOV', sans-serif",
-                                fontWeight: 400,
-                                fontSize: 15,
-                                lineHeight: '150%',
-                                color: '#464C53',
-                                padding: '0 2px',
-                              }}
-                            >
-                              {typeof author === 'string' ? author : author.name}
-                              {ai < paper.authors.length - 1 && ','}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div
-                        className="flex items-center gap-[2px]"
-                        style={{
-                          fontFamily: "'Pretendard GOV', sans-serif",
-                          fontWeight: 400,
-                          fontSize: 15,
-                          lineHeight: '150%',
-                          color: '#464C53',
-                        }}
-                      >
-                        {paper.published_at && (
-                          <span style={{ padding: '0 2px' }}>{paper.published_at}</span>
-                        )}
-                        {paper.view_count != null && (
-                          <>
-                            <span style={{ color: '#8A949E', padding: '0 2px' }}>|</span>
-                            <span style={{ padding: '0 2px' }}>조회 {paper.view_count}</span>
-                          </>
-                        )}
-                        {paper.citation_count != null && (
-                          <>
-                            <span style={{ color: '#8A949E', padding: '0 2px' }}>|</span>
-                            <span style={{ padding: '0 2px' }}>인용 {paper.citation_count}</span>
-                          </>
-                        )}
-                        {paper.doi && (
-                          <>
-                            <span style={{ color: '#8A949E', padding: '0 2px' }}>|</span>
-                            <span style={{ padding: '0 2px' }}>{paper.doi}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div
-                      className="flex items-center justify-end flex-shrink-0"
-                      style={{ width: 96, alignSelf: 'stretch' }}
-                    >
-                      <button
-                        onClick={() => navigate(`/papers/${paper.id}`)}
-                        style={{
-                          width: 96,
-                          height: 40,
-                          background: '#256EF4',
-                          borderRadius: 6,
-                          border: 'none',
-                          fontFamily: "'Pretendard GOV', sans-serif",
-                          fontWeight: 400,
-                          fontSize: 15,
-                          lineHeight: '150%',
-                          color: '#FFFFFF',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        원문보기
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Col 2: Sidebar */}
-          <div className="flex flex-col gap-12 flex-shrink-0" style={{ width: 300 }}>
-            <div className="flex flex-col" style={{ borderRadius: 8, overflow: 'hidden' }}>
-              <div
-                className="flex items-center"
-                style={{
-                  padding: 24,
-                  height: 56,
-                  background: 'rgba(8, 56, 145, 0.8)',
-                  borderRadius: '8px 8px 0 0',
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Pretendard GOV', sans-serif",
-                    fontWeight: 700,
-                    fontSize: 19,
-                    lineHeight: '150%',
-                    color: '#FFFFFF',
-                  }}
-                >
-                  Calls for Papers
-                </span>
+            {searchLoading ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: "'Pretendard GOV', sans-serif", fontSize: 15, color: '#8A949E' }}>
+                검색 중...
               </div>
-
-              <div
-                className="flex flex-col gap-4"
-                style={{
-                  padding: 24,
-                  background: '#FFFFFF',
-                  border: '1px solid #D8E5FD',
-                  borderTop: 'none',
-                  borderRadius: '0 0 12px 12px',
-                }}
-              >
-                <div className="flex flex-col gap-[6px]">
-                  <p
-                    style={{
-                      fontFamily: "'Pretendard GOV', sans-serif",
-                      fontWeight: 600,
-                      fontSize: 17,
-                      lineHeight: '150%',
-                      color: '#131416',
-                      margin: 0,
-                    }}
-                  >
-                    {venue.name} 논문 모집 안내
-                  </p>
-                </div>
-
-                <div style={{ height: 1, background: '#D8E5FD' }} />
-
-                <p
-                  style={{
-                    fontFamily: "'Pretendard GOV', sans-serif",
-                    fontWeight: 400,
-                    fontSize: 15,
-                    lineHeight: '150%',
-                    color: '#131416',
-                    margin: 0,
-                  }}
-                >
-                  Open for submissions
-                </p>
-
-                {venue.submission_url && (
-                  <>
-                    <div style={{ height: 1, background: '#D8E5FD' }} />
-                    <a
-                      href={/^https?:\/\//i.test(venue.submission_url!) ? venue.submission_url! : `https://${venue.submission_url}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        fontFamily: "'Pretendard GOV', sans-serif",
-                        fontWeight: 600,
-                        fontSize: 15,
-                        lineHeight: '150%',
-                        color: '#256EF4',
-                        textDecoration: 'none',
-                      }}
-                    >
-                      투고 바로가기 →
-                    </a>
-                  </>
-                )}
+            ) : rawSearchResults === null ? null : rawSearchResults.length === 0 ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: "'Pretendard GOV', sans-serif", fontSize: 15, color: '#8A949E' }}>
+                검색 결과가 없습니다.
               </div>
-            </div>
+            ) : (
+              <div>
+                {rawSearchResults.map((result) => (
+                  <SearchResultCard
+                    key={result.id}
+                    result={result}
+                    onAddToCart={handleAddToCart}
+                    onBuyNow={handleBuyNow}
+                    isLoggedIn={isLoggedIn}
+                    isSelected={selectedIds.has(result.id)}
+                    onToggleSelect={(e) => {
+                      e.stopPropagation();
+                      setSelectedIds(prev => {
+                        const next = new Set(prev);
+                        next.has(result.id) ? next.delete(result.id) : next.add(result.id);
+                        return next;
+                      });
+                    }}
+                    cartLoading={cartMutation.isPending && cartMutation.variables === result.id}
+                    buyLoading={buyNowMutation.isPending && buyNowMutation.variables === result.id}
+                    highlightTerms={searchKeyword ? [searchKeyword] : []}
+                    isScraped={scrappedIds.has(result.id)}
+                    onScrapToggle={handleScrapToggle}
+                    isPurchased={purchasedIds.has(result.id)}
+                  />
+                ))}
+              </div>
+            )}
+
+            <FloatingActionBar
+              selectedCount={selectedIds.size}
+              bulkScrapLoading={bulkScrapLoading}
+              bulkCartLoading={bulkCartLoading}
+              onScrap={handleBulkScrap}
+              onCite={handleBulkCite}
+              onBuy={handleBulkBuy}
+              onClear={() => setSelectedIds(new Set())}
+            />
+
+            <SearchPagination
+              currentPage={searchPage}
+              totalPages={Math.ceil(searchTotal / itemsPerPage)}
+              totalResults={searchTotal}
+              isLoading={searchLoading}
+              hasError={false}
+              onGoToPage={goToSearchPage}
+            />
           </div>
         </div>
       </section>
