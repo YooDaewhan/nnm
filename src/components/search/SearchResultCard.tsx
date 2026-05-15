@@ -167,7 +167,7 @@ export function SearchResultCard({
     setAiSummaryLoading(true);
     setAiSummaryError(false);
     try {
-      const summary = await fetchAiSummary(result.title);
+      const summary = await fetchAiSummary(result.id);
       setAiSummary(summary);
     } catch {
       setAiSummaryError(true);
@@ -220,7 +220,7 @@ export function SearchResultCard({
     return (
       <div className="flex flex-row md:flex-col items-center gap-2">
         <div className="h-9 px-3 md:w-full flex items-center justify-center border border-[#AB2B36] rounded-md shrink-0">
-          <span className="text-[14px] font-bold text-[#AB2B36]">￦ 7,000</span>
+          <span className="text-[14px] font-bold text-[#AB2B36]">￦ {(result.price ?? result.metadata.price ?? 7000).toLocaleString()}</span>
         </div>
         <button
           onClick={(e) => onBuyNow(e, result.id)}
@@ -409,7 +409,7 @@ export function SearchResultCard({
           )}
 
           {aiSummaryExpanded && (
-            <div className="mt-3 p-3 bg-[#F0F4FF] rounded-lg border border-[#C7D9FF]">
+            <div className="mt-3 p-3 bg-[#F0F4FF] rounded-lg border border-[#C7D9FF] animate-fadeIn">
               <div className="flex items-center gap-1.5 mb-2">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                   <path d="M8 1.5L9.8 5.5L14 6.1L11 9L11.8 13.2L8 11.1L4.2 13.2L5 9L2 6.1L6.2 5.5L8 1.5Z" stroke="#256EF4" strokeWidth="1.3" strokeLinejoin="round"/>
@@ -417,11 +417,11 @@ export function SearchResultCard({
                 <span className="text-[12px] font-semibold text-[#256EF4]">AI 요약</span>
               </div>
               {aiSummaryLoading ? (
-                <p className="text-[13px] text-[#8A949E]">요약을 생성하고 있습니다...</p>
+                <p className="text-[13px] text-[#8A949E]">요약을 불러오는 중...</p>
               ) : aiSummaryError ? (
                 <p className="text-[13px] text-[#AB2B36]">AI 요약을 불러오는데 실패했습니다.</p>
               ) : (
-                <p className="text-[13px] text-[#464C53] leading-[1.6em]">{aiSummary}</p>
+                <p className="text-[13px] text-[#464C53] leading-[1.6em] animate-fadeIn">{aiSummary}</p>
               )}
             </div>
           )}

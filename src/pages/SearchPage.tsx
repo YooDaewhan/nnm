@@ -133,7 +133,7 @@ function OpenSearchTextContent() {
       sessionStorage.setItem('directBuyItem', JSON.stringify({
         publication_id: resultId,
         title: result?.title ?? '',
-        unit_price: 5000,
+        unit_price: result?.price ?? result?.metadata?.price ?? 7000,
         quantity: 1,
         authors: result?.authors ?? [],
         publisher: result?.metadata?.publisher_name ?? null,
