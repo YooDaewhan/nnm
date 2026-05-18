@@ -11,7 +11,7 @@ const FIELD_LABELS: Record<string, string> = {
 interface SubmittedState {
   conditions: DetailedSearchCondition[];
   sort: 'relevance' | 'latest';
-  filters: { year_from?: number; year_to?: number; year_label?: string };
+  filters: { year_from?: number; year_to?: number; year_label?: string; journal?: string };
 }
 
 interface SearchResultHeaderProps {
@@ -20,6 +20,7 @@ interface SearchResultHeaderProps {
   onReset: () => void;
   onRemoveCondition: (idx: number) => void;
   onRemoveYearFilter: () => void;
+  onRemoveJournalFilter: (remaining?: string) => void;
 }
 
 const ResetIcon = () => (
@@ -111,10 +112,14 @@ function AnalyzePanel({ data }: { data: AnalyzeResponse }) {
   );
 }
 
-export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemoveCondition, onRemoveYearFilter }: SearchResultHeaderProps) {
+export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemoveCondition, onRemoveYearFilter, onRemoveJournalFilter }: SearchResultHeaderProps) {
   const andConditions = submittedState?.conditions.slice(1) ?? [];
   const hasYearFilter = !!(submittedState?.filters.year_from || submittedState?.filters.year_to);
-  const hasAnyFilter = andConditions.length > 0 || hasYearFilter;
+  const journalString = Array.isArray(submittedState?.filters.journal)
+    ? (submittedState!.filters.journal as unknown as string[]).join(',')
+    : (submittedState?.filters.journal ?? '');
+  const hasJournalFilter = !!journalString;
+  const hasAnyFilter = andConditions.length > 0 || hasYearFilter || hasJournalFilter;
 
   const [isExpanded, setIsExpanded] = useState(false);
   const topic = submittedState?.conditions[0]?.keyword ?? '';
@@ -163,6 +168,21 @@ export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemov
                 </button>
               </span>
             )}
+            {hasJournalFilter && journalString.split(',').map((j: string, i: number, arr: string[]) => (
+              <span key={j} className="h-7 px-3 flex items-center gap-1.5 bg-white/70 border border-[#C4D8FF] rounded-full text-[13px] text-[#464C53]">
+                <span className="text-[#8A949E]">학술지:</span>
+                {j}
+                <button
+                  onClick={() => {
+                    const remaining = arr.filter((_: string, idx: number) => idx !== i);
+                    remaining.length === 0 ? onRemoveJournalFilter() : onRemoveJournalFilter(remaining.join(','));
+                  }}
+                  className="text-[#8A949E] hover:text-[#E32929] transition-colors flex items-center"
+                >
+                  <CloseIcon />
+                </button>
+              </span>
+            ))}
             {!hasAnyFilter && (
               <span className="text-[13px] text-[#8A949E]">적용된 조건이 없습니다.</span>
             )}

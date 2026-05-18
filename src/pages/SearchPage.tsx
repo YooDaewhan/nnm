@@ -45,7 +45,7 @@ function OpenSearchTextContent() {
       page: currentPage,
       size: itemsPerPage,
       sort: submittedState!.sort,
-      filters: (submittedState!.filters.year_from || submittedState!.filters.year_to)
+      filters: (submittedState!.filters.year_from || submittedState!.filters.year_to || submittedState!.filters.journal)
         ? submittedState!.filters
         : undefined,
     }),
@@ -54,6 +54,14 @@ function OpenSearchTextContent() {
 
   const searchResults = data?.results ?? [];
   const totalResults = data?.total ?? data?.count ?? 0;
+
+  const providers = useMemo(() => {
+    const seen = new Set<string>();
+    return searchResults
+      .map(r => r.metadata?.journal)
+      .filter((j): j is string => !!j && !seen.has(j) && !!seen.add(j))
+      .map((name, idx) => ({ id: idx, name }));
+  }, [searchResults]);
 
   const searchError = error instanceof Error ? error.message : error ? '검색 중 오류가 발생했습니다.' : null;
   const totalPages = Math.ceil(totalResults / itemsPerPage);
@@ -170,6 +178,11 @@ function OpenSearchTextContent() {
     setSearchParams({ page: '1' });
   };
 
+  const handleRemoveJournalFilter = (remaining?: string) => {
+    setSubmittedState(prev => prev ? { ...prev, filters: { ...prev.filters, journal: remaining } } : prev);
+    setSearchParams({ page: '1' });
+  };
+
   const highlightTerms = submittedState?.conditions.map(c => c.keyword).filter(Boolean) ?? [];
 
   return (
@@ -181,6 +194,7 @@ function OpenSearchTextContent() {
           onReset={handleResetFilters}
           onRemoveCondition={removeConditionBadge}
           onRemoveYearFilter={removeYearFilter}
+          onRemoveJournalFilter={handleRemoveJournalFilter}
         />
 
         <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -201,6 +215,7 @@ function OpenSearchTextContent() {
           {/* 필터 사이드바 */}
           <div className={`w-full md:w-auto md:sticky top-24 md:self-start ${mobileFilterOpen ? '' : 'hidden md:block'}`}>
             <SearchFilterSidebar
+              providers={providers}
               onApply={(filters) => {
                 const yearFrom = filters.yearFrom ? parseInt(filters.yearFrom) : undefined;
                 const yearTo = filters.yearTo ? parseInt(filters.yearTo) : undefined;
@@ -210,6 +225,7 @@ function OpenSearchTextContent() {
                     ...(yearFrom && { year_from: yearFrom }),
                     ...(yearTo && { year_to: yearTo }),
                     ...(filters.yearLabel && { year_label: filters.yearLabel }),
+                    ...(filters.providerName.length > 0 && { journal: filters.providerName.join(',') }),
                   },
                 } : prev);
                 setSearchParams({ page: '1' });

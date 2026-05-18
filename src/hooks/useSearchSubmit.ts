@@ -5,7 +5,7 @@ import { DetailedSearchCondition } from '@/api/search';
 export interface SubmittedState {
   conditions: DetailedSearchCondition[];
   sort: 'relevance' | 'latest';
-  filters: { year_from?: number; year_to?: number; year_label?: string };
+  filters: { year_from?: number; year_to?: number; year_label?: string; journal?: string };
 }
 
 function loadFromSession(): SubmittedState | null {

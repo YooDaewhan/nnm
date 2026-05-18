@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 export interface Filters {
-  providerName: string;
+  providerName: string[];
   venueName: string;
   yearFrom: string;
   yearTo: string;
@@ -15,7 +15,7 @@ export interface ProviderOption {
 }
 
 const DEFAULT_FILTERS: Filters = {
-  providerName: '',
+  providerName: [],
   venueName: '',
   yearFrom: '',
   yearTo: '',
@@ -153,28 +153,35 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
           </div>
 
           {/* 학회 / 학술지 */}
-          <div className="border-b border-[#E4E7EA]">
-            <button onClick={() => toggle('venue')} className="flex items-center justify-between w-full py-3.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold text-[#1E2124]">학회 / 학술지</span>
-                {(filters.providerName || filters.venueName) && (
-                  <div className="w-5 h-5 flex items-center justify-center bg-[#256EF4] rounded-full">
-                    <span className="text-[11px] font-medium text-white leading-none">1</span>
-                  </div>
-                )}
-              </div>
-              <ChevronIcon open={accordionOpen.venue} />
-            </button>
-            {accordionOpen.venue && (
-              <div className="pb-5 pt-1">
-                {providers && providers.length > 0 && (
+          {providers && providers.length > 0 && (
+            <div className="border-b border-[#E4E7EA]">
+              <button onClick={() => toggle('venue')} className="flex items-center justify-between w-full py-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[16px] font-bold text-[#1E2124]">학회 / 학술지</span>
+                  {(filters.providerName.length > 0 || filters.venueName) && (
+                    <div className="w-5 h-5 flex items-center justify-center bg-[#256EF4] rounded-full">
+                      <span className="text-[11px] font-medium text-white leading-none">
+                        {filters.providerName.length || 1}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <ChevronIcon open={accordionOpen.venue} />
+              </button>
+              {accordionOpen.venue && (
+                <div className="pb-5 pt-1">
                   <div className="flex flex-wrap gap-2">
                     {providers.map((p) => {
-                      const isSelected = filters.providerName === p.name;
+                      const isSelected = filters.providerName.includes(p.name);
                       return (
                         <button
                           key={p.id}
-                          onClick={() => setFilters(prev => ({ ...prev, providerName: isSelected ? '' : p.name }))}
+                          onClick={() => setFilters(prev => ({
+                            ...prev,
+                            providerName: isSelected
+                              ? prev.providerName.filter(n => n !== p.name)
+                              : [...prev.providerName, p.name],
+                          }))}
                           className={`h-8 px-3 rounded-full text-[13px] font-normal transition-colors border ${
                             isSelected
                               ? 'bg-[#ECF2FE] text-[#0B50D0] border-[#256EF4]'
@@ -186,10 +193,10 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
                       );
                     })}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
 
