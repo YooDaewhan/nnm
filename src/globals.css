@@ -39,3 +39,36 @@ body {
 .predictive-smooth {
   will-change: transform;
 }
+
+
+
+
+
+/* 2026-05-18 css 추가 (Bang) */
+.papers-meta-value {
+  display: inline-flex;
+  align-items: center;
+}
+
+.papers-meta-value:not(:first-of-type)::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_arrow-to-right.svg);
+}
+
+.icon_document-search::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_document-search.svg);
+}
+
+.icon_double-quotes-fill-L::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_double-quotes-fill-L.svg);
+}
+

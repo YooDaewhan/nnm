@@ -553,10 +553,6 @@ function PaperDetailContent() {
                               ) : (
                                 <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{paper.provider.name}</span>
                               )}
-                              {/* arrow-to-right icon 16px, stroke #CDD1D5 */}
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
                             </>
                           )}
                           {paper.venue && (
@@ -577,9 +573,6 @@ function PaperDetailContent() {
                               )}
                               {(paper.page_start || paper.page_end) && (
                                 <>
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                    <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
                                   <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
                                     {paper.page_start && paper.page_end
                                       ? `pp.${paper.page_start}-${paper.page_end}`
@@ -615,28 +608,15 @@ function PaperDetailContent() {
                       {/* 미리보기 button : h-32px, rounded-[4px], gap 4px, font 17px */}
                       <button
                         onClick={() => { console.log('[미리보기] 클릭 paper:', paper?.id, 'previewOpen:', previewOpen); setPreviewOpen(true); }}
-                        className="flex items-center gap-[4px] px-[2px] h-[32px] rounded text-[17px] leading-[150%] text-[#1E2124] hover:bg-[#F0F2F5] transition-colors"
+                        className="icon_document-search flex items-center gap-[4px] px-[2px] h-[32px] rounded text-[17px] leading-[150%] text-[#1E2124] hover:bg-[#F0F2F5] transition-colors"
                       >
-                        {/* document-search icon 20px */}
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                          <rect x="3.5" y="2.5" width="10" height="13" rx="1.2" stroke="#33363D" strokeWidth="1.6" />
-                          <line x1="6" y1="7" x2="11" y2="7" stroke="#33363D" strokeWidth="1.1" strokeLinecap="round" />
-                          <line x1="6" y1="10" x2="9" y2="10" stroke="#33363D" strokeWidth="1.1" strokeLinecap="round" />
-                          <circle cx="14" cy="14" r="3" stroke="#33363D" strokeWidth="1.6" />
-                          <line x1="16.5" y1="16.5" x2="18" y2="18" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" />
-                        </svg>
                         미리보기
                       </button>
                       {/* 인용하기 button */}
                       <button
                         onClick={handleOpenCite}
-                        className="flex items-center gap-[4px] px-[2px] h-[32px] rounded text-[17px] leading-[150%] text-[#1E2124] hover:bg-[#F0F2F5] transition-colors"
+                        className="icon_double-quotes-fill-L flex items-center gap-[4px] px-[2px] h-[32px] rounded text-[17px] leading-[150%] text-[#1E2124] hover:bg-[#F0F2F5] transition-colors"
                       >
-                        {/* double-quotes icon 20px */}
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                          <path d="M5 8.5C5 7 6 6 7.5 6H8v2H7.5C7.2 8 7 8.2 7 8.5V9h1.5v3.5H5V8.5z" fill="#33363D" />
-                          <path d="M11.5 8.5C11.5 7 12.5 6 14 6h.5v2H14c-.3 0-.5.2-.5.5V9H15v3.5h-3.5V8.5z" fill="#33363D" />
-                        </svg>
                         인용하기
                       </button>
                     </div>
@@ -778,12 +758,12 @@ function PaperDetailContent() {
                       {paper.references.map((ref, idx) => {
                         const text = typeof ref === 'string' ? ref : (ref as { raw_text?: string }).raw_text ?? '';
                         return (
-                          <div key={idx}>
-                            <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] py-[12px]">
+                          <ol key={idx}>
+                            <li className="papers-body-text text-[13px] font-normal leading-[150%] text-[#464C53] py-[8px]">
                               {renderTextWithLinks(text)}
-                            </p>
-                            <div className="w-full h-px bg-[#CDD1D5]" />
-                          </div>
+                            </li>
+                            <div className="w-full h-px border-t-1 border-dashed bg-[#CDD1D5]" />
+                          </ol>
                         );
                       })}
                     </div>
