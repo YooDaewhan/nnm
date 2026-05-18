@@ -15,9 +15,12 @@ function loadFromSession(): SubmittedState | null {
   } catch { return null; }
 }
 
+const VALID_FIELDS: DetailedSearchCondition['field'][] = ['title', 'author', 'abstract', 'keyword', 'doi', 'full_text'];
+
 export function useSearchSubmit() {
   const [searchParams, setSearchParams] = useSearchParams();
   const qParam = searchParams.get('q');
+  const fieldParam = searchParams.get('field');
 
   const [submittedState, setSubmittedState] = useState<SubmittedState | null>(loadFromSession);
   const [detailedSort, setDetailedSort] = useState<'relevance' | 'latest'>(() => {
@@ -26,19 +29,24 @@ export function useSearchSubmit() {
 
   useEffect(() => {
     if (!qParam) return;
+    const field: DetailedSearchCondition['field'] =
+      VALID_FIELDS.includes(fieldParam as DetailedSearchCondition['field'])
+        ? (fieldParam as DetailedSearchCondition['field'])
+        : 'title';
     setDetailedSort('relevance');
     setSubmittedState({
-      conditions: [{ field: 'title', keyword: qParam, operator: 'AND' }],
+      conditions: [{ field, keyword: qParam, operator: 'AND' }],
       sort: 'relevance',
       filters: {},
     });
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       next.delete('q');
+      next.delete('field');
       next.set('page', '1');
       return next;
     }, { replace: true });
-  }, [qParam]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [qParam, fieldParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (submittedState) sessionStorage.setItem('search_submitted', JSON.stringify(submittedState));
