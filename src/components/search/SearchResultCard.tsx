@@ -220,7 +220,7 @@ export function SearchResultCard({
     return (
       <div className="flex flex-col items-stretch gap-2 w-[112px]">
         <div className="h-9 w-full flex items-center justify-center border border-[#AB2B36] rounded-md">
-          <span className="text-[14px] font-bold text-[#AB2B36]">￦ {(result.price ?? 7000).toLocaleString()}</span>
+          <span className="text-[14px] font-bold text-[#AB2B36]">￦ {(result.price ?? result.metadata?.price ?? 0).toLocaleString()}</span>
         </div>
         <button
           onClick={(e) => onBuyNow(e, result.id)}

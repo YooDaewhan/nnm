@@ -222,7 +222,7 @@ function PaperDetailContent() {
     sessionStorage.setItem('directBuyItem', JSON.stringify({
       publication_id: paper!.id,
       title: paper!.title,
-      unit_price: 7000,
+      unit_price: paper?.price ?? 0,
       quantity: 1,
       authors: paper!.authors.map(a => a.name),
       publisher: paper!.publisher_name ?? paper!.provider?.name ?? null,
