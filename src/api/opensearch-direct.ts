@@ -47,6 +47,7 @@ type OSHit = {
     lpage?: number | string;
     page_start?: number | string;
     page_end?: number | string;
+    price?: number | null;
   };
 };
 
@@ -130,6 +131,8 @@ export async function osSearchText(params: OsSearchTextParams): Promise<OpenSear
     };
   };
 
+  console.log('[osSearchText] raw hits:', json.hits.hits);
+
   const results = json.hits.hits.map((hit) => ({
     id: hit._source.publication_uuid ?? hit._id,
     title: hit._source.title ?? '',
@@ -141,6 +144,7 @@ export async function osSearchText(params: OsSearchTextParams): Promise<OpenSear
         : [],
     year: hit._source.year ?? 0,
     score: hit._score,
+    price: hit._source.price ?? null,
     metadata: {
       journal: hit._source.journal ?? null,
       doi: hit._source.doi ?? null,
