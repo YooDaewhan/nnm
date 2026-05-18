@@ -211,16 +211,22 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
             ) : (
               /* status=logout */
               <div className="flex items-center gap-2 md:gap-4 h-10 md:h-14">
-                <button
-                  onClick={() => navigate('/register')}
-                  className="flex items-center justify-center text-[15px] md:text-[19px] font-bold text-[#1E2124] bg-transparent border border-[#1E2124] hover:bg-gray-50 transition-colors px-3 md:px-6 h-10 md:h-14 rounded-full"
-                >
-                  회원가입
-                </button>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigate('/cart')}
+                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 hover:opacity-70 transition-opacity"
+                    aria-label="장바구니"
+                  >
+                    <img src="/icons/bag-B.svg" alt="장바구니" className="w-7 h-7 md:w-10 md:h-10" />
+                  </button>
+                  <span className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    장바구니
+                  </span>
+                </div>
                 <div className="relative group">
                   <button
                     onClick={() => navigate('/login')}
-                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 rounded-full hover:opacity-70 transition-opacity"
+                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 bg-white border border-[#1E2124] rounded-full hover:opacity-70 transition-opacity"
                     aria-label="로그인"
                   >
                     <img src="/icons/user-A.svg" alt="로그인" className="w-5 h-5 md:w-7 md:h-7" />

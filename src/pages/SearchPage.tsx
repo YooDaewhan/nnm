@@ -62,9 +62,7 @@ function OpenSearchTextContent() {
 
   useEffect(() => {
     if (data) {
-      console.log('[SearchPage] API response:', data);
-      console.log('[SearchPage] 첫번째 결과 샘플:', data.results?.[0]);
-      console.log('[SearchPage] 첫번째 결과 metadata:', data.results?.[0]?.metadata);
+      console.log(data);
     }
   }, [data]);
 
@@ -131,7 +129,7 @@ function OpenSearchTextContent() {
       sessionStorage.setItem('directBuyItem', JSON.stringify({ 
         publication_id: resultId,
         title: result?.title ?? '',
-        unit_price: result?.price ?? result?.metadata?.price ?? 7000,
+        unit_price: result?.price ?? 7000,
         quantity: 1,
         authors: result?.authors ?? [],
         publisher: result?.metadata?.publisher_name ?? null,
