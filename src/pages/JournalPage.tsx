@@ -258,11 +258,84 @@ export default function JournalPage() {
   }
 
   if (error || !venue) {
+    const is404 = error === '404';
     return (
-      <div className="flex items-center justify-center w-full" style={{ minHeight: 400 }}>
-        <span style={{ fontFamily: "'Pretendard GOV', sans-serif", fontSize: 17, color: '#E02020' }}>
-          {error ? `데이터를 불러올 수 없습니다. (${error})` : '저널 정보를 찾을 수 없습니다.'}
-        </span>
+      <div className="flex flex-col items-center justify-center w-full" style={{ minHeight: 500, padding: '80px 16px' }}>
+        <div
+          className="flex flex-col items-center text-center"
+          style={{ maxWidth: 480 }}
+        >
+          <div
+            className="flex items-center justify-center rounded-full mb-6"
+            style={{ width: 80, height: 80, background: '#F4F5F6' }}
+          >
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16 16-7.163 16-16S28.837 4 20 4zm0 24a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm1-8a1 1 0 01-2 0v-8a1 1 0 012 0v8z" fill="#8A949E" />
+            </svg>
+          </div>
+          <p
+            style={{
+              fontFamily: "'Pretendard GOV', sans-serif",
+              fontWeight: 700,
+              fontSize: 24,
+              lineHeight: '150%',
+              color: '#1A1E27',
+              margin: '0 0 12px',
+            }}
+          >
+            {is404 ? '저널을 찾을 수 없습니다' : '데이터를 불러올 수 없습니다'}
+          </p>
+          <p
+            style={{
+              fontFamily: "'Pretendard GOV', sans-serif",
+              fontWeight: 400,
+              fontSize: 15,
+              lineHeight: '150%',
+              color: '#8A949E',
+              margin: '0 0 32px',
+            }}
+          >
+            {is404
+              ? '요청하신 저널 정보가 존재하지 않거나 삭제되었습니다.'
+              : '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                height: 44,
+                padding: '0 24px',
+                background: '#F4F5F6',
+                border: 'none',
+                borderRadius: 6,
+                fontFamily: "'Pretendard GOV', sans-serif",
+                fontWeight: 400,
+                fontSize: 15,
+                color: '#464C53',
+                cursor: 'pointer',
+              }}
+            >
+              이전 페이지
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                height: 44,
+                padding: '0 24px',
+                background: '#256EF4',
+                border: 'none',
+                borderRadius: 6,
+                fontFamily: "'Pretendard GOV', sans-serif",
+                fontWeight: 400,
+                fontSize: 15,
+                color: '#FFFFFF',
+                cursor: 'pointer',
+              }}
+            >
+              홈으로 이동
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
