@@ -2,6 +2,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { confirmPayment as confirmPaymentApi } from '../api/payment';
 import { removeFromCart } from '../api/cart';
+import { API_BASE_URL } from '../api/client';
 
 function StepIndicator() {
   const steps = ['장바구니', '구매/결제', '결제완료'];
@@ -39,16 +40,6 @@ function StepIndicator() {
   );
 }
 
-function DownloadIcon() {
-  return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="4" fill="#F4F5F6"/>
-      <path d="M16 7V21M16 21L11 16M16 21L21 16" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M9 25H23" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
 function PaymentSuccessContent() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -56,6 +47,70 @@ function PaymentSuccessContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const confirmedRef = useRef(false);
+  const [downloading, setDownloading] = useState<Record<number, boolean>>({});
+  const [downloadingAll, setDownloadingAll] = useState(false);
+
+  const downloadSingle = async (publicationId: string, title: string): Promise<void> => {
+    const token = localStorage.getItem('access_token');
+    const headers: Record<string, string> = { Accept: 'application/json', 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE_URL}/api/citations/${publicationId}/download?format=bibtex`, { method: 'GET', headers });
+    if (!res.ok) throw new Error('다운로드에 실패했습니다.');
+
+    const contentType = res.headers.get('Content-Type') ?? '';
+    if (contentType.includes('application/json')) {
+      const json = await res.json();
+      const url: string | undefined = json.url ?? json.download_url ?? json.signed_url ?? json.presigned_url ?? json.data?.url;
+      if (!url) throw new Error('다운로드 URL이 없습니다.');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = json.filename ?? `${title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }
+  };
+
+  const handleDownload = async (publicationId: string, title: string, idx: number) => {
+    setDownloading(prev => ({ ...prev, [idx]: true }));
+    try {
+      await downloadSingle(publicationId, title);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '다운로드에 실패했습니다.');
+    } finally {
+      setDownloading(prev => ({ ...prev, [idx]: false }));
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    const items = (paymentData?.items ?? []) as any[];
+    const downloadableItems = items.filter((item: any) => item.publication_id);
+    if (downloadableItems.length === 0) {
+      alert('다운로드 가능한 논문이 없습니다.');
+      return;
+    }
+    setDownloadingAll(true);
+    try {
+      for (const item of downloadableItems) {
+        await downloadSingle(item.publication_id, item.title);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '다운로드에 실패했습니다.');
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
 
   useEffect(() => {
     const paymentKey = searchParams.get('paymentKey');
@@ -199,11 +254,12 @@ function PaymentSuccessContent() {
                   구매내역으로 이동
                 </button>
                 <button
-                  onClick={() => navigate('/mypage/orders/')}
-                  className="h-11 sm:h-12 px-3 sm:px-4 border border-[#58616A] rounded-md bg-transparent cursor-pointer text-sm sm:text-[17px] text-[#1E2124] whitespace-nowrap"
+                  onClick={handleDownloadAll}
+                  disabled={downloadingAll}
+                  className="h-11 sm:h-12 px-3 sm:px-4 border border-[#58616A] rounded-md bg-transparent cursor-pointer text-sm sm:text-[17px] text-[#1E2124] whitespace-nowrap disabled:opacity-50"
                   style={{ fontFamily: 'Pretendard GOV, Pretendard, sans-serif' }}
                 >
-                  논문 전체 다운로드
+                  {downloadingAll ? '다운로드 중...' : '논문 전체 다운로드'}
                 </button>
               </div>
             </div>
@@ -248,8 +304,20 @@ function PaymentSuccessContent() {
                     )}
                   </div>
 
-                  <button className="bg-transparent border-none cursor-pointer flex-shrink-0 p-0" title="논문 다운로드">
-                    <DownloadIcon />
+                  <button
+                    onClick={() => item.publication_id && handleDownload(item.publication_id, item.title, idx)}
+                    disabled={downloading[idx] || !item.publication_id}
+                    title="PDF 다운로드"
+                    className="inline-flex items-center justify-center w-[48px] h-[48px] rounded-[6px] border border-[#CDD1D5] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50 flex-shrink-0"
+                  >
+                    {downloading[idx] ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1E2124]" />
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 3v10M6 9l4 4 4-4" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M4 15h12" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" />
+                      </svg>
+                    )}
                   </button>
                 </div>
 

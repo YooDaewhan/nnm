@@ -28,7 +28,7 @@ export function PdfFullViewerModal({ paperId, onClose }: Props) {
 
   useEffect(() => {
     getPdfFull(paperId)
-      .then(({ url: pdfUrl }) => setFileUrl(pdfUrl.replace(S3_HOST, '/s3-proxy')))
+      .then(({ url: pdfUrl }) => setFileUrl(import.meta.env.DEV ? pdfUrl.replace(S3_HOST, '/s3-proxy') : pdfUrl))
       .catch((err) => {
         if (err instanceof PdfApiError && err.status === 403) {
           setError('열람 권한이 없습니다. 논문을 구매해 주세요.');

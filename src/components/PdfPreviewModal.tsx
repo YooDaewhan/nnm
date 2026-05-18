@@ -37,7 +37,7 @@ export function PdfPreviewModal({
 
   useEffect(() => {
     getPdfPreview(paperId)
-      .then((url) => setFileUrl(url.replace(S3_HOST, '/s3-proxy')))
+      .then((url) => setFileUrl(import.meta.env.DEV ? url.replace(S3_HOST, '/s3-proxy') : url))
       .catch((err: unknown) => {
         if (err instanceof PdfApiError) {
           if (err.status === 403 && err.reason === 'too_short') {
