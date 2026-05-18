@@ -74,12 +74,12 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
 
       {/* ── 메인 헤더 (로고 + 검색바 + 우측 버튼) ── */}
       <div className="w-full bg-white">
-        <div className="max-w-[1248px] mx-auto relative flex items-center py-[10px] md:py-[15px] px-4 md:px-0" style={{ minHeight: 70 }}>
+        <div className="max-w-[1248px] mx-auto relative flex items-center py-[10px] md:py-[15px] px-3 md:px-0" style={{ minHeight: 70 }}>
 
           {/* 로고 */}
           <button
             onClick={() => { setSearchQuery(''); navigate('/'); }}
-            className="shrink-0 hover:opacity-80 transition-opacity"
+            className="shrink-0 hover:opacity-80 transition-opacity -ml-2 md:ml-0"
             aria-label="홈으로 이동"
           >
             <img src="/icons/logo__pc.svg" alt="뉴논문" className="w-[140px] md:w-[200px] h-auto" />
@@ -226,10 +226,10 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                 <div className="relative group">
                   <button
                     onClick={() => navigate('/login')}
-                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 bg-white border border-[#1E2124] rounded-full hover:opacity-70 transition-opacity"
+                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 bg-[#1E2124] rounded-full hover:opacity-70 transition-opacity"
                     aria-label="로그인"
                   >
-                    <img src="/icons/user-A.svg" alt="로그인" className="w-5 h-5 md:w-7 md:h-7" />
+                    <img src="/icons/user-A.svg" alt="로그인" className="w-5 h-5 md:w-7 md:h-7 invert" />
                   </button>
                   <span className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     로그인
