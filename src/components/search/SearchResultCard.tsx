@@ -146,15 +146,7 @@ export function SearchResultCard({
     setTimeout(() => setCiteCopied(null), 2000);
   }, [citeTexts]);
 
-  const paperUrl = (() => {
-    const provider = (result.metadata.provider_name as string | null)?.trim();
-    const venue = (result.metadata.venue_name as string | null)?.trim();
-    const journal = (result.metadata.journal as string | null)?.trim();
-    if (provider && venue && journal) {
-      return `/papers/${encodeURIComponent(provider)}/${encodeURIComponent(venue)}/${encodeURIComponent(journal)}/${result.id}`;
-    }
-    return `/papers/${result.id}`;
-  })();
+  const paperUrl = `/papers/${result.id}`;
 
   const handleAiSummary = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();

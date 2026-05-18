@@ -110,6 +110,7 @@ function PaperDetailContent() {
     queryKey: ['paper', id],
     queryFn: () => getPaperDetail(id!) as Promise<OSPaperDetail>,
     enabled: !!id,
+    throwOnError: false,
   });
 
   const { data: ordersData } = useQuery({
