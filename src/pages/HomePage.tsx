@@ -1052,7 +1052,10 @@ export default function HomePage() {
                         <div
                           key={`${venue.id ?? i}-${i}`}
                           style={{
-                            flex: `0 0 calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
+                            flexShrink: 0,
+                            flexGrow: 0,
+                            width: `calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
+                            minWidth: 0,
                             cursor: 'pointer',
                           }}
                           onClick={() => venue.id && navigate(`/journal/${venue.id}`)}

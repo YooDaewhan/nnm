@@ -47,7 +47,7 @@ export function SearchControlBar({
           검색 결과 <span className="text-[#256EF4]">{totalResults.toLocaleString()}</span>건
         </p>
       )}
-      <div className="hidden md:flex items-center justify-between mb-4 pb-3 border-b border-[#E4E7EA]">
+      <div className="hidden md:flex items-center justify-between mb-4">
         <div className="flex items-center">
           {/* 전체선택 */}
           <button
