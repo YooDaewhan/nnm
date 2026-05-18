@@ -8,7 +8,7 @@ import {
   getPayments, getPaymentDetail, cancelPayment,
   type OrderWithPayment, type GetPaymentsParams,
 } from '../../api/payment';
-import { API_BASE_URL } from '../../api/client';
+import { getPdfFull } from '../../api/pdf';
 
 export default function MyPageOrdersPage() {
   const navigate = useNavigate();
@@ -453,35 +453,23 @@ function ArticleRow({ title, paperId, authors, publishDate, kci, publisher, jour
     if (!paperId) return;
     setDownloading(true);
     try {
-      const token = localStorage.getItem('access_token');
-      const headers: Record<string, string> = { Accept: 'application/json', 'Content-Type': 'application/json' };
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const res = await fetch(`${API_BASE_URL}/api/citations/${paperId}/download?format=bibtex`, { method: 'GET', headers });
-      if (!res.ok) throw new Error('다운로드에 실패했습니다.');
-
-      const contentType = res.headers.get('Content-Type') ?? '';
-      if (contentType.includes('application/json')) {
-        const json = await res.json();
-        const url: string | undefined = json.url ?? json.download_url ?? json.signed_url ?? json.presigned_url ?? json.data?.url;
-        if (!url) throw new Error('다운로드 URL이 없습니다.');
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = json.filename ?? `${title}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `${title}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      }
+      const { url } = await getPdfFull(String(paperId));
+      const S3_HOST = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
+      const h = window.location.hostname;
+      const useProxy = h === 'localhost' || h === '127.0.0.1'
+        || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+      const fetchUrl = useProxy ? url.replace(S3_HOST, '/s3-proxy') : url;
+      const pdfRes = await fetch(fetchUrl);
+      if (!pdfRes.ok) throw new Error('PDF 다운로드에 실패했습니다.');
+      const blob = await pdfRes.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       alert(err instanceof Error ? err.message : '다운로드에 실패했습니다.');
     } finally {
