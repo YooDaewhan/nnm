@@ -574,7 +574,7 @@ export default function HomePage() {
         {/* 배경 */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
           <div style={{ position: 'absolute', top: 50, right: -100, width: 900, height: 320, }}>
-            <img src="https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/tid024t009346%402x.png" />
+            <img src="https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/tid024t009346%402x.png" style={{ transform: 'scaleX(-1)' }} />
           </div>
         </div>
 
