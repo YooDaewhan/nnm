@@ -408,10 +408,10 @@ function PaperDetailContent() {
               <div className="flex-1 min-w-0 flex flex-col gap-[48px]">
 
               {/* ══ article__header ══ */}
-              <div className="flex flex-col gap-[16px]">
+              <div className="flex flex-row items-start gap-[32px]">
 
                 {/* article-info : flex col, gap 16px */}
-                <div className="flex flex-col gap-[16px] min-w-0">
+                <div className="flex-1 flex flex-col gap-[16px] min-w-0">
 
                   {/* badge+btn row : space-between */}
                   <div className="flex flex-row justify-between items-center">
@@ -555,6 +555,15 @@ function PaperDetailContent() {
                       </MetaRow>
                     )}
 
+                    {/* 발행연월 */}
+                    {paper.published_at && (
+                      <MetaRow label="발행연월">
+                        <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
+                          {new Date(paper.published_at).getFullYear()}.{String(new Date(paper.published_at).getMonth() + 1).padStart(2, '0')}
+                        </span>
+                      </MetaRow>
+                    )}
+
                     {/* DOI */}
                     {paper.doi && (
                       <MetaRow label="DOI">
@@ -661,6 +670,7 @@ function PaperDetailContent() {
                     </div>
                   </div>
                 </div>
+
               </div>
 
               {/* divider : h-1px, bg #CDD1D5 */}
@@ -759,12 +769,11 @@ function PaperDetailContent() {
               {/* ══ RIGHT: 사이드바 ══ */}
               <div className="hidden lg:block w-[260px] flex-shrink-0 self-start">
 
-                {/* 저널 커버 — sticky */}
-                <div className="sticky top-[80px] flex flex-col gap-[0px] mb-[32px]">
-                  {/* 커버 이미지 카드 */}
+                {/* 저널 커버 */}
+                <div className="sticky top-[80px] flex flex-col gap-[0px]">
                   <div
-                    className="flex flex-col justify-center items-center w-full rounded-t-[12px]"
-                    style={{ background: '#F4F5F6', padding: '20px 16px 16px' }}
+                    className="flex flex-col justify-center items-center w-full rounded-[12px]"
+                    style={{ background: '#F4F5F6', padding: '20px 16px 20px' }}
                   >
                     {(() => {
                       const rawCover = paper.cover_url ?? paper.venue?.cover_url;
@@ -775,11 +784,11 @@ function PaperDetailContent() {
                         <img
                           src={coverSrc}
                           alt="저널 커버"
-                          className="w-[168px] h-[240px] rounded object-cover"
+                          className="w-[200px] h-[300px] rounded object-cover"
                           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                         />
                       ) : (
-                        <div className="w-[168px] h-[240px] bg-[#D9DDE1] rounded flex items-center justify-center">
+                        <div className="w-[168px] h-[360px] bg-[#D9DDE1] rounded flex items-center justify-center">
                           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
                             <rect x="8" y="4" width="32" height="40" rx="3" stroke="#A0A8B0" strokeWidth="2" fill="none" />
                             <line x1="14" y1="14" x2="34" y2="14" stroke="#A0A8B0" strokeWidth="1.5" strokeLinecap="round" />
@@ -789,40 +798,6 @@ function PaperDetailContent() {
                         </div>
                       );
                     })()}
-                  </div>
-
-                  {/* 저널 텍스트 정보 */}
-                  <div
-                    className="flex flex-col gap-[8px] w-full rounded-b-[12px]"
-                    style={{ background: '#F4F5F6', padding: '12px 16px 20px' }}
-                  >
-                    {paper.venue?.name && (
-                      <Link
-                        to={`/journal/${paper.venue.id}`}
-                        className="text-[14px] font-bold leading-[150%] text-[#131416] hover:underline line-clamp-2"
-                      >
-                        {paper.venue.name}
-                      </Link>
-                    )}
-                    {paper.provider?.name && (
-                      <span className="text-[13px] text-[#8A949E] leading-[150%]">{paper.provider.name}</span>
-                    )}
-                    {paper.published_at && (
-                      <span className="text-[13px] text-[#8A949E] leading-[150%]">
-                        {new Date(paper.published_at).getFullYear()}년 {new Date(paper.published_at).getMonth() + 1}월
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* 이 분야의 베스트 — 일반 스크롤 */}
-                <div className="flex flex-col gap-[16px]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[17px] font-bold leading-[150%] text-[#131416]">이 분야의 베스트</span>
-                    <button className="text-[13px] text-[#8A949E] hover:text-[#464C53] transition-colors">더보기</button>
-                  </div>
-                  <div className="flex flex-col gap-[12px]">
-                    <p className="text-[13px] text-[#8A949E]">준비 중입니다.</p>
                   </div>
                 </div>
               </div>
