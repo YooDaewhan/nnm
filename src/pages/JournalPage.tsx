@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '../api/client';
 import JournalFilterSidebar from '@/components/JournalFilterSidebar';
@@ -61,6 +61,7 @@ interface VenueDetail {
 export default function JournalPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const isLoggedIn = isAuthenticated();
   const [venue, setVenue] = useState<VenueDetail | null>(null);
@@ -133,13 +134,19 @@ export default function JournalPage() {
 
   const handleAddToCart = (e: React.MouseEvent, resultId: string) => {
     e.stopPropagation();
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: location.pathname + location.search } });
+      return;
+    }
     cartMutation.mutate(resultId);
   };
 
   const handleBuyNow = (e: React.MouseEvent, resultId: string) => {
     e.stopPropagation();
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: location.pathname + location.search } });
+      return;
+    }
     buyNowMutation.mutate(resultId);
   };
 

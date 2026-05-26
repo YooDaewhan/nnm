@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { isAuthenticated } from '../../lib/auth';
 import { getCurrentUser, logout, changePassword, withdraw } from '../../api/auth';
@@ -7,6 +7,7 @@ import MypageLayout from '../../components/MyPageLayout';
 
 export default function MyPageInfoPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -19,8 +20,8 @@ export default function MyPageInfoPage() {
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated()) navigate('/login');
-  }, [navigate]);
+    if (!isAuthenticated()) navigate('/login', { state: { from: location.pathname } });
+  }, [navigate, location.pathname]);
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['current-user'],

@@ -1,5 +1,5 @@
 import { useState, Suspense, useCallback, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
@@ -89,6 +89,7 @@ function renderTextWithLinks(text: string): React.ReactNode[] {
 function PaperDetailContent() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const abstractRef = useRef<HTMLDivElement>(null);
   const loggedPaperIdRef = useRef<string | null>(null);
 
@@ -149,6 +150,23 @@ function PaperDetailContent() {
     onError: (err) => alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
   });
 
+  // 로그인 후 복귀 시 pendingAction 자동 실행
+  useEffect(() => {
+    if (!loggedIn || !paper) return;
+    const raw = sessionStorage.getItem('pendingAction');
+    if (!raw) return;
+    try {
+      const action = JSON.parse(raw) as { type: string; publicationId: string };
+      if (action.publicationId !== paper.id) return;
+      sessionStorage.removeItem('pendingAction');
+      if (action.type === 'addToCart') cartMutation.mutate();
+    } catch {
+      sessionStorage.removeItem('pendingAction');
+    }
+  // cartMutation.mutate는 안정적이므로 deps에서 제외
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn, paper]);
+
   const handleShare = () => {
     const url = window.location.href;
     const doCopy = () => { setCopied(true); setTimeout(() => setCopied(false), 1500); };
@@ -166,12 +184,19 @@ function PaperDetailContent() {
   };
 
   const handleScrap = () => {
-    if (!loggedIn) { navigate('/login'); return; }
+    if (!loggedIn) {
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
     scrapMutation.mutate();
   };
 
   const handleAddToCart = () => {
-    if (!loggedIn) { navigate('/login'); return; }
+    if (!loggedIn) {
+      sessionStorage.setItem('pendingAction', JSON.stringify({ type: 'addToCart', publicationId: id }));
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
     cartMutation.mutate();
   };
 
@@ -217,7 +242,7 @@ function PaperDetailContent() {
 
   const handlePurchase = () => {
     if (!loggedIn) {
-      navigate('/login');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
     sessionStorage.setItem('directBuyItem', JSON.stringify({
@@ -556,14 +581,25 @@ function PaperDetailContent() {
                               >
                                 {paper.venue.name}
                               </Link>
-                              {paper.issue?.label && (
-                                <>
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                    <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                  <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{paper.issue.label}</span>
-                                </>
-                              )}
+                              {(() => {
+                                const issue = paper.issue as any;
+                                if (!issue) return null;
+                                const vol = Number(issue.volume) || 0;
+                                const num = Number(issue.number) || 0;
+                                if (!vol && !num) return null;
+                                const issueLabel = [
+                                  vol ? `제${vol}권` : '',
+                                  num ? `제${num}호` : '',
+                                ].filter(Boolean).join(' ');
+                                return (
+                                  <>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                                      <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                    <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{issueLabel}</span>
+                                  </>
+                                );
+                              })()}
                               {(paper.page_start || paper.page_end) && (
                                 <>
                                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
@@ -579,6 +615,15 @@ function PaperDetailContent() {
                             </>
                           )}
                         </div>
+                      </MetaRow>
+                    )}
+
+                    {/* 발행일 */}
+                    {paper.published_at && (
+                      <MetaRow label="발행일">
+                        <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
+                          {new Date(paper.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')}
+                        </span>
                       </MetaRow>
                     )}
 

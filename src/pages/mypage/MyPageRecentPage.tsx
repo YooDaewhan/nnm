@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
@@ -40,12 +40,13 @@ export function addRecentPaper(paper: Omit<RecentPaper, 'viewedAt'>): void {
 
 export default function MyPageRecentPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [papers, setPapers] = useState<RecentPaper[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated()) { navigate('/login'); return; }
+    if (!isAuthenticated()) { navigate('/login', { state: { from: location.pathname } }); return; }
     setPapers(getRecentPapers());
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const handleLogout = async () => { await logout(); navigate('/login'); };
 

@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { isAuthenticated } from '../lib/auth';
 import { getPurchaseLibrary, type PurchaseLibraryItem } from '../api/purchase';
 
 export default function LibraryPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    if (!isAuthenticated()) navigate('/login');
-  }, [navigate]);
+    if (!isAuthenticated()) navigate('/login', { state: { from: location.pathname } });
+  }, [navigate, location.pathname]);
 
   const { data, isLoading, error: fetchError } = useQuery({
     queryKey: ['library', currentPage],

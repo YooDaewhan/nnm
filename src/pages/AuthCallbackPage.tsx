@@ -23,7 +23,9 @@ export default function AuthCallbackPage() {
     if (accessToken) {
       localStorage.setItem('access_token', accessToken);
       localStorage.removeItem('oauth_provider');
-      navigate('/');
+      const redirect = sessionStorage.getItem('loginRedirect') || '/';
+      sessionStorage.removeItem('loginRedirect');
+      navigate(redirect, { replace: true });
       return;
     }
 
@@ -32,7 +34,9 @@ export default function AuthCallbackPage() {
     if (code && !/^\d{3}$/.test(code)) {
       localStorage.setItem('access_token', code);
       localStorage.removeItem('oauth_provider');
-      navigate('/');
+      const redirect = sessionStorage.getItem('loginRedirect') || '/';
+      sessionStorage.removeItem('loginRedirect');
+      navigate(redirect, { replace: true });
       return;
     }
 

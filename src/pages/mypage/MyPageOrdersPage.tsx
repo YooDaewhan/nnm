@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
@@ -12,6 +12,7 @@ import { getPdfFull } from '../../api/pdf';
 
 export default function MyPageOrdersPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<GetPaymentsParams['status'] | ''>('');
@@ -23,8 +24,8 @@ export default function MyPageOrdersPage() {
   const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated()) navigate('/login');
-  }, [navigate]);
+    if (!isAuthenticated()) navigate('/login', { state: { from: location.pathname } });
+  }, [navigate, location.pathname]);
 
   // 주문 목록 쿼리
   const { data: ordersData, isLoading, error: fetchError } = useQuery({

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { OpenSearchTextResultItem } from '@/api/search';
 import { addToCart, addToCartBatch } from '@/api/cart';
@@ -12,6 +12,7 @@ export function useBulkActions(
   isLoggedIn: boolean,
 ) {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [bulkCartLoading, setBulkCartLoading] = useState(false);
   const [bulkScrapLoading, setBulkScrapLoading] = useState(false);
@@ -35,7 +36,7 @@ export function useBulkActions(
   };
 
   const handleBulkBuy = async () => {
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) { navigate('/login', { state: { from: location.pathname + location.search } }); return; }
     setBulkCartLoading(true);
     const ids = [...selectedIds];
     try {
@@ -64,7 +65,7 @@ export function useBulkActions(
   };
 
   const handleBulkScrap = async () => {
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) { navigate('/login', { state: { from: location.pathname + location.search } }); return; }
     setBulkScrapLoading(true);
     const ids = [...selectedIds];
     try {

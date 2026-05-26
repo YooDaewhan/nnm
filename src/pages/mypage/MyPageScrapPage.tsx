@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
@@ -10,6 +10,7 @@ const PER_PAGE = 10;
 
 export default function MyPageScrapPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
@@ -17,8 +18,8 @@ export default function MyPageScrapPage() {
   const handleLogout = async () => { await logout(); navigate('/login'); };
 
   useEffect(() => {
-    if (!isAuthenticated()) { navigate('/login'); }
-  }, [navigate]);
+    if (!isAuthenticated()) { navigate('/login', { state: { from: location.pathname } }); }
+  }, [navigate, location.pathname]);
 
   const { data, isLoading, isFetching, error: fetchError } = useQuery({
     queryKey: ['scraps', currentPage],

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
 import MypageLayout from '../../components/MyPageLayout';
@@ -16,6 +16,7 @@ type QnaItem = {
 
 export default function MyPageQnaPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [items, setItems] = useState<QnaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,9 +27,9 @@ export default function MyPageQnaPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated()) { navigate('/login'); return; }
+    if (!isAuthenticated()) { navigate('/login', { state: { from: location.pathname } }); return; }
     fetchQna();
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const fetchQna = async () => {
     setLoading(true);

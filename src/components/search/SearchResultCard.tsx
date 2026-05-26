@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { OpenSearchTextResultItem, fetchAiSummary } from '@/api/search';
 import { getPdfFull, PdfApiError } from '@/api/pdf';
@@ -40,6 +40,7 @@ export function SearchResultCard({
   isPurchased = false,
 }: SearchResultCardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -63,7 +64,7 @@ export function SearchResultCard({
 
   const handleScrap = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) { navigate('/login', { state: { from: location.pathname + location.search } }); return; }
     scrapMutation.mutate();
   };
 
