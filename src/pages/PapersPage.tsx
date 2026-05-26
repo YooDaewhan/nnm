@@ -575,12 +575,28 @@ function PaperDetailContent() {
                           )}
                           {paper.venue && (
                             <>
-                              <Link
-                                to={`/journal/${paper.venue.id}`}
-                                className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline"
-                              >
-                                {paper.venue.name}
-                              </Link>
+                              {(() => {
+                                const venueId = paper.venue?.id;
+                                const isValidId = venueId && venueId !== '0' && venueId !== 'undefined' && venueId !== 'null';
+                                const encodedName = paper.venue?.name ? encodeURIComponent(paper.venue.name) : null;
+                                const journalTo = isValidId
+                                  ? `/journal/${venueId}${encodedName ? `?name=${encodedName}` : ''}`
+                                  : encodedName
+                                  ? `/journal?name=${encodedName}`
+                                  : null;
+                                return journalTo ? (
+                                  <Link
+                                    to={journalTo}
+                                    className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline"
+                                  >
+                                    {paper.venue.name}
+                                  </Link>
+                                ) : (
+                                  <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
+                                    {paper.venue.name}
+                                  </span>
+                                );
+                              })()}
                               {(() => {
                                 const issue = paper.issue as any;
                                 if (!issue) return null;

@@ -63,6 +63,9 @@ export default function JournalPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const nameParam = useMemo(() => new URLSearchParams(location.search).get('name'), [location.search]);
+  // id가 유효한 경우 (0이나 undefined 문자열 제외)
+  const validId = id && id !== '0' && id !== 'undefined' && id !== 'null' ? id : undefined;
   const isLoggedIn = isAuthenticated();
   const [venue, setVenue] = useState<VenueDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -225,27 +228,62 @@ export default function JournalPage() {
   };
 
   useEffect(() => {
-    if (!id) return;
+    // validId 또는 nameParam 중 하나라도 없으면 중단
+    if (!validId && !nameParam) {
+      setLoading(false);
+      setError('404');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const token = localStorage.getItem('access_token');
-    fetch(`${API_BASE_URL}/api/venues/${id}`, {
-      headers: {
-        Accept: 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setVenue(data);
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [id]);
+    const headers: HeadersInit = {
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const fetchByName = (name: string) => {
+      fetch(`${API_BASE_URL}/api/venues?name=${encodeURIComponent(name)}&per_page=100`, { headers })
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          const list: VenueDetail[] = Array.isArray(data) ? data : (data.data ?? []);
+          const match = list.find((v: VenueDetail) =>
+            v.name?.toLowerCase() === name.toLowerCase()
+          );
+          if (match) setVenue(match);
+          else setError('404');
+        })
+        .catch((e) => setError(e.message))
+        .finally(() => setLoading(false));
+    };
+
+    if (validId) {
+      // ID 기반 조회 → 404면 이름으로 fallback
+      fetch(`${API_BASE_URL}/api/venues/${validId}`, { headers })
+        .then(async (res) => {
+          if (res.status === 404 && nameParam) {
+            // ID로 못 찾으면 이름으로 재조회 (loading 관리는 fetchByName에서)
+            fetchByName(nameParam);
+            return;
+          }
+          if (!res.ok) throw new Error(`${res.status}`);
+          const data = await res.json();
+          setVenue(data);
+          setLoading(false);
+        })
+        .catch((e) => {
+          setError(e.message);
+          setLoading(false);
+        });
+    } else if (nameParam) {
+      fetchByName(nameParam);
+    }
+  }, [validId, nameParam]);
 
   useEffect(() => {
     if (!venue) return;
