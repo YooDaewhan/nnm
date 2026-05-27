@@ -563,20 +563,15 @@ export default function HomePage() {
       ════════════════════════════════════════ */}
       <section
         style={{
-          background: 'linear-gradient(135deg, #1B1F3B 0%, #2B3260 35%, #3D4F8A 100%)',
+          backgroundImage: 'url(/images/background.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: isMobile ? '0% 80%' : 'center center',
           position: 'relative',
           zIndex: 10,
           height: '400px',
           display: 'flex',
-
         }}
       >
-        {/* 배경 */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
-          <div style={{ position: 'absolute', top: 50, right: -100, width: 900, height: 320, }}>
-            <img src="https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/tid024t009346%402x.png" style={{ transform: 'scaleX(-1)' }} />
-          </div>
-        </div>
 
         <div
           style={{
@@ -585,26 +580,28 @@ export default function HomePage() {
             margin: '0 auto',
             padding: '0 16px',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             gap: 32,
             position: 'relative',
             zIndex: 1,
           }}
         >
-          {/* ── 좌측: 타이틀 + 검색바 ── */}
-          <div style={{ flex: 1, maxWidth: isMobile ? '100%' : 640 }}>
+          {/* ── 가운데: 타이틀 + 검색바 ── */}
+          <div style={{ width: '100%', maxWidth: isMobile ? '100%' : 640, textAlign: 'center' }}>
             <h1
               style={{
                 fontSize: isMobile ? 32 : 48,
-                fontWeight: 700,
+                fontWeight: 650,
                 color: '#FFFFFF',
                 marginBottom: isMobile ? 8 : 14,
                 lineHeight: 1.3,
                 letterSpacing: '-0.5px',
+                whiteSpace: 'nowrap',
               }}
             >
-              생각은 깊게, 검색은 빠르게
+              빠르고 정확한 학술 문헌 검색 서비스
             </h1>
             <p
               style={{
@@ -615,7 +612,7 @@ export default function HomePage() {
                 lineHeight: 1.5,
               }}
             >
-              복잡한 절차 없이 핵심 논문을 빠르게 찾아보세요.
+              신뢰할 수 있는 지식, 국내 연구의 기준
             </p>
 
             {/* 검색 바 */}
