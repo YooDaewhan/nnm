@@ -235,7 +235,13 @@ export function SearchResultCard({
         ${isSelected ? 'border-t-[#256EF4]' : 'border-t-[#CDD1D5]'}`}
       >
         {/* 체크박스 */}
-        <div onClick={onToggleSelect} className="flex items-start justify-center pt-0.5 shrink-0 cursor-pointer">
+        <div
+          onClick={onToggleSelect}
+          role="checkbox"
+          aria-checked={isSelected}
+          aria-label="논문 선택"
+          className="flex items-start justify-center pt-0.5 shrink-0 cursor-pointer"
+        >
           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
             ${isSelected ? 'bg-[#256EF4] border-[#256EF4]' : 'border-[#CDD1D5] bg-white hover:border-[#256EF4]'}`}
           >
