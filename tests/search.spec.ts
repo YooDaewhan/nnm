@@ -12,14 +12,14 @@ test.describe('검색 페이지', () => {
 
   test('검색 결과 건수 표시', async ({ page }) => {
     await expect(page.getByText(/검색 결과/)).toBeVisible();
-    await expect(page.getByText(/건/)).toBeVisible();
+    await expect(page.getByText(/검색 결과 .+건/)).toBeVisible();
   });
 
   test('정렬 드롭다운 - 정확도순/최신순 선택', async ({ page }) => {
     const sortSelect = page.getByRole('combobox').filter({ hasText: /정확도순|최신순/ }).first();
     await expect(sortSelect).toBeVisible();
     await sortSelect.selectOption({ label: '최신순' });
-    await expect(sortSelect).toHaveValue(/최신/);
+    await expect(sortSelect).toHaveValue('latest');
   });
 
   test('페이지 크기 드롭다운 - 20개씩으로 변경', async ({ page }) => {
@@ -41,8 +41,9 @@ test.describe('검색 페이지', () => {
     await expect(firstCheckbox).toBeChecked();
   });
 
-  test('필터 사이드바 - 출판연도 필터 (최근 1년)', async ({ page }) => {
-    const yearBtn = page.getByRole('button', { name: '최근 1년' });
+  test('필터 사이드바 - 출판연도 필터 (1년)', async ({ page }) => {
+    await page.getByRole('button', { name: '발행일' }).click();
+    const yearBtn = page.getByRole('button', { name: '1년' });
     await expect(yearBtn).toBeVisible();
     await yearBtn.click();
     await expect(yearBtn).toBeVisible();
@@ -57,7 +58,8 @@ test.describe('검색 페이지', () => {
 
   test('필터 초기화 버튼 동작', async ({ page }) => {
     // 연도 필터 적용 후 초기화
-    const yearBtn = page.getByRole('button', { name: '최근 3년' });
+    await page.getByRole('button', { name: '발행일' }).click();
+    const yearBtn = page.getByRole('button', { name: '3년' });
     await yearBtn.click();
     const resetBtn = page.getByRole('button', { name: '초기화' }).last();
     await expect(resetBtn).toBeVisible();

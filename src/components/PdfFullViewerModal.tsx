@@ -28,7 +28,12 @@ export function PdfFullViewerModal({ paperId, onClose }: Props) {
 
   useEffect(() => {
     getPdfFull(paperId)
-      .then(({ url: pdfUrl }) => setFileUrl(pdfUrl.replace(S3_HOST, '/s3-proxy')))
+      .then(({ url: pdfUrl }) => {
+        const h = window.location.hostname;
+        const useProxy = h === 'localhost' || h === '127.0.0.1'
+          || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+        setFileUrl(useProxy ? pdfUrl.replace(S3_HOST, '/s3-proxy') : pdfUrl);
+      })
       .catch((err) => {
         if (err instanceof PdfApiError && err.status === 403) {
           setError('열람 권한이 없습니다. 논문을 구매해 주세요.');

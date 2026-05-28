@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '../../lib/auth';
 import { logout } from '../../api/auth';
@@ -8,10 +8,11 @@ import {
   getPayments, getPaymentDetail, cancelPayment,
   type OrderWithPayment, type GetPaymentsParams,
 } from '../../api/payment';
-import { PDF_SERVER_BASE_URL } from '../../api/client';
+import { getPdfFull } from '../../api/pdf';
 
 export default function MyPageOrdersPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<GetPaymentsParams['status'] | ''>('');
@@ -23,8 +24,8 @@ export default function MyPageOrdersPage() {
   const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated()) navigate('/login');
-  }, [navigate]);
+    if (!isAuthenticated()) navigate('/login', { state: { from: location.pathname } });
+  }, [navigate, location.pathname]);
 
   // 주문 목록 쿼리
   const { data: ordersData, isLoading, error: fetchError } = useQuery({
@@ -191,6 +192,7 @@ export default function MyPageOrdersPage() {
           <div className="flex flex-col gap-4">
             {orders.filter(order => order.status !== 'pending' /* 결제 대기 숨김 */).map(order => {
               const items: any[] = (order as any).metadata?.items ?? [];
+              const isCancelled = ['cancelled', 'CANCELED', 'PARTIAL_CANCELED', 'failed'].includes(order.status);
               return (
                 <div key={order.id} className="bg-white rounded-xl overflow-hidden">
 
@@ -246,6 +248,7 @@ export default function MyPageOrdersPage() {
                             volume={item.volume}
                             pages={item.pages}
                             price={item.price ?? order.amount}
+                            isCancelled={isCancelled}
                           />
                         </div>
                       ))
@@ -253,6 +256,7 @@ export default function MyPageOrdersPage() {
                       <ArticleRow
                         title={order.order_name}
                         price={order.amount}
+                        isCancelled={isCancelled}
                       />
                     )}
                   </div>
@@ -433,9 +437,10 @@ interface ArticleRowProps {
   volume?: string;
   pages?: string;
   price?: number;
+  isCancelled?: boolean;
 }
 
-function ArticleRow({ title, paperId, authors, publishDate, kci, publisher, journal, volume, pages, price }: ArticleRowProps) {
+function ArticleRow({ title, paperId, authors, publishDate, kci, publisher, journal, volume, pages, price, isCancelled }: ArticleRowProps) {
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
 
@@ -449,17 +454,25 @@ function ArticleRow({ title, paperId, authors, publishDate, kci, publisher, jour
     if (!paperId) return;
     setDownloading(true);
     try {
-      const res = await fetch(`${PDF_SERVER_BASE_URL}/api/documents/${paperId}/file`);
-      if (!res.ok) throw new Error('다운로드 실패');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const { url } = await getPdfFull(String(paperId));
+      const S3_HOST = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
+      const h = window.location.hostname;
+      const useProxy = h === 'localhost' || h === '127.0.0.1'
+        || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+      const fetchUrl = useProxy ? url.replace(S3_HOST, '/s3-proxy') : url;
+      const pdfRes = await fetch(fetchUrl);
+      if (!pdfRes.ok) throw new Error('PDF 다운로드에 실패했습니다.');
+      const blob = await pdfRes.blob();
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = blobUrl;
       a.download = `${title}.pdf`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      alert('PDF 다운로드에 실패했습니다.');
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '다운로드에 실패했습니다.');
     } finally {
       setDownloading(false);
     }
@@ -492,23 +505,25 @@ function ArticleRow({ title, paperId, authors, publishDate, kci, publisher, jour
         {price !== undefined && (
           <span className="shrink-0 text-[17px] font-bold leading-[1.5em] text-[#131416]">{price.toLocaleString()}원</span>
         )}
-        <div className="shrink-0">
-          <button
-            onClick={handleDownload}
-            disabled={downloading || !paperId}
-            className="w-8 h-8 border border-[#CDD1D5] rounded-[6px] flex items-center justify-center hover:bg-[#F4F5F6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            title="다운로드"
-          >
-            {downloading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#1E2124]" />
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M9 2v10M5 8l4 4 4-4" stroke="#1E2124" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M2 15h14" stroke="#1E2124" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            )}
-          </button>
-        </div>
+        {!isCancelled && (
+          <div className="shrink-0">
+            <button
+              onClick={handleDownload}
+              disabled={downloading || !paperId}
+              className="w-8 h-8 border border-[#CDD1D5] rounded-[6px] flex items-center justify-center hover:bg-[#F4F5F6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title="다운로드"
+            >
+              {downloading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#1E2124]" />
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M9 2v10M5 8l4 4 4-4" stroke="#1E2124" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M2 15h14" stroke="#1E2124" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

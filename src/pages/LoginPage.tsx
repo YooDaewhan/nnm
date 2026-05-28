@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated, saveToken, saveRefreshToken } from '../lib/auth';
 import { postApiAuthLogin, type PostApiAuthLoginBody } from '../api/generated';
 import { startSocialLogin, type SocialProvider } from '../api/social-auth';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // 로그인 후 돌아갈 URL: state.from > ?redirect= 쿼리 > 기본 '/'
+  const from =
+    (location.state as { from?: string } | null)?.from ||
+    new URLSearchParams(location.search).get('redirect') ||
+    '/';
   const [loading, setLoading] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +38,7 @@ export default function LoginPage() {
           saveToken(data.access_token);
           const refresh = (data as any).refresh_token;
           if (refresh) saveRefreshToken(refresh);
-          navigate('/');
+          navigate(from, { replace: true });
         } else {
           throw new Error('토큰을 받지 못했습니다.');
         }
@@ -54,6 +60,8 @@ export default function LoginPage() {
   const handleSocialLogin = (provider: SocialProvider) => {
     setLoading(provider);
     setError(null);
+    // 소셜 로그인은 외부 OAuth 리다이렉트이므로 sessionStorage에 복귀 URL 저장
+    if (from !== '/') sessionStorage.setItem('loginRedirect', from);
     startSocialLogin(provider);
   };
 

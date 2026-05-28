@@ -26,3 +26,9 @@ pnpm-debug.log*
 playwright-report/
 test-results/
 coverage/
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

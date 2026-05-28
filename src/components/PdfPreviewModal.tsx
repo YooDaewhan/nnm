@@ -37,7 +37,12 @@ export function PdfPreviewModal({
 
   useEffect(() => {
     getPdfPreview(paperId)
-      .then((url) => setFileUrl(url.replace(S3_HOST, '/s3-proxy')))
+      .then((url) => {
+        const h = window.location.hostname;
+        const useProxy = h === 'localhost' || h === '127.0.0.1'
+          || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+        setFileUrl(useProxy ? url.replace(S3_HOST, '/s3-proxy') : url);
+      })
       .catch((err: unknown) => {
         if (err instanceof PdfApiError) {
           if (err.status === 403 && err.reason === 'too_short') {

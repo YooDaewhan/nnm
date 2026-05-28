@@ -563,20 +563,15 @@ export default function HomePage() {
       ════════════════════════════════════════ */}
       <section
         style={{
-          background: 'linear-gradient(135deg, #1B1F3B 0%, #2B3260 35%, #3D4F8A 100%)',
+          backgroundImage: 'url(/images/background.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: isMobile ? '0% 80%' : 'center center',
           position: 'relative',
           zIndex: 10,
           height: '400px',
           display: 'flex',
-
         }}
       >
-        {/* 배경 */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
-          <div style={{ position: 'absolute', top: 50, right: -100, width: 900, height: 320, }}>
-            <img src="https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/tid024t009346%402x.png" />
-          </div>
-        </div>
 
         <div
           style={{
@@ -585,26 +580,28 @@ export default function HomePage() {
             margin: '0 auto',
             padding: '0 16px',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             gap: 32,
             position: 'relative',
             zIndex: 1,
           }}
         >
-          {/* ── 좌측: 타이틀 + 검색바 ── */}
-          <div style={{ flex: 1, maxWidth: isMobile ? '100%' : 640 }}>
+          {/* ── 가운데: 타이틀 + 검색바 ── */}
+          <div style={{ width: '100%', maxWidth: isMobile ? '100%' : 640, textAlign: 'center' }}>
             <h1
               style={{
                 fontSize: isMobile ? 32 : 48,
-                fontWeight: 700,
+                fontWeight: 650,
                 color: '#FFFFFF',
                 marginBottom: isMobile ? 8 : 14,
                 lineHeight: 1.3,
                 letterSpacing: '-0.5px',
+                whiteSpace: 'nowrap',
               }}
             >
-              생각은 깊게, 검색은 빠르게
+              빠르고 정확한 학술 문헌 검색 서비스
             </h1>
             <p
               style={{
@@ -615,7 +612,7 @@ export default function HomePage() {
                 lineHeight: 1.5,
               }}
             >
-              복잡한 절차 없이 핵심 논문을 빠르게 찾아보세요.
+              신뢰할 수 있는 지식, 국내 연구의 기준
             </p>
 
             {/* 검색 바 */}
@@ -911,35 +908,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════
-          4. SIMS 배너 — 검정 배경
-      ════════════════════════════════════════ */}
-      <section
-        style={{
-          background: '#111111', // 기본 배경색
-          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)), url('https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/ti375a45215_nn.png')`,
-          padding: isMobile ? '52px 16px' : '72px 40px',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <a
-          href="https://sims.newnonmun.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: 'none', display: 'inline-block', position: 'relative', zIndex: 1 }}
-        >
-          <p style={{ fontSize: isMobile ? 13 : 16, fontWeight: 600, color: '#EAB308', marginBottom: isMobile ? 10 : 16, letterSpacing: '0.02em' }}>
-            효율적인 학회 운영 관리
-          </p>
-          <h2 style={{ fontSize: isMobile ? 22 : 34, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.3px', lineHeight: 1.35 }}>
-            학회통합관리시스템 SIMS로 해결하세요!
-          </h2>
-        </a>
-      </section>
-
-      {/* ════════════════════════════════════════
-          5. 추천 저널 — 커버 + 타이틀 + 발행기관
+          4. 추천 저널 — 커버 + 타이틀 + 발행기관
       ════════════════════════════════════════ */}
       <section style={{ backgroundColor: '#FFFFFF', padding: '64px 0' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
@@ -1052,7 +1021,10 @@ export default function HomePage() {
                         <div
                           key={`${venue.id ?? i}-${i}`}
                           style={{
-                            flex: `0 0 calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
+                            flexShrink: 0,
+                            flexGrow: 0,
+                            width: `calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
+                            minWidth: 0,
                             cursor: 'pointer',
                           }}
                           onClick={() => venue.id && navigate(`/journal/${venue.id}`)}
@@ -1107,6 +1079,268 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ════════════════════════════════════════
+          5. 학회통합관리시스템 SIMS — 카드 슬라이더
+      ════════════════════════════════════════ */}
+      <SimsSection isMobile={isMobile} navigate={navigate} />
+
     </div>
+  );
+}
+
+/* ───────────────────────────────────────────
+   SIMS 서비스 카드 섹션
+   ─────────────────────────────────────────── */
+const SIMS_SERVICES = [
+  {
+    id: 1,
+    title: '학회/협회 웹사이트',
+    description: '회원관리, 회비납부, 증명서 발급 등 효율적인 행정업무를 위한 관리 기능 지원',
+    href: 'https://sims.newnonmun.com/',
+    image: '/images/sims-01.png' as string | null,
+  },
+  {
+    id: 2,
+    title: '논문투고 시스템',
+    description: '논문투고 접수부터 심사까지 학회 환경에 맞춘 투고/심사규정 설정 가능',
+    href: 'https://sims.newnonmun.com/',
+    image: '/images/sims-02.png' as string | null,
+  },
+  {
+    id: 3,
+    title: '사전등록 시스템',
+    description: '학술대회 안내 및 사전등록, 초록접수 등 학술대회 전용 사이트 구현',
+    href: 'https://sims.newnonmun.com/',
+    image: '/images/sims-03.png' as string | null,
+  },
+  {
+    id: 4,
+    title: '학술지 편집/제작',
+    description: '회원관리, 회비납부, 증명서 발급 등 효율적인 행정업무를 위한 관리 기능 지원',
+    href: 'https://sims.newnonmun.com/',
+    image: '/images/sims-04.png' as string | null,
+  },
+  {
+    id: 5,
+    title: '뉴스레터/저널레터',
+    description: '학회 소식과 발간된 저널에 대한 이메일 발송',
+    href: 'https://sims.newnonmun.com/',
+    image: '/images/sims-05.png' as string | null,
+  },
+  {
+    id: 6,
+    title: '저널 웹사이트 / XML',
+    description: 'Archive 검색 등 국내·외 학술지 평가를 위한 사이트 구현',
+    href: 'https://sims.newnonmun.com/',
+    image: '/images/sims-06.png' as string | null,
+  },
+  {
+    id: 7,
+    title: '학술지 등재 컨설팅',
+    description: '국내외 학술지 등재 평가 신청자격 및 평가항목 컨설팅',
+    href: 'https://sims.newnonmun.com/',
+    image: '/images/sims-07.png' as string | null,
+  },
+  {
+    id: 8,
+    title: '학술대회 관리',
+    description: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다.',
+    href: 'https://sims.newnonmun.com/',
+    image: null as string | null,
+  },
+];
+
+function SimsSection({ isMobile, navigate: _navigate }: { isMobile: boolean; navigate: ReturnType<typeof useNavigate> }) {
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [noTransition, setNoTransition] = useState(false);
+
+  const gap = isMobile ? 12 : 24;
+  const itemsPerPage = isMobile ? 1 : 4;
+  const n = SIMS_SERVICES.length;
+  const canScroll = n > itemsPerPage;
+  const arrowSize = isMobile ? 32 : 40;
+  const arrowOffset = isMobile ? -14 : -20;
+
+  // 저널 슬라이더와 동일한 방식: 앞뒤에 itemsPerPage만큼 복제 후 1개씩 이동
+  const clonedItems = canScroll
+    ? [...SIMS_SERVICES.slice(-itemsPerPage), ...SIMS_SERVICES, ...SIMS_SERVICES.slice(0, itemsPerPage)]
+    : SIMS_SERVICES;
+
+  const displayIndex = canScroll ? slideIndex + itemsPerPage : 0;
+
+  const goLeft = () => {
+    if (noTransition) return;
+    const next = slideIndex - 1;
+    setSlideIndex(next);
+    if (next < 0) {
+      setTimeout(() => {
+        setNoTransition(true);
+        setSlideIndex(n - 1);
+        requestAnimationFrame(() => requestAnimationFrame(() => setNoTransition(false)));
+      }, 360);
+    }
+  };
+
+  const goRight = () => {
+    if (noTransition) return;
+    const next = slideIndex + 1;
+    setSlideIndex(next);
+    if (next >= n) {
+      setTimeout(() => {
+        setNoTransition(true);
+        setSlideIndex(0);
+        requestAnimationFrame(() => requestAnimationFrame(() => setNoTransition(false)));
+      }, 360);
+    }
+  };
+
+  const ArrowBtn = ({ dir }: { dir: 'left' | 'right' }) => (
+    <button
+      onClick={dir === 'left' ? goLeft : goRight}
+      style={{
+        position: 'absolute',
+        [dir]: arrowOffset,
+        top: '38%',
+        transform: 'translateY(-50%)',
+        zIndex: 2,
+        width: arrowSize,
+        height: arrowSize,
+        borderRadius: '50%',
+        background: '#FFFFFF',
+        border: '1px solid #E5E7EB',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+        padding: 0,
+        flexShrink: 0,
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        {dir === 'left'
+          ? <path d="M10 3L5 8L10 13" stroke="#1E2124" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          : <path d="M6 3L11 8L6 13" stroke="#1E2124" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />}
+      </svg>
+    </button>
+  );
+
+  return (
+    <section style={{ backgroundColor: '#F8FAFF', padding: '64px 0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
+        <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#1E2124', marginBottom: 6, letterSpacing: '0px' }}>
+          학회통합관리시스템 SIMS
+        </h2>
+        <p style={{ fontSize: isMobile ? 15 : 17, color: '#464C53', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
+          학회 운영에 필요한 시스템을 제공합니다.
+        </p>
+
+        <div style={{ position: 'relative' }}>
+          {canScroll && <ArrowBtn dir="left" />}
+          {canScroll && <ArrowBtn dir="right" />}
+
+          <div style={{ overflow: 'hidden' }}>
+            <div
+              className="predictive-smooth"
+              style={{
+                display: 'flex',
+                gap,
+                transform: `translateX(calc(-${displayIndex} * (100% + ${gap}px) / ${itemsPerPage}))`,
+                transition: noTransition ? 'none' : 'transform 0.35s ease',
+                width: '100%',
+              }}
+            >
+              {clonedItems.map((service, i) => (
+                <a
+                  key={`${service.id}-${i}`}
+                  href={service.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    flexShrink: 0,
+                    flexGrow: 0,
+                    width: `calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
+                    minWidth: 0,
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    display: 'block',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    border: '1px solid #E5E7EB',
+                    background: '#FFFFFF',
+                    transition: 'box-shadow 0.2s, border-color 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.10)';
+                    (e.currentTarget as HTMLAnchorElement).style.borderColor = '#C5CAD0';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'none';
+                    (e.currentTarget as HTMLAnchorElement).style.borderColor = '#E5E7EB';
+                  }}
+                >
+                  {/* 이미지 영역 (플레이스홀더) */}
+                  <div
+                    style={{
+                      width: '100%',
+                      aspectRatio: '16 / 9',
+                      background: '#F3F4F5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {service.image ? (
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                    ) : (
+                      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <rect x="4" y="4" width="40" height="40" rx="4" stroke="#D1D5DB" strokeWidth="1.5" fill="none" />
+                        <line x1="12" y1="12" x2="36" y2="36" stroke="#D1D5DB" strokeWidth="1.5" />
+                        <line x1="36" y1="12" x2="12" y2="36" stroke="#D1D5DB" strokeWidth="1.5" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* 텍스트 영역 */}
+                  <div style={{ padding: isMobile ? '14px 16px 16px' : '18px 20px 20px' }}>
+                    <p
+                      style={{
+                        fontSize: isMobile ? 15 : 17,
+                        fontWeight: 700,
+                        color: '#1E2124',
+                        marginBottom: 6,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {service.title}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: isMobile ? 13 : 15,
+                        color: '#464C53',
+                        fontWeight: 400,
+                        lineHeight: 1.6,
+                        margin: 0,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {service.description}
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

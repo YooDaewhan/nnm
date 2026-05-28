@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(find 'c:\\\\Users\\\\iok11\\\\yoo\\\\backup' -name \"a.*.php\" -type f 2>/dev/null | sort)",
+      "Read(//c/Users/iok11/yoo/backup/**)"
     ]
   }
 }

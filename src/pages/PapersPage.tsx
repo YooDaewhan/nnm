@@ -1,5 +1,5 @@
 import { useState, Suspense, useCallback, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
@@ -89,6 +89,7 @@ function renderTextWithLinks(text: string): React.ReactNode[] {
 function PaperDetailContent() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const abstractRef = useRef<HTMLDivElement>(null);
   const loggedPaperIdRef = useRef<string | null>(null);
 
@@ -110,6 +111,7 @@ function PaperDetailContent() {
     queryKey: ['paper', id],
     queryFn: () => getPaperDetail(id!) as Promise<OSPaperDetail>,
     enabled: !!id,
+    throwOnError: false,
   });
 
   const { data: ordersData } = useQuery({
@@ -148,6 +150,23 @@ function PaperDetailContent() {
     onError: (err) => alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
   });
 
+  // 로그인 후 복귀 시 pendingAction 자동 실행
+  useEffect(() => {
+    if (!loggedIn || !paper) return;
+    const raw = sessionStorage.getItem('pendingAction');
+    if (!raw) return;
+    try {
+      const action = JSON.parse(raw) as { type: string; publicationId: string };
+      if (action.publicationId !== paper.id) return;
+      sessionStorage.removeItem('pendingAction');
+      if (action.type === 'addToCart') cartMutation.mutate();
+    } catch {
+      sessionStorage.removeItem('pendingAction');
+    }
+  // cartMutation.mutate는 안정적이므로 deps에서 제외
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn, paper]);
+
   const handleShare = () => {
     const url = window.location.href;
     const doCopy = () => { setCopied(true); setTimeout(() => setCopied(false), 1500); };
@@ -165,12 +184,19 @@ function PaperDetailContent() {
   };
 
   const handleScrap = () => {
-    if (!loggedIn) { navigate('/login'); return; }
+    if (!loggedIn) {
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
     scrapMutation.mutate();
   };
 
   const handleAddToCart = () => {
-    if (!loggedIn) { navigate('/login'); return; }
+    if (!loggedIn) {
+      sessionStorage.setItem('pendingAction', JSON.stringify({ type: 'addToCart', publicationId: id }));
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
     cartMutation.mutate();
   };
 
@@ -216,13 +242,13 @@ function PaperDetailContent() {
 
   const handlePurchase = () => {
     if (!loggedIn) {
-      navigate('/login');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
     sessionStorage.setItem('directBuyItem', JSON.stringify({
       publication_id: paper!.id,
       title: paper!.title,
-      unit_price: 7000,
+      unit_price: paper?.price ?? 0,
       quantity: 1,
       authors: paper!.authors.map(a => a.name),
       publisher: paper!.publisher_name ?? paper!.provider?.name ?? null,
@@ -248,36 +274,24 @@ function PaperDetailContent() {
     if (!paper) return;
     setDownloading(true);
     try {
-      const { API_BASE_URL } = await import('../api/client');
-      const token = localStorage.getItem('access_token');
-      const headers: Record<string, string> = { Accept: 'application/json', 'Content-Type': 'application/json' };
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const res = await fetch(`${API_BASE_URL}/api/citations/${paper.id}/download?format=bibtex`, { method: 'GET', headers });
-      if (!res.ok) throw new Error('다운로드에 실패했습니다.');
-
-      const contentType = res.headers.get('Content-Type') ?? '';
-      if (contentType.includes('application/json')) {
-        const json = await res.json();
-        const url: string | undefined = json.url ?? json.download_url ?? json.signed_url ?? json.presigned_url ?? json.data?.url;
-        if (!url) throw new Error('다운로드 URL이 없습니다.');
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = json.filename ?? `${paper.title}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `${paper.title}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      }
+      const { getPdfFull } = await import('../api/pdf');
+      const { url } = await getPdfFull(paper.id);
+      const S3_HOST = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
+      const h = window.location.hostname;
+      const useProxy = h === 'localhost' || h === '127.0.0.1'
+        || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+      const fetchUrl = useProxy ? url.replace(S3_HOST, '/s3-proxy') : url;
+      const pdfRes = await fetch(fetchUrl);
+      if (!pdfRes.ok) throw new Error('PDF 다운로드에 실패했습니다.');
+      const blob = await pdfRes.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${paper.title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       alert(err instanceof Error ? err.message : '다운로드에 실패했습니다.');
     } finally {
@@ -557,20 +571,47 @@ function PaperDetailContent() {
                           )}
                           {paper.venue && (
                             <>
-                              <Link
-                                to={`/journal/${paper.venue.id}`}
-                                className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline"
-                              >
-                                {paper.venue.name}
-                              </Link>
-                              {paper.issue?.label && (
-                                <>
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                    <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                  <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{paper.issue.label}</span>
-                                </>
-                              )}
+                              {(() => {
+                                const venueId = paper.venue?.id;
+                                const isValidId = venueId && venueId !== '0' && venueId !== 'undefined' && venueId !== 'null';
+                                const encodedName = paper.venue?.name ? encodeURIComponent(paper.venue.name) : null;
+                                const journalTo = isValidId
+                                  ? `/journal/${venueId}${encodedName ? `?name=${encodedName}` : ''}`
+                                  : encodedName
+                                  ? `/journal?name=${encodedName}`
+                                  : null;
+                                return journalTo ? (
+                                  <Link
+                                    to={journalTo}
+                                    className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline"
+                                  >
+                                    {paper.venue.name}
+                                  </Link>
+                                ) : (
+                                  <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
+                                    {paper.venue.name}
+                                  </span>
+                                );
+                              })()}
+                              {(() => {
+                                const issue = paper.issue as any;
+                                if (!issue) return null;
+                                const vol = Number(issue.volume) || 0;
+                                const num = Number(issue.number) || 0;
+                                if (!vol && !num) return null;
+                                const issueLabel = [
+                                  vol ? `제${vol}권` : '',
+                                  num ? `제${num}호` : '',
+                                ].filter(Boolean).join(' ');
+                                return (
+                                  <>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                                      <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                    <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{issueLabel}</span>
+                                  </>
+                                );
+                              })()}
                               {(paper.page_start || paper.page_end) && (
                                 <>
                                   <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
@@ -583,6 +624,15 @@ function PaperDetailContent() {
                             </>
                           )}
                         </div>
+                      </MetaRow>
+                    )}
+
+                    {/* 발행일 */}
+                    {paper.published_at && (
+                      <MetaRow label="발행일">
+                        <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
+                          {new Date(paper.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')}
+                        </span>
                       </MetaRow>
                     )}
 
@@ -624,14 +674,14 @@ function PaperDetailContent() {
                     {/* button-pay-box right : gap 16px */}
                     <div className="papers-btn-pay-box flex flex-row justify-end items-center gap-[16px]">
                       {/* 원문 받기 button (outline) : h-48px, rounded-[6px], px-24, font 17px */}
-                      {!isPurchased && (
+                      {/*!isPurchased && (
                         <button
                           onClick={handleScrollToAbstract}
                           className="inline-flex items-center justify-center px-[24px] h-[48px] rounded-[6px] text-[17px] leading-[150%] text-[#131416] hover:bg-[#F0F2F5] transition-colors"
                         >
                           초록보기
                         </button>
-                      )}
+                      )*/}
                       {/* 구매하기 / 원문보기 button : h-48px, bg #256EF4, rounded-[6px], px-24, font 17px, white */}
                       <button
                         onClick={isPurchased ? handleViewFull : handlePurchase}

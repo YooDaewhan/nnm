@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { OpenSearchTextResultItem, fetchAiSummary } from '@/api/search';
 import { getPdfFull, PdfApiError } from '@/api/pdf';
@@ -40,6 +40,7 @@ export function SearchResultCard({
   isPurchased = false,
 }: SearchResultCardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -63,7 +64,7 @@ export function SearchResultCard({
 
   const handleScrap = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) { navigate('/login', { state: { from: location.pathname + location.search } }); return; }
     scrapMutation.mutate();
   };
 
@@ -146,15 +147,7 @@ export function SearchResultCard({
     setTimeout(() => setCiteCopied(null), 2000);
   }, [citeTexts]);
 
-  const paperUrl = (() => {
-    const provider = (result.metadata.provider_name as string | null)?.trim();
-    const venue = (result.metadata.venue_name as string | null)?.trim();
-    const journal = (result.metadata.journal as string | null)?.trim();
-    if (provider && venue && journal) {
-      return `/papers/${encodeURIComponent(provider)}/${encodeURIComponent(venue)}/${encodeURIComponent(journal)}/${result.id}`;
-    }
-    return `/papers/${result.id}`;
-  })();
+  const paperUrl = `/papers/${result.id}`;
 
   const handleAiSummary = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -218,14 +211,14 @@ export function SearchResultCard({
       );
     }
     return (
-      <div className="flex flex-row md:flex-col items-center gap-2">
-        <div className="h-9 px-3 md:w-full flex items-center justify-center border border-[#AB2B36] rounded-md shrink-0">
-          <span className="text-[14px] font-bold text-[#AB2B36]">￦ {(result.price ?? result.metadata.price ?? 7000).toLocaleString()}</span>
+      <div className="flex flex-col items-stretch gap-2 w-[112px]">
+        <div className="h-9 w-full flex items-center justify-center border border-[#AB2B36] rounded-md">
+          <span className="text-[14px] font-bold text-[#AB2B36]">￦ {(result.price ?? result.metadata?.price ?? 0).toLocaleString()}</span>
         </div>
         <button
           onClick={(e) => onBuyNow(e, result.id)}
           disabled={buyLoading}
-          className="h-9 px-4 md:w-full bg-[#256EF4] text-white text-[13px] font-semibold rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50 whitespace-nowrap"
+          className="h-9 w-full bg-[#256EF4] text-white text-[13px] font-semibold rounded-md hover:bg-[#1e4ec9] transition-colors disabled:opacity-50"
         >
           {buyLoading ? '처리 중...' : '구매하기'}
         </button>
@@ -242,7 +235,13 @@ export function SearchResultCard({
         ${isSelected ? 'border-t-[#256EF4]' : 'border-t-[#CDD1D5]'}`}
       >
         {/* 체크박스 */}
-        <div onClick={onToggleSelect} className="flex items-start justify-center pt-0.5 shrink-0 cursor-pointer">
+        <div
+          onClick={onToggleSelect}
+          role="checkbox"
+          aria-checked={isSelected}
+          aria-label="논문 선택"
+          className="flex items-start justify-center pt-0.5 shrink-0 cursor-pointer"
+        >
           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0
             ${isSelected ? 'bg-[#256EF4] border-[#256EF4]' : 'border-[#CDD1D5] bg-white hover:border-[#256EF4]'}`}
           >
@@ -344,11 +343,11 @@ export function SearchResultCard({
                 <span>KCI등재</span>
               </div>
               <PublicationMeta metadata={result.metadata} />
-              {(
+              {/*(
                 <p className="text-[13px] text-[#C0392B] mt-1.5 line-clamp-1 leading-snug">
                   • 이 자료는 연계기관과의 협약에 따라 무료로 제공되며, 원문 이용방식은 연계기관의 정책을 따르고 있습니다.
                 </p>
-              )}
+              )*/}
             </div>
 
             <div className="hidden md:block shrink-0">
@@ -384,13 +383,6 @@ export function SearchResultCard({
               {!result.abstract ? '초록 없음' : expanded ? '접기' : '초록보기'}
             </button>
             <div className="w-px h-3 bg-[#CDD1D5]"/>
-            <button onClick={handleAiSummary} className={`flex items-center gap-1 px-3 text-[13px] transition-colors ${aiSummaryExpanded ? 'text-[#256EF4]' : 'text-[#464C53] hover:text-[#256EF4]'}`}>
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                <path d="M8 1.5L9.8 5.5L14 6.1L11 9L11.8 13.2L8 11.1L4.2 13.2L5 9L2 6.1L6.2 5.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
-              </svg>
-              {aiSummaryLoading ? '요약 중...' : aiSummaryExpanded ? '접기' : 'AI 요약'}
-            </button>
-            <div className="w-px h-3 bg-[#CDD1D5]"/>
             <button onClick={handleOpenCite} className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2.5 5.5C2.5 4.67 3.17 4 4 4H5.5V7.5H2.5V5.5ZM8.5 5.5C8.5 4.67 9.17 4 10 4H11.5V7.5H8.5V5.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
@@ -405,24 +397,6 @@ export function SearchResultCard({
               <p className="text-[13px] text-[#464C53] leading-[1.6em]">
                 {highlightText(result.abstract, highlightTerms)}
               </p>
-            </div>
-          )}
-
-          {aiSummaryExpanded && (
-            <div className="mt-3 p-3 bg-[#F0F4FF] rounded-lg border border-[#C7D9FF] animate-fadeIn">
-              <div className="flex items-center gap-1.5 mb-2">
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 1.5L9.8 5.5L14 6.1L11 9L11.8 13.2L8 11.1L4.2 13.2L5 9L2 6.1L6.2 5.5L8 1.5Z" stroke="#256EF4" strokeWidth="1.3" strokeLinejoin="round"/>
-                </svg>
-                <span className="text-[12px] font-semibold text-[#256EF4]">AI 요약</span>
-              </div>
-              {aiSummaryLoading ? (
-                <p className="text-[13px] text-[#8A949E]">요약을 불러오는 중...</p>
-              ) : aiSummaryError ? (
-                <p className="text-[13px] text-[#AB2B36]">AI 요약을 불러오는데 실패했습니다.</p>
-              ) : (
-                <p className="text-[13px] text-[#464C53] leading-[1.6em] animate-fadeIn">{aiSummary}</p>
-              )}
             </div>
           )}
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL } from '../api/client';
 import JournalFilterSidebar from '@/components/JournalFilterSidebar';
@@ -61,7 +61,11 @@ interface VenueDetail {
 export default function JournalPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+  const nameParam = useMemo(() => new URLSearchParams(location.search).get('name'), [location.search]);
+  // id가 유효한 경우 (0이나 undefined 문자열 제외)
+  const validId = id && id !== '0' && id !== 'undefined' && id !== 'null' ? id : undefined;
   const isLoggedIn = isAuthenticated();
   const [venue, setVenue] = useState<VenueDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -120,7 +124,7 @@ export default function JournalPage() {
       sessionStorage.setItem('directBuyItem', JSON.stringify({
         publication_id: resultId,
         title: result?.title ?? '',
-        unit_price: result?.price ?? result?.metadata?.price ?? 7000,
+        unit_price: result?.price ?? result?.metadata?.price ?? 0,
         quantity: 1,
         authors: result?.authors ?? [],
         publisher: result?.metadata?.publisher_name ?? null,
@@ -133,13 +137,19 @@ export default function JournalPage() {
 
   const handleAddToCart = (e: React.MouseEvent, resultId: string) => {
     e.stopPropagation();
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: location.pathname + location.search } });
+      return;
+    }
     cartMutation.mutate(resultId);
   };
 
   const handleBuyNow = (e: React.MouseEvent, resultId: string) => {
     e.stopPropagation();
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: location.pathname + location.search } });
+      return;
+    }
     buyNowMutation.mutate(resultId);
   };
 
@@ -218,27 +228,62 @@ export default function JournalPage() {
   };
 
   useEffect(() => {
-    if (!id) return;
+    // validId 또는 nameParam 중 하나라도 없으면 중단
+    if (!validId && !nameParam) {
+      setLoading(false);
+      setError('404');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const token = localStorage.getItem('access_token');
-    fetch(`${API_BASE_URL}/api/venues/${id}`, {
-      headers: {
-        Accept: 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setVenue(data);
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [id]);
+    const headers: HeadersInit = {
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const fetchByName = (name: string) => {
+      fetch(`${API_BASE_URL}/api/venues?name=${encodeURIComponent(name)}&per_page=100`, { headers })
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          const list: VenueDetail[] = Array.isArray(data) ? data : (data.data ?? []);
+          const match = list.find((v: VenueDetail) =>
+            v.name?.toLowerCase() === name.toLowerCase()
+          );
+          if (match) setVenue(match);
+          else setError('404');
+        })
+        .catch((e) => setError(e.message))
+        .finally(() => setLoading(false));
+    };
+
+    if (validId) {
+      // ID 기반 조회 → 404면 이름으로 fallback
+      fetch(`${API_BASE_URL}/api/venues/${validId}`, { headers })
+        .then(async (res) => {
+          if (res.status === 404 && nameParam) {
+            // ID로 못 찾으면 이름으로 재조회 (loading 관리는 fetchByName에서)
+            fetchByName(nameParam);
+            return;
+          }
+          if (!res.ok) throw new Error(`${res.status}`);
+          const data = await res.json();
+          setVenue(data);
+          setLoading(false);
+        })
+        .catch((e) => {
+          setError(e.message);
+          setLoading(false);
+        });
+    } else if (nameParam) {
+      fetchByName(nameParam);
+    }
+  }, [validId, nameParam]);
 
   useEffect(() => {
     if (!venue) return;
@@ -258,11 +303,84 @@ export default function JournalPage() {
   }
 
   if (error || !venue) {
+    const is404 = error === '404';
     return (
-      <div className="flex items-center justify-center w-full" style={{ minHeight: 400 }}>
-        <span style={{ fontFamily: "'Pretendard GOV', sans-serif", fontSize: 17, color: '#E02020' }}>
-          {error ? `데이터를 불러올 수 없습니다. (${error})` : '저널 정보를 찾을 수 없습니다.'}
-        </span>
+      <div className="flex flex-col items-center justify-center w-full" style={{ minHeight: 500, padding: '80px 16px' }}>
+        <div
+          className="flex flex-col items-center text-center"
+          style={{ maxWidth: 480 }}
+        >
+          <div
+            className="flex items-center justify-center rounded-full mb-6"
+            style={{ width: 80, height: 80, background: '#F4F5F6' }}
+          >
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16 16-7.163 16-16S28.837 4 20 4zm0 24a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm1-8a1 1 0 01-2 0v-8a1 1 0 012 0v8z" fill="#8A949E" />
+            </svg>
+          </div>
+          <p
+            style={{
+              fontFamily: "'Pretendard GOV', sans-serif",
+              fontWeight: 700,
+              fontSize: 24,
+              lineHeight: '150%',
+              color: '#1A1E27',
+              margin: '0 0 12px',
+            }}
+          >
+            {is404 ? '저널을 찾을 수 없습니다' : '데이터를 불러올 수 없습니다'}
+          </p>
+          <p
+            style={{
+              fontFamily: "'Pretendard GOV', sans-serif",
+              fontWeight: 400,
+              fontSize: 15,
+              lineHeight: '150%',
+              color: '#8A949E',
+              margin: '0 0 32px',
+            }}
+          >
+            {is404
+              ? '요청하신 저널 정보가 존재하지 않거나 삭제되었습니다.'
+              : '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                height: 44,
+                padding: '0 24px',
+                background: '#F4F5F6',
+                border: 'none',
+                borderRadius: 6,
+                fontFamily: "'Pretendard GOV', sans-serif",
+                fontWeight: 400,
+                fontSize: 15,
+                color: '#464C53',
+                cursor: 'pointer',
+              }}
+            >
+              이전 페이지
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                height: 44,
+                padding: '0 24px',
+                background: '#256EF4',
+                border: 'none',
+                borderRadius: 6,
+                fontFamily: "'Pretendard GOV', sans-serif",
+                fontWeight: 400,
+                fontSize: 15,
+                color: '#FFFFFF',
+                cursor: 'pointer',
+              }}
+            >
+              홈으로 이동
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

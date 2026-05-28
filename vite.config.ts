@@ -29,6 +29,18 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    proxy: {
+      '/s3-proxy': {
+        target: 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/s3-proxy/, ''),
+        secure: true,
+      },
+    },
+  },
   build: {
     outDir: 'dist',
     // 청크 사이즈 경고 기준 올리기

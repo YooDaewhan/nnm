@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -7,6 +8,10 @@ const NO_CHROME_PATHS = ['/login', '/register', '/auth'];
 export default function RootLayout() {
   const location = useLocation();
   const hideChrome = NO_CHROME_PATHS.some(p => location.pathname.startsWith(p));
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-clip">
