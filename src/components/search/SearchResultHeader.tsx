@@ -45,68 +45,36 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
 );
 
 function AnalyzePanel({ data }: { data: AnalyzeResponse }) {
-  const content = data.parse_error
-    ? (data.raw_output?.trim() ?? '분석 결과를 파싱하지 못했습니다.')
-    : null;
+  // chunk_id → publication_id 매핑
+  const chunkToPub = new Map(
+    data.chunks.filter(c => c.publication_id).map(c => [c.chunk_id, c.publication_id!])
+  );
+  // publication_id → 1-based 인용 번호 (references 순서 기준)
+  const pubToIdx = new Map(data.references.map((ref, i) => [ref.publication_id, i + 1]));
+
+  // [#82208] → [1] 형태로 치환
+  const formattedAnswer = data.answer.replace(/\[#(\d+)\]/g, (_, id) => {
+    const pubId = chunkToPub.get(Number(id));
+    const idx = pubId ? pubToIdx.get(pubId) : undefined;
+    return idx != null ? `[${idx}]` : '';
+  });
 
   return (
     <div className="mt-5 pt-5 border-t border-[#C4D8FF] space-y-5">
-      {data.parse_error ? (
-        <p className="text-[14px] text-[#464C53] leading-relaxed whitespace-pre-wrap">{content}</p>
-      ) : (
-        <>
-          {/* 브리핑 */}
-          {data.briefing && (
-            <p className="text-[14px] text-[#1E2124] leading-relaxed">{data.briefing}</p>
-          )}
+      <p className="text-[14px] text-[#1E2124] leading-relaxed whitespace-pre-wrap">{formattedAnswer}</p>
 
-          {/* 섹션 */}
-          {data.sections.map((section, si) => (
-            <div key={si}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-[13px] font-semibold text-[#256EF4] bg-[#EAF0FF] px-2.5 py-0.5 rounded-full">
-                  {section.kind}
-                </span>
-                <h3 className="text-[15px] font-semibold text-[#1E2124]">{section.title}</h3>
-              </div>
-              <ul className="space-y-2">
-                {section.points.map((point, pi) => (
-                  <li key={pi} className="flex gap-2">
-                    <span className="mt-1 shrink-0 w-1.5 h-1.5 rounded-full bg-[#256EF4]" />
-                    <span className="text-[13px] text-[#464C53] leading-relaxed">
-                      <span className="font-medium text-[#1E2124]">{point.label}</span>
-                      {' — '}
-                      {point.description}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          {/* 출처 */}
-          {data.sources.length > 0 && (
-            <div>
-              <h4 className="text-[13px] font-semibold text-[#8A949E] mb-2">참고 논문</h4>
-              <ol className="space-y-1">
-                {data.sources.map((src) => (
-                  <li key={src.marker} className="flex gap-2 text-[12px] text-[#464C53]">
-                    <span className="shrink-0 font-medium text-[#256EF4]">[{src.marker}]</span>
-                    <span>
-                      {src.title}
-                      {src.authors.length > 0 && (
-                        <span className="text-[#8A949E]"> — {src.authors.join(', ')}</span>
-                      )}
-                      {src.year && (
-                        <span className="text-[#8A949E]"> ({src.year})</span>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
-        </>
+      {data.references.length > 0 && (
+        <div>
+          <h4 className="text-[13px] font-semibold text-[#8A949E] mb-2">참고 논문</h4>
+          <ol className="space-y-1">
+            {data.references.map((ref, i) => (
+              <li key={ref.publication_id} className="flex gap-2 text-[12px] text-[#464C53]">
+                <span className="shrink-0 font-medium text-[#256EF4]">[{i + 1}]</span>
+                <span>{ref.title}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
     </div>
   );
@@ -126,7 +94,7 @@ export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemov
 
   const { data: analyzeData, isLoading: analyzeLoading, error: analyzeError } = useQuery({
     queryKey: ['ai-analyze', topic],
-    queryFn: () => postAnalyze({ topic, top_k: 12, min_similarity: 0.3 }),
+    queryFn: () => postAnalyze({ question: topic, top_k: 12, min_similarity: 0.3 }),
     enabled: isExpanded && !!topic,
     staleTime: 1000 * 60 * 60,
     retry: 1,

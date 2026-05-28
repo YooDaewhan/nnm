@@ -1,39 +1,34 @@
 import { API_BASE_URL } from './client';
 
-export interface AnalyzeSection {
-  title: string;
-  kind: string;
-  points: Array<{ label: string; description: string }>;
+export interface AiChunk {
+  chunk_id: number;
+  publication_id: string | null;
+  section: string | null;
+  seq: number;
+  score: number;
+  text: string;
 }
 
-export interface AnalyzeSource {
-  marker: number;
-  external_id: string;
-  similarity: number;
+export interface AiReference {
+  publication_id: string;
   title: string;
-  authors: string[];
-  year: number;
+  doi: string | null;
 }
 
 export interface AnalyzeResponse {
-  topic: string;
-  briefing: string;
-  sections: AnalyzeSection[];
-  sources: AnalyzeSource[];
-  no_relevant_papers: boolean;
-  parse_error: string | null;
-  raw_output: string | null;
-  analyze_prompt_version: string;
-  summary_model: string;
-  elapsed_ms: number;
+  question: string;
+  answer: string;
+  model: string;
+  chunks: AiChunk[];
+  references: AiReference[];
 }
 
 export async function postAnalyze(params: {
-  topic: string;
+  question: string;
   top_k?: number;
   min_similarity?: number;
 }): Promise<AnalyzeResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/ai/analyze`, {
+  const res = await fetch(`${API_BASE_URL}/api/ai/ask`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(params),
