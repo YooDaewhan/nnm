@@ -1,10 +1,23 @@
 const BOT_PATTERN = /googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|linkedinbot|slackbot/i;
 
-const API_BASE = 'https://your-api.com'; // TODO: 백엔드 URL로 교체
+const API_BASE = 'http://125.129.246.231';
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // /api/* → 백엔드 HTTP 프록시 (Mixed Content 우회)
+    if (url.pathname.startsWith('/api')) {
+      const backendUrl = `${API_BASE}${url.pathname}${url.search}`;
+      const proxyReq = new Request(backendUrl, {
+        method: request.method,
+        headers: request.headers,
+        body: ['GET', 'HEAD'].includes(request.method) ? null : request.body,
+        redirect: 'follow',
+      });
+      return fetch(proxyReq);
+    }
+
     const ua = request.headers.get('User-Agent') || '';
     const isBot = BOT_PATTERN.test(ua);
 

@@ -18,7 +18,7 @@ export const pdfServerFetch = async <T>(
 
 // API 클라이언트 설정
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://192.168.20.231:8000';
+  import.meta.env.VITE_API_URL || '';
 
 // Orval이 생성한 API 함수에서 사용할 커스텀 fetch 인스턴스
 export const customFetch = async <T>(
