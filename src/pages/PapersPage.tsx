@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
-import { API_BASE_URL } from '../api/client';
+import { API_BASE_URL, fixImageUrl } from '../api/client';
 import { PdfPreviewModal } from '../components/PdfPreviewModal';
 import { PdfFullViewerModal } from '../components/PdfFullViewerModal';
 import { addToCart } from '../api/cart';
@@ -96,7 +96,6 @@ function PaperDetailContent() {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [buyBtnHovered, setBuyBtnHovered] = useState(false);
 
   const [citeOpen, setCiteOpen] = useState(false);
   const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
@@ -430,23 +429,23 @@ function PaperDetailContent() {
             <div className="flex flex-col gap-[48px]">
 
               {/* ══ article__header : row, gap 60px ══ */}
-              <div className="flex flex-col lg:flex-row items-start gap-[60px]">
+              <div className="flex flex-col lg:flex-row items-start lg:items-stretch gap-[60px]">
 
-                {/* article-cover : 320px × 340px, bg #F4F5F6, rounded-xl */}
+                {/* article-cover : w 320px, fill height(min 340), bg #F4F5F6, rounded-xl, padding 32px */}
                 <div
-                  className="hidden lg:flex flex-shrink-0 flex-col justify-center items-center w-[320px] h-[340px] rounded-[12px]"
-                  style={{ background: '#F4F5F6', padding: '16px' }}
+                  className="hidden lg:flex flex-shrink-0 flex-col justify-center items-center w-[320px] lg:self-stretch min-h-[340px] rounded-[12px]"
+                  style={{ background: '#F4F5F6', padding: '32px' }}
                 >
                   {(() => {
                     const rawCover = paper.cover_url ?? paper.venue?.cover_url;
                     const coverSrc = rawCover
-                      ? (rawCover.startsWith('http') ? rawCover : `${API_BASE_URL}${rawCover}`)
+                      ? (rawCover.startsWith('http') ? fixImageUrl(rawCover) : `${API_BASE_URL}${rawCover}`)
                       : null;
                     return coverSrc ? (
                       <img
                         src={coverSrc}
                         alt="저널 커버"
-                        className="w-[200px] h-[300px] rounded object-cover"
+                        className="w-[200px] h-[276px] rounded object-cover"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                       />
                     ) : (
@@ -467,20 +466,35 @@ function PaperDetailContent() {
 
                   {/* badge+btn row : space-between */}
                   <div className="flex flex-row justify-between items-center">
-                    {/* badge-box : gap 8px */}
-                    <div className="flex flex-row items-start gap-[8px]">
-                      {/* venue.type 기반 동적 배지 */}
+                    {/* badge-box : gap 8px — 자료유형(info) + 등재정보(primary) */}
+                    <div className="flex flex-row items-center gap-[8px]">
+                      {/* 자료유형 배지 : bg #E7F4FE, text #096AB3 */}
                       {(() => {
                         const key = paper.venue?.type?.trim().toLowerCase();
-                        const badge = key ? AWARD_BADGE_MAP[key] : null;
-                        if (!badge) return null;
+                        const label = (key && AWARD_BADGE_MAP[key]?.label) || '논문';
                         return (
                           <span
-                            key={key}
                             className="papers-badge inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
-                            style={{ background: badge.bg, color: badge.color }}
+                            style={{ background: '#E7F4FE', color: '#096AB3' }}
                           >
-                            {badge.label}
+                            {label}
+                          </span>
+                        );
+                      })()}
+                      {/* 등재정보 배지 : bg #ECF2FE, text #0B50D0 */}
+                      {(() => {
+                        const idx = paper.indexing;
+                        const indexLabel =
+                          idx?.index_info?.trim() ||
+                          idx?.kci?.trim() ||
+                          (paper.venue?.settings?.kci ? 'KCI등재' : null);
+                        if (!indexLabel) return null;
+                        return (
+                          <span
+                            className="papers-badge inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
+                            style={{ background: '#ECF2FE', color: '#0B50D0' }}
+                          >
+                            {indexLabel}
                           </span>
                         );
                       })()}
@@ -546,10 +560,19 @@ function PaperDetailContent() {
                     {/* 저자정보 */}
                     {paper.authors && paper.authors.length > 0 && (
                       <MetaRow label="저자정보">
-                        <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
-                          {paper.authors.slice(0, 3).map((a) => (typeof a === 'string' ? a : a.name)).join(' ')}
-                          {paper.authors.length > 3 ? ` 외 ${paper.authors.length - 3}명` : ''}
-                        </span>
+                        <div className="flex items-center flex-wrap">
+                          {paper.authors.map((a, i) => {
+                            const name = typeof a === 'string' ? a : a.name;
+                            return (
+                              <span key={i} className="inline-flex items-center">
+                                <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{name}</span>
+                                {i < paper.authors.length - 1 && (
+                                  <span aria-hidden className="inline-block w-px h-[13px] bg-[#8A949E] mx-[8px]" />
+                                )}
+                              </span>
+                            );
+                          })}
+                        </div>
                       </MetaRow>
                     )}
 
@@ -634,11 +657,14 @@ function PaperDetailContent() {
                       </MetaRow>
                     )}
 
-                    {/* 발행일 */}
+                    {/* 발행년월 : YYYY.MM */}
                     {paper.published_at && (
-                      <MetaRow label="발행일">
+                      <MetaRow label="발행년월">
                         <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
-                          {new Date(paper.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')}
+                          {(() => {
+                            const d = new Date(paper.published_at);
+                            return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+                          })()}
                         </span>
                       </MetaRow>
                     )}
@@ -693,42 +719,25 @@ function PaperDetailContent() {
 
                     {/* button-pay-box right : gap 16px */}
                     <div className="papers-btn-pay-box flex flex-row justify-end items-center gap-[16px]">
-                      {/* 원문 받기 button (outline) : h-48px, rounded-[6px], px-24, font 17px */}
-                      {/*!isPurchased && (
-                        <button
-                          onClick={handleScrollToAbstract}
-                          className="inline-flex items-center justify-center px-[24px] h-[48px] rounded-[6px] text-[17px] leading-[150%] text-[#131416] hover:bg-[#F0F2F5] transition-colors"
-                        >
-                          초록보기
-                        </button>
-                      )*/}
-                      {/* 구매하기 / 원문보기 button : h-48px, bg #256EF4, rounded-[6px], px-24, font 17px, white */}
-                      <button
-                        onClick={isPurchased ? handleViewFull : handlePurchase}
-                        onMouseEnter={() => setBuyBtnHovered(true)}
-                        onMouseLeave={() => setBuyBtnHovered(false)}
-                        className="inline-flex items-center justify-center px-[24px] h-[48px] rounded-[6px] text-[17px] leading-[150%] text-white"
-                        style={{ background: '#256EF4', overflow: 'hidden', position: 'relative' }}
-                      >
-                        <span style={{
-                          display: 'inline-block',
-                          transition: 'transform 0.2s ease, opacity 0.2s ease',
-                          transform: !isPurchased && buyBtnHovered ? 'translateY(-120%)' : 'translateY(0)',
-                          opacity: !isPurchased && buyBtnHovered ? 0 : 1,
-                        }}>
-                          {isPurchased ? '원문보기' : '구매하기'}
-                        </span>
-                        {!isPurchased && (
-                          <span style={{
-                            position: 'absolute',
-                            transition: 'transform 0.2s ease, opacity 0.2s ease',
-                            transform: buyBtnHovered ? 'translateY(0)' : 'translateY(120%)',
-                            opacity: buyBtnHovered ? 1 : 0,
-                          }}>
-                            {paper.price ? `₩${paper.price.toLocaleString()}` : '구매하기'}
+                      {/* btn-pay : 가격(ghost) + 구매하기(primary), gap 8px */}
+                      <div className="flex flex-row items-center gap-[8px]">
+                        {/* 가격 버튼 : transparent bg, #131416, h-48px, px-24 */}
+                        {!isPurchased && (paper.price ?? 0) > 0 && (
+                          <span className="inline-flex items-center justify-center px-[24px] h-[48px] rounded-[6px] text-[17px] leading-[150%] text-[#131416] whitespace-nowrap">
+                            ₩ {(paper.price ?? 0).toLocaleString()}
                           </span>
                         )}
-                      </button>
+                        {/* 구매하기 / 원문보기 : h-48px, bg #256EF4, rounded-[6px], px-24, white */}
+                        <button
+                          onClick={isPurchased ? handleViewFull : handlePurchase}
+                          className="inline-flex items-center justify-center px-[24px] h-[48px] rounded-[6px] text-[17px] leading-[150%] text-white whitespace-nowrap transition-colors hover:opacity-90"
+                          style={{ background: '#256EF4' }}
+                        >
+                          {isPurchased
+                            ? '원문보기'
+                            : (paper.is_free || (paper.price ?? 0) === 0) ? '무료보기' : '구매하기'}
+                        </button>
+                      </div>
                       {isPurchased && (
                         <button
                           onClick={handleDownload}
@@ -757,19 +766,16 @@ function PaperDetailContent() {
               {/* ══ article__detail : flex col, gap 64px ══ */}
               <div className="flex flex-col gap-[64px] w-full">
 
-                {/* con-abstract : 초록, gap 20px */}
-                {paper.abstract && (
+                {/* con-abstract : 초록 (국문 + 영문), gap 20px */}
+                {(paper.abstract || paper.abstract_en) && (
                   <div ref={abstractRef} className="flex flex-col gap-[20px] w-full">
                     <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">초록</h2>
-                    <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract}</p>
-                  </div>
-                )}
-
-                {/* 영문초록 */}
-                {paper.abstract_en && (
-                  <div className="flex flex-col gap-[20px] w-full">
-                    <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">영문초록</h2>
-                    <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract_en}</p>
+                    {paper.abstract && (
+                      <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract}</p>
+                    )}
+                    {paper.abstract_en && (
+                      <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract_en}</p>
+                    )}
                   </div>
                 )}
 

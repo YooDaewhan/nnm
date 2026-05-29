@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DetailedSearchCondition } from '@/api/search';
-import { customFetch, API_BASE_URL } from '@/api/client';
+import { customFetch, API_BASE_URL, fixImageUrl } from '@/api/client';
 
 /* ───────────────────────────────────────────
    반응형 훅
@@ -957,7 +957,7 @@ export default function HomePage() {
                       const publisher = venue.publisher ?? venue.publisher_name ?? '';
                       const rawCoverUrl = venue.cover_url;
                       const coverUrl = rawCoverUrl
-                        ? (rawCoverUrl.startsWith('http') ? rawCoverUrl : `${API_BASE_URL}${rawCoverUrl}`)
+                        ? (rawCoverUrl.startsWith('http') ? fixImageUrl(rawCoverUrl) : `${API_BASE_URL}${rawCoverUrl}`)
                         : null;
                       return (
                         <div

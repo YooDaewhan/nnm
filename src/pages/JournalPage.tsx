@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { API_BASE_URL } from '../api/client';
+import { API_BASE_URL, fixImageUrl } from '../api/client';
 import JournalFilterSidebar from '@/components/JournalFilterSidebar';
 import { OpenSearchTextResultItem } from '@/api/search';
 import { osSearchText } from '@/api/opensearch-direct';
@@ -457,7 +457,7 @@ export default function JournalPage() {
             >
               {venue?.cover_url ? (
                 <img
-                  src={venue.cover_url?.startsWith('http') ? venue.cover_url : `${API_BASE_URL}${venue.cover_url ?? ''}`}
+                  src={venue.cover_url?.startsWith('http') ? fixImageUrl(venue.cover_url)! : `${API_BASE_URL}${venue.cover_url ?? ''}`}
                   alt="저널 커버"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

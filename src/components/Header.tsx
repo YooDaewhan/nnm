@@ -16,13 +16,6 @@ interface HeaderProps {
   onLogout?: () => void;
 }
 
-const IconLogOut = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m16 17 5-5-5-5"/>
-    <path d="M21 12H9"/>
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-  </svg>
-);
 
 export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderProps) {
   const navigate = useNavigate();
@@ -171,13 +164,13 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
             {isLoggedIn === null ? null : isLoggedIn ? (
               /* status=login */
               <div className="flex items-center gap-2 md:gap-4 h-10 md:h-14">
-                <div className="relative group">
+                <div className="relative group hidden md:block">
                   <button
                     onClick={() => navigate('/cart')}
                     className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 hover:opacity-70 transition-opacity"
                     aria-label="장바구니"
                   >
-                    <img src="/icons/bag-B.svg" alt="장바구니" className="w-7 h-7 md:w-10 md:h-10" />
+                    <img src="/svg/bag-B.svg" alt="장바구니" className="w-7 h-7 md:w-10 md:h-10" />
                   </button>
                   <span className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     장바구니
@@ -186,38 +179,38 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                 <div className="relative group">
                   <button
                     onClick={() => navigate('/mypage')}
-                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 bg-[#1E2124] rounded-full hover:opacity-70 transition-opacity"
+                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 hover:opacity-70 transition-opacity"
                     aria-label="마이페이지"
                   >
-                    <img src="/icons/user-A.svg" alt="마이페이지" className="w-5 h-5 md:w-7 md:h-7 invert" />
+                    <img src="/svg/user-circle-fill.svg" alt="마이페이지" className="w-9 h-9 md:w-10 md:h-10" />
                   </button>
                   <span className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     마이페이지
                   </span>
                 </div>
-                {/* <div className="relative group">
+                <div className="relative group hidden md:block">
                   <button
                     onClick={handleLogout}
                     className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 hover:opacity-70 transition-opacity"
                     aria-label="로그아웃"
                   >
-                    <IconLogOut />
+                    <img src="/svg/logout.svg" alt="로그아웃" className="w-7 h-7 md:w-10 md:h-10" />
                   </button>
                   <span className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     로그아웃
                   </span>
-                </div> */}
+                </div>
               </div>
             ) : (
               /* status=logout */
               <div className="flex items-center gap-2 md:gap-4 h-10 md:h-14">
-                <div className="relative group">
+                <div className="relative group hidden md:block">
                   <button
                     onClick={() => navigate('/cart')}
                     className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 hover:opacity-70 transition-opacity"
                     aria-label="장바구니"
                   >
-                    <img src="/icons/bag-B.svg" alt="장바구니" className="w-7 h-7 md:w-10 md:h-10" />
+                    <img src="/svg/bag-B.svg" alt="장바구니" className="w-7 h-7 md:w-10 md:h-10" />
                   </button>
                   <span className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     장바구니
@@ -226,10 +219,10 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                 <div className="relative group">
                   <button
                     onClick={() => navigate('/login')}
-                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 bg-[#1E2124] rounded-full hover:opacity-70 transition-opacity"
+                    className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 hover:opacity-70 transition-opacity"
                     aria-label="로그인"
                   >
-                    <img src="/icons/user-A.svg" alt="로그인" className="w-5 h-5 md:w-7 md:h-7 invert" />
+                    <img src="/svg/user-circle-fill.svg" alt="로그인" className="w-9 h-9 md:w-10 md:h-10" />
                   </button>
                   <span className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 text-[12px] text-[#1E2124] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     로그인

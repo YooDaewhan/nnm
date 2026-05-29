@@ -16,6 +16,12 @@ export const pdfServerFetch = async <T>(
   return { data, status: response.status, headers: response.headers } as T;
 };
 
+// 백엔드가 사설 IP(192.168.20.231)를 반환하는 경우 공개 IP로 교체
+export const fixImageUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  return url.replace('http://192.168.20.231:8000', 'http://125.129.246.231');
+};
+
 // API 클라이언트 설정
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || '';
