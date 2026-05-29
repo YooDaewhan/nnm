@@ -11,6 +11,8 @@ export default {
       const backendUrl = `${API_BASE}${url.pathname}${url.search}`;
       const proxyHeaders = new Headers(request.headers);
       proxyHeaders.delete('host');
+      proxyHeaders.delete('origin');
+      proxyHeaders.delete('referer');
       const proxyReq = new Request(backendUrl, {
         method: request.method,
         headers: proxyHeaders,
