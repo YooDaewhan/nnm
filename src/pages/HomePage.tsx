@@ -506,13 +506,14 @@ export default function HomePage() {
     }
   }, [categoryData, selectedTab]);
 
-  const { data: featuredVenues = [] } = useQuery<FeaturedVenue[]>({
+  const { data: featuredVenues = [], isLoading: venuesLoading } = useQuery<FeaturedVenue[]>({
     queryKey: ['home', 'featured-venues'],
     queryFn: async () => {
       const res = await customFetch<{ data: unknown }>('/api/home/featured-venues?limit=12');
       return extractFeaturedVenues((res.data as Record<string, unknown>)?.data ?? res.data);
     },
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const [conditions, setConditions] = useState<DetailedSearchCondition[]>([
@@ -920,7 +921,37 @@ export default function HomePage() {
           </p>
 
           {/* 저널 슬라이더 */}
-          {(() => {
+          {venuesLoading ? (
+            <div style={{ display: 'flex', gap: isMobile ? 12 : 24, overflow: 'hidden' }}>
+              {Array.from({ length: isMobile ? 3 : 6 }).map((_, i) => {
+                const itemsPerPage = isMobile ? 3 : 6;
+                const gap = isMobile ? 12 : 24;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      flexShrink: 0,
+                      width: `calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '100%',
+                        aspectRatio: '3 / 4',
+                        borderRadius: 8,
+                        background: '#F3F4F6',
+                        animation: 'pulse 1.5s ease-in-out infinite',
+                        animationDelay: `${i * 0.1}s`,
+                        marginBottom: 12,
+                      }}
+                    />
+                    <div style={{ height: 20, background: '#F3F4F6', borderRadius: 4, marginBottom: 6, animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
+                    <div style={{ height: 16, background: '#F3F4F6', borderRadius: 4, width: '60%', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (() => {
             const gap = isMobile ? 12 : 24;
             const itemsPerPage = isMobile ? 3 : 6;
             const n = featuredVenues.length;

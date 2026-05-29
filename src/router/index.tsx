@@ -45,7 +45,6 @@ import MyPageLibraryPage from '@/pages/mypage/MyPageLibraryPage';
 import MyPageRecentPage from '@/pages/mypage/MyPageRecentPage';
 import MyPageScrapPage from '@/pages/mypage/MyPageScrapPage';
 import MyPageQnaPage from '@/pages/mypage/MyPageQnaPage';
-import TestPage from '@/pages/test/TestPage';
 
 export const router = createBrowserRouter([
   {
@@ -74,7 +73,7 @@ export const router = createBrowserRouter([
       { path: '/register',            element: <RegisterPage /> },
       { path: '/register/complete',   element: <RegisterCompletePage /> },
       { path: '/auth/callback',       element: <AuthCallbackPage /> },
-      { path: '/test',                element: <TestPage /> },
+
     ],
   },
 ]);
