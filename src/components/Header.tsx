@@ -78,8 +78,9 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
             <img src="/icons/logo__pc.svg" alt="뉴논문" className="w-[140px] md:w-[200px] h-auto" />
           </button>
 
-          {/* 검색바 (PC만, 홈 제외) — 절대 중앙 정렬 */}
+          {/* 검색바 (PC만, 홈 제외) */}
           {location.pathname !== '/' && (
+          <div className="hidden md:flex flex-1 justify-center min-w-0 px-4">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -89,7 +90,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
               if (searchCategory !== 'all') params.set('field', searchCategory);
               navigate(`/search?${params.toString()}`);
             }}
-            className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-[700px]"
+            className="flex w-full max-w-[700px]"
           >
             <div className="flex items-center w-full h-[50px] border border-[#1E2124] rounded-xl overflow-visible bg-white relative">
 
@@ -157,10 +158,11 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
 
             </div>
           </form>
+          </div>
           )}
 
           {/* 우측: 로그인 상태에 따라 분기 */}
-          <div className="flex flex-1 justify-end">
+          <div className="ml-auto flex shrink-0 items-center">
             {isLoggedIn === null ? null : isLoggedIn ? (
               /* status=login */
               <div className="flex items-center gap-2 md:gap-4 h-10 md:h-14">
