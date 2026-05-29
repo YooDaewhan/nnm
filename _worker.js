@@ -9,9 +9,11 @@ export default {
     // /api/* → 백엔드 HTTP 프록시 (Mixed Content 우회)
     if (url.pathname.startsWith('/api')) {
       const backendUrl = `${API_BASE}${url.pathname}${url.search}`;
+      const proxyHeaders = new Headers(request.headers);
+      proxyHeaders.delete('host');
       const proxyReq = new Request(backendUrl, {
         method: request.method,
-        headers: request.headers,
+        headers: proxyHeaders,
         body: ['GET', 'HEAD'].includes(request.method) ? null : request.body,
         redirect: 'follow',
       });
