@@ -144,14 +144,7 @@ export default function SearchResultList({
                 {/* row-1: 배지(좌) + 아이콘버튼(우) */}
                 <div className="flex items-start justify-between gap-4 mb-2">
                   {/* 배지 그룹 */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center justify-center h-6 px-2 bg-[#ECF2FE] text-[#0B50D0] text-[15px] font-normal rounded leading-none">
-                      학술저널
-                    </span>
-                    <span className="inline-flex items-center justify-center h-6 px-2 bg-[#EAF6EC] text-[#267337] text-[15px] font-normal rounded leading-none">
-                      KCI등재
-                    </span>
-                  </div>
+                  <div className="flex items-center gap-2 flex-wrap" />
                   {/* 아이콘 버튼 그룹 */}
                   <div className="flex items-center gap-4 flex-shrink-0">
                     <button
@@ -223,10 +216,6 @@ export default function SearchResultList({
                           </span>
                         </>
                       )}
-                      <Divider />
-                      <span className="inline-flex items-center h-6 px-0.5 text-[15px] text-[#464C53] leading-none">
-                        KCI등재
-                      </span>
                       {meta?.view_count != null && (
                         <>
                           <Divider />

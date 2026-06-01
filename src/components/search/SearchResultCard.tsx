@@ -309,25 +309,6 @@ export function SearchResultCard({
                   {VENUE_TYPE_MAP[result.type].label}
                 </span>
               )}
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: 24,
-                  padding: '0 8px',
-                  borderRadius: 4,
-                  background: '#ECF2FE',
-                  fontFamily: "'Pretendard GOV', sans-serif",
-                  fontWeight: 400,
-                  fontSize: 14,
-                  lineHeight: '150%',
-                  color: '#0B50D0',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                KCI등재
-              </span>
             </div>
 
             {/* btn-icon-box: gap 8px (기존 16px → 절반) */}
@@ -649,7 +630,6 @@ export function SearchResultCard({
                   {VENUE_TYPE_MAP[result.type].label}
                 </span>
               )}
-              <span className="inline-flex items-center h-[22px] px-2.5 bg-[#EAF6EC] text-[#267337] text-[12px] font-medium rounded-full">KCI등재</span>
             </div>
             <div className="flex items-center gap-0.5">
               <div className="relative">
@@ -701,8 +681,7 @@ export function SearchResultCard({
                     <span className="text-[#CDD1D5] mx-0.5">|</span>
                   </>
                 )}
-                {result.year != null && (<><span>{result.year}</span><span className="text-[#CDD1D5] mx-0.5">|</span></>)}
-                <span>KCI등재</span>
+                {result.year != null && (<><span>{result.year}</span></>)}
               </div>
               <PublicationMeta metadata={result.metadata} />
             </div>

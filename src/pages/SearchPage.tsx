@@ -54,8 +54,8 @@ function OpenSearchTextContent() {
   });
 
   const searchResults = useMemo(() => {
-    const venues: Array<{ provider_id: number; type: string }> = (data as any)?.venues ?? [];
-    const providers: Array<{ id: number; name: string }> = (data as any)?.providers ?? [];
+    const venues = data?.venues ?? [];
+    const providers = data?.providers ?? [];
     const providerIdToType: Record<number, string> = {};
     venues.forEach(v => { providerIdToType[v.provider_id] = v.type; });
     const providerNameToType: Record<string, string> = {};
