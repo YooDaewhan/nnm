@@ -312,7 +312,7 @@ export function SearchResultCard({
             </div>
 
             {/* btn-icon-box: gap 8px (기존 16px → 절반) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {/* 공유 */}
               <div style={{ position: 'relative' }}>
                 <button
@@ -322,16 +322,11 @@ export function SearchResultCard({
                   style={mobileIconBtn}
                 >
                   {copied ? (
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path d="M4 10L8.5 14.5L16 6" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                      <circle cx="15" cy="4" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="15" cy="16" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="5" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M7.1 8.9L12.9 5.5M7.1 11.1L12.9 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+                    <img src="/svg/share-android.svg" width={20} height={20} style={{ display: 'block' }} alt="공유하기" />
                   )}
                 </button>
                 {copied && (
@@ -359,21 +354,13 @@ export function SearchResultCard({
               <button
                 onClick={handleScrap}
                 disabled={scrapMutation.isPending}
-                title={isScraped ? '스크랩 해제' : '스크랩'}
+                title={isScraped ? '보관함 해제' : '보관함 담기'}
                 style={{
                   ...mobileIconBtn,
                   opacity: scrapMutation.isPending ? 0.5 : 1,
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                  <path
-                    d="M5 3H15C15.55 3 16 3.45 16 4V18L10 14.5L4 18V4C4 3.45 4.45 3 5 3Z"
-                    stroke={isScraped ? '#256EF4' : 'currentColor'}
-                    fill={isScraped ? '#256EF4' : 'none'}
-                    strokeWidth="1.5"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
               </button>
 
               {/* 장바구니 (구매 전에만 표시) */}
@@ -387,10 +374,7 @@ export function SearchResultCard({
                     opacity: cartLoading ? 0.5 : 1,
                   }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                    <path d="M3 6H17L15.2 15H4.8L3 6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                    <path d="M7.5 6C7.5 4.1 8.6 2.5 10 2.5C11.4 2.5 12.5 4.1 12.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
+                  <img src="/svg/bag-B.svg" width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
                 </button>
               )}
             </div>
@@ -631,36 +615,26 @@ export function SearchResultCard({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1.5">
               <div className="relative">
                 <button type="button" onClick={handleShare} className={iconBtn} title="링크 복사">
                   {copied ? (
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path d="M4 10L8.5 14.5L16 6" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                      <circle cx="15" cy="4" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="15" cy="16" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-                      <circle cx="5" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M7.1 8.9L12.9 5.5M7.1 11.1L12.9 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+                    <img src="/svg/share-android.svg" width={20} height={20} style={{ display: 'block' }} alt="공유하기" />
                   )}
                 </button>
                 {copied && (
                   <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">복사됨</span>
                 )}
               </div>
-              <button onClick={handleScrap} disabled={scrapMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title={isScraped ? '스크랩 해제' : '스크랩'}>
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                  <path d="M5 3H15C15.55 3 16 3.45 16 4V18L10 14.5L4 18V4C4 3.45 4.45 3 5 3Z" stroke={isScraped ? '#256EF4' : 'currentColor'} fill={isScraped ? '#256EF4' : 'none'} strokeWidth="1.5" strokeLinejoin="round" />
-                </svg>
+              <button onClick={handleScrap} disabled={scrapMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title={isScraped ? '보관함 해제' : '보관함 담기'}>
+                <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
               </button>
               <button onClick={(e) => onAddToCart(e, result.id)} disabled={cartLoading} className={`${iconBtn} disabled:opacity-50`} title="장바구니 담기">
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                  <path d="M3 6H17L15.2 15H4.8L3 6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M7.5 6C7.5 4.1 8.6 2.5 10 2.5C11.4 2.5 12.5 4.1 12.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <img src="/svg/bag-B.svg" width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
               </button>
             </div>
           </div>

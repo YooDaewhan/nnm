@@ -30,25 +30,15 @@ const ArrowRight = () => (
 );
 
 const ShareIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-    <circle cx="15" cy="4.5" r="1.8" stroke="#33363D" strokeWidth="1.4"/>
-    <circle cx="5" cy="10" r="1.8" stroke="#33363D" strokeWidth="1.4"/>
-    <circle cx="15" cy="15.5" r="1.8" stroke="#33363D" strokeWidth="1.4"/>
-    <path d="M6.7 9L13.3 5.5M6.7 11L13.3 14.5" stroke="#33363D" strokeWidth="1.4" strokeLinecap="round"/>
-  </svg>
+  <img src="/svg/share-android.svg" width={20} height={20} style={{ display: 'block' }} alt="공유하기" />
 );
 
 const HeartIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-    <path d="M10 16C10 16 2.5 11.5 2.5 6.8C2.5 4.9 4 3.5 5.9 3.5C7.3 3.5 8.8 4.4 10 5.6C11.2 4.4 12.7 3.5 14.1 3.5C16 3.5 17.5 4.9 17.5 6.8C17.5 11.5 10 16 10 16Z" stroke="#33363D" strokeWidth="1.4" strokeLinejoin="round"/>
-  </svg>
+  <img src="/svg/heart.svg" width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
 );
 
 const BagIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-    <path d="M3.5 6.5H16.5L15 15H5L3.5 6.5Z" stroke="#33363D" strokeWidth="1.4" strokeLinejoin="round"/>
-    <path d="M7.5 6.5C7.5 4.6 8.7 3 10 3C11.3 3 12.5 4.6 12.5 6.5" stroke="#33363D" strokeWidth="1.4" strokeLinecap="round"/>
-  </svg>
+  <img src="/svg/bag-B.svg" width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
 );
 
 const DownloadIcon = () => (
@@ -146,7 +136,7 @@ export default function SearchResultList({
                   {/* 배지 그룹 */}
                   <div className="flex items-center gap-2 flex-wrap" />
                   {/* 아이콘 버튼 그룹 */}
-                  <div className="flex items-center gap-4 flex-shrink-0">
+                  <div className="flex items-center gap-5 flex-shrink-0">
                     <button
                       onClick={(e) => e.stopPropagation()}
                       className="text-[#33363D] hover:text-[#1E2124] transition-colors"
@@ -157,7 +147,7 @@ export default function SearchResultList({
                     <button
                       onClick={(e) => e.stopPropagation()}
                       className="text-[#33363D] hover:text-[#1E2124] transition-colors"
-                      title="찜하기"
+                      title="보관함 담기"
                     >
                       <HeartIcon />
                     </button>
