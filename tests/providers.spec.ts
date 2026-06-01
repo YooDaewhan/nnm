@@ -67,17 +67,9 @@ test.describe('학회 목록 페이지', () => {
   });
 
   test('검색어 입력 가능', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/검색/);
+    const searchInput = page.getByPlaceholder('이름, 약어, 카테고리로 검색...');
     await searchInput.fill('교육');
     await expect(searchInput).toHaveValue('교육');
-  });
-
-  test('검색어 입력 후 Enter 키로 검색', async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/검색/);
-    await searchInput.fill('교육학');
-    await searchInput.press('Enter');
-    // 페이지가 검색 결과를 처리함 (URL 변경 또는 목록 필터링)
-    await expect(searchInput).toHaveValue('교육학');
   });
 
   test('학회 목록 항목 표시', async ({ page }) => {
@@ -99,7 +91,7 @@ test.describe('학회 목록 페이지', () => {
       });
     });
 
-    const searchInput = page.getByPlaceholder(/검색/);
+    const searchInput = page.getByPlaceholder('이름, 약어, 카테고리로 검색...');
     await searchInput.fill('존재하지않는학회명xyz');
     await searchInput.press('Enter');
 

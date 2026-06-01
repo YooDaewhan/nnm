@@ -114,7 +114,7 @@ test.describe('저널 상세 페이지', () => {
   test('필터 사이드바 표시', async ({ page }) => {
     // 저널 필터 사이드바가 있어야 함 (JournalFilterSidebar 컴포넌트는 인라인 스타일 사용)
     await expect(
-      page.getByText('결과 내 검색').or(page.getByText('발행일'))
+      page.getByText('결과 내 검색').or(page.getByText('발행일')).first()
     ).toBeVisible({ timeout: 10000 });
   });
 });
