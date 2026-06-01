@@ -9,6 +9,10 @@ interface SearchControlBarProps {
   onSelectAll: () => void;
   onBulkScrap: () => void;
   onBulkBuy: () => void;
+  detailedSort?: 'relevance' | 'latest';
+  itemsPerPage?: number;
+  onSortChange?: (sort: 'relevance' | 'latest') => void;
+  onItemsPerPageChange?: (size: number) => void;
 }
 
 export function SearchControlBar({
@@ -20,6 +24,10 @@ export function SearchControlBar({
   onSelectAll,
   onBulkScrap,
   onBulkBuy,
+  detailedSort,
+  itemsPerPage,
+  onSortChange,
+  onItemsPerPageChange,
 }: SearchControlBarProps) {
   const allSelected = selectedIds.size === searchResults.length && searchResults.length > 0;
   const partialSelected = selectedIds.size > 0 && !allSelected;
@@ -145,6 +153,53 @@ export function SearchControlBar({
           </svg>
           구매하기
         </button>
+
+        {(onSortChange || onItemsPerPageChange) && (
+          <>
+            <div style={{ flex: 1 }} />
+            {onSortChange && detailedSort !== undefined && (
+              <select
+                value={detailedSort}
+                onChange={(e) => onSortChange(e.target.value as 'relevance' | 'latest')}
+                style={{
+                  fontFamily: "'Pretendard GOV', sans-serif",
+                  fontSize: 14,
+                  color: '#464C53',
+                  border: '1px solid #CDD1D5',
+                  borderRadius: 6,
+                  padding: '4px 8px',
+                  background: '#fff',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="relevance">정확도순</option>
+                <option value="latest">최신순</option>
+              </select>
+            )}
+            {onItemsPerPageChange && itemsPerPage !== undefined && (
+              <select
+                value={itemsPerPage}
+                onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+                style={{
+                  fontFamily: "'Pretendard GOV', sans-serif",
+                  fontSize: 14,
+                  color: '#464C53',
+                  border: '1px solid #CDD1D5',
+                  borderRadius: 6,
+                  padding: '4px 8px',
+                  background: '#fff',
+                  cursor: 'pointer',
+                  marginLeft: 8,
+                }}
+              >
+                <option value={4}>4개씩</option>
+                <option value={10}>10개씩</option>
+                <option value={20}>20개씩</option>
+                <option value={50}>50개씩</option>
+              </select>
+            )}
+          </>
+        )}
       </div>
     </>
   );
