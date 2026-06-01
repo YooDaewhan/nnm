@@ -23,10 +23,10 @@ test.describe('검색 페이지', () => {
   });
 
   test('페이지 크기 드롭다운 - 20개씩으로 변경', async ({ page }) => {
-    const pageSizeSelect = page.getByRole('combobox').filter({ hasText: /개씩/ }).first();
-    await expect(pageSizeSelect).toBeVisible();
-    await pageSizeSelect.selectOption({ label: '20개씩' });
-  });
+  const pageSizeSelect = page.locator('select').first();
+  await expect(pageSizeSelect).toBeVisible();
+  await pageSizeSelect.selectOption('20');
+});
 
   test('검색 결과 카드 - 카드 목록 렌더링 확인', async ({ page }) => {
     // 카드 컨테이너가 1개 이상 존재해야 함

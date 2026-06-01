@@ -425,6 +425,10 @@ function OpenSearchTextContent() {
                     onSelectAll={handleSelectAll}
                     onBulkScrap={handleBulkScrap}
                     onBulkBuy={handleBulkBuy}
+                    detailedSort={detailedSort}
+                    itemsPerPage={itemsPerPage}
+                    onSortChange={handleSortChange}
+                    onItemsPerPageChange={handleItemsPerPageChange}
                   />
                 </div>
 

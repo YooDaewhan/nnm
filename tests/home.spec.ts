@@ -11,7 +11,7 @@ test.describe('홈페이지', () => {
   });
 
   test('검색창 - 입력 후 검색 버튼 클릭 시 검색 페이지로 이동', async ({ page }) => {
-    const input = page.getByPlaceholder(/키워드를 입력하세요|찾고 싶은 논문/);
+    const input = page.getByPlaceholder(/검색어를 입력하세요|찾고 싶은 논문/);
     await input.fill('교육학');
     // 돋보기 버튼(검색 버튼) 클릭
     await input.press('Enter');
