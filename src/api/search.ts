@@ -824,6 +824,7 @@ export type OpenSearchTextResultItem = {
   year: number;
   score: number;
   price?: number | null;
+  type?: string | null;
   metadata: OpenSearchResultMetadata;
 };
 

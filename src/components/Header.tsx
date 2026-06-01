@@ -60,6 +60,15 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    const params = new URLSearchParams({ q });
+    if (searchCategory !== 'all') params.set('field', searchCategory);
+    navigate(`/search?${params.toString()}`);
+  };
+
   const selectedLabel = SEARCH_CATEGORIES.find(c => c.value === searchCategory)?.label ?? '전체';
 
   return (
@@ -67,29 +76,22 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
 
       {/* ── 메인 헤더 (로고 + 검색바 + 우측 버튼) ── */}
       <div className="w-full bg-white">
-        <div className="max-w-[1248px] mx-auto relative flex items-center py-[10px] md:py-[15px] px-3 md:px-0" style={{ minHeight: 70 }}>
+        <div className="max-w-[1248px] mx-auto relative flex items-center py-[10px] md:py-[15px] px-5 md:px-0" style={{ minHeight: 70 }}>
 
           {/* 로고 */}
           <button
             onClick={() => { setSearchQuery(''); navigate('/'); }}
-            className="shrink-0 hover:opacity-80 transition-opacity -ml-2 md:ml-0"
+            className="shrink-0 hover:opacity-80 transition-opacity"
             aria-label="홈으로 이동"
           >
-            <img src="/icons/logo__pc.svg" alt="뉴논문" className="w-[140px] md:w-[200px] h-auto" />
+            <img src="/icons/logo__pc.svg" alt="뉴논문" className="w-[135px] md:w-[200px] h-[26px] md:h-auto" />
           </button>
 
           {/* 검색바 (PC만, 홈 제외) */}
           {location.pathname !== '/' && (
           <div className="hidden md:flex flex-1 justify-center min-w-0 px-4">
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const q = searchQuery.trim();
-              if (!q) return;
-              const params = new URLSearchParams({ q });
-              if (searchCategory !== 'all') params.set('field', searchCategory);
-              navigate(`/search?${params.toString()}`);
-            }}
+            onSubmit={handleSearch}
             className="flex w-full max-w-[700px]"
           >
             <div className="flex items-center w-full h-[50px] border border-[#1E2124] rounded-xl overflow-visible bg-white relative">
@@ -99,7 +101,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                 <button
                   type="button"
                   onClick={() => setShowCategoryDropdown(v => !v)}
-                  className="flex items-center gap-1 px-4 h-[50px] text-[15px] text-[#1E2124] font-medium whitespace-nowrap hover:bg-gray-50 transition-colors rounded-l-xl"
+                  className="flex items-center gap-1 px-4 h-[50px] text-[15px] text-[#1E2124] font-medium whitespace-nowrap rounded-l-xl"
                 >
                   {selectedLabel}
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -113,7 +115,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                         <button
                           type="button"
                           onClick={() => { setSearchCategory(cat.value); setShowCategoryDropdown(false); }}
-                          className={`w-full text-left px-4 py-2 text-[14px] hover:bg-gray-50 transition-colors ${searchCategory === cat.value ? 'font-semibold text-[#1E2124]' : 'text-[#33363D]'}`}
+                          className={`w-full text-left px-4 py-2 text-[14px] transition-colors ${searchCategory === cat.value ? 'font-semibold text-[#1E2124]' : 'text-[#33363D]'}`}
                         >
                           {cat.label}
                         </button>
@@ -235,6 +237,40 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
           </div>
 
         </div>
+      </div>
+
+      {/* ── 모바일 검색바 (md 미만에서만 표시, 피그마 header__mo 디자인) ── */}
+      <div className="md:hidden w-full bg-white px-4 pb-6">
+        <form onSubmit={handleSearch}>
+          <div
+            className="flex items-center w-full bg-white rounded-[8px]"
+            style={{ border: '2px solid #1E2124' }}
+          >
+            {/* 검색 입력 */}
+            <div className="flex items-center flex-1 h-[64px] px-6 gap-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="검색어를 입력하세요"
+                className="flex-1 text-[19px] leading-[150%] font-normal text-[#1E2124] placeholder:text-[#8A949E] bg-transparent border-none outline-none"
+                style={{ fontFamily: "'Pretendard GOV', 'Pretendard', sans-serif" }}
+              />
+            </div>
+
+            {/* 검색 버튼 */}
+            <button
+              type="submit"
+              className="shrink-0 flex items-center justify-center w-[64px] h-[64px] text-[#33363D] hover:opacity-70 transition-opacity"
+              aria-label="검색"
+            >
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="14" cy="14" r="8.5" stroke="#33363D" strokeWidth="2"/>
+                <line x1="20.6" y1="20.6" x2="27" y2="27" stroke="#33363D" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* ── 하단 구분선 ── */}
