@@ -722,9 +722,9 @@ function PaperDetailContent() {
                       {/* btn-pay : 가격(ghost) + 구매하기(primary), gap 8px */}
                       <div className="flex flex-row items-center gap-[8px]">
                         {/* 가격 버튼 : transparent bg, #131416, h-48px, px-24 */}
-                        {!isPurchased && (paper.price ?? 0) > 0 && (
+                        {!isPurchased && paper.price != null && (
                           <span className="inline-flex items-center justify-center px-[24px] h-[48px] rounded-[6px] text-[17px] leading-[150%] text-[#131416] whitespace-nowrap">
-                            ₩ {(paper.price ?? 0).toLocaleString()}
+                            ₩ {paper.price.toLocaleString()}
                           </span>
                         )}
                         {/* 구매하기 / 원문보기 : h-48px, bg #256EF4, rounded-[6px], px-24, white */}
@@ -735,7 +735,7 @@ function PaperDetailContent() {
                         >
                           {isPurchased
                             ? '원문보기'
-                            : (paper.is_free || (paper.price ?? 0) === 0) ? '무료보기' : '구매하기'}
+                            : '구매하기'}
                         </button>
                       </div>
                       {isPurchased && (
@@ -869,6 +869,7 @@ function PaperDetailContent() {
         <PdfPreviewModal
           paperId={paper.id}
           isPurchased={isPurchased}
+          price={paper.price}
           onClose={() => setPreviewOpen(false)}
           onPurchase={() => { setPreviewOpen(false); handlePurchase(); }}
           onViewFull={() => { setPreviewOpen(false); handleViewFull(); }}

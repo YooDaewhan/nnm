@@ -737,6 +737,7 @@ export function SearchResultCard({
         <PdfPreviewModal
           paperId={result.id}
           isPurchased={isPurchased}
+          price={result.price ?? result.metadata?.price}
           onClose={() => setPreviewOpen(false)}
           onPurchase={() => { setPreviewOpen(false); navigate(paperUrl); }}
           onViewFull={() => { setPreviewOpen(false); setViewerOpen(true); }}

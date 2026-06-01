@@ -13,6 +13,7 @@ const S3_HOST = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
 interface PdfPreviewModalProps {
   paperId: string;
   isPurchased?: boolean;
+  price?: number | null;
   onClose: () => void;
   onPurchase?: () => void;
   onViewFull?: () => void;
@@ -21,6 +22,7 @@ interface PdfPreviewModalProps {
 export function PdfPreviewModal({
   paperId,
   isPurchased = false,
+  price,
   onClose,
   onPurchase,
   onViewFull,
@@ -153,7 +155,9 @@ export function PdfPreviewModal({
               </button>
             ) : !isPurchased && onPurchase ? (
               <>
-                <span className="text-[15px] font-bold text-[#AB2B36]">￦ 7,000</span>
+                {price != null && (
+                  <span className="text-[15px] font-bold text-[#AB2B36]">￦ {price.toLocaleString()}</span>
+                )}
                 <button
                   onClick={onPurchase}
                   className="inline-flex items-center justify-center px-4 h-9 bg-[#256EF4] text-white text-[14px] rounded-md hover:bg-[#1E5ADB] transition-colors"
