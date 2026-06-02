@@ -79,13 +79,13 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
         <div className="max-w-[1248px] mx-auto relative flex items-center py-[10px] md:py-[15px] px-5 md:px-0" style={{ minHeight: 70 }}>
 
           {/* 로고 */}
-          <button
+          <a
             onClick={() => { setSearchQuery(''); navigate('/'); }}
-            className="shrink-0 hover:opacity-80 transition-opacity"
+            className="shrink-0"
             aria-label="홈으로 이동"
           >
-            <img src="/icons/logo__pc.svg" alt="뉴논문" className="w-[135px] md:w-[200px] h-[26px] md:h-auto" />
-          </button>
+            <img src="/icons/logo__pc.svg" alt="뉴논문" className="w-[135px] md:w-[165px] h-auto" />
+          </a>
 
           {/* 검색바 (PC만, 홈 제외) */}
           {location.pathname !== '/' && (
@@ -94,7 +94,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
             onSubmit={handleSearch}
             className="flex w-full max-w-[700px]"
           >
-            <div className="flex items-center w-full h-[50px] border border-[#1E2124] rounded-xl overflow-visible bg-white relative">
+            <div className="flex items-center w-full max-h-[62px] border border-[#1E2124] rounded-xl overflow-visible bg-white relative">
 
               {/* 카테고리 드롭다운 */}
               <div ref={categoryRef} className="relative shrink-0">

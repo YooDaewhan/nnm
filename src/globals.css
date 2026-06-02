@@ -81,13 +81,21 @@ section {
 
 /* 2026-06-02 css 추가 (Bang) */
 :root {
-  /* color */
+  /* text color */
   --text-bolder: #131416;
   --text-basic: #1E2124;
   --text-subtle: #464C53;
 
+  /* border color */
+  --gray-light: #CDD1D5;
+  --secondary-light: #D6E0EB;
+
   /* font */
   --main-font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+a {
+  cursor: pointer;
 }
 
 body {
