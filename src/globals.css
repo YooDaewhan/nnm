@@ -49,8 +49,6 @@ section {
 
 
 
-
-
 /* 2026-05-18 css 추가 (Bang) */
 .papers-meta-value {
   display: inline-flex;
@@ -79,3 +77,51 @@ section {
   background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_double-quotes-fill-L.svg);
 }
 
+
+
+/* 2026-06-02 css 추가 (Bang) */
+:root {
+  /* color */
+  --text-bolder: #131416;
+  --text-basic: #1E2124;
+  --text-subtle: #464C53;
+
+  /* font */
+  --main-font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+body {
+  font-family: var(--main-font);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-basic);
+}
+
+button {
+  cursor: pointer
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1280px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+footer {
+  font-size: .9375rem;
+}
+
+footer .terms-link a {
+  cursor: pointer;
+}
+
+footer .terms-link a:hover {
+  font-weight: 600;
+}
+
+footer .copyright {
+  color: var(--text-subtle);
+  font-size: .8125rem;
+}
