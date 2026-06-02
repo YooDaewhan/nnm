@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DetailedSearchCondition } from '@/api/search';
-import { customFetch, API_BASE_URL } from '@/api/client';
+import { customFetch, API_BASE_URL, fixImageUrl } from '@/api/client';
 
 /* ───────────────────────────────────────────
    반응형 훅
@@ -17,9 +17,6 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-/* ───────────────────────────────────────────
-   Static data
-   ─────────────────────────────────────────── */
 /* ───────────────────────────────────────────
    API 타입
    ─────────────────────────────────────────── */
@@ -136,9 +133,10 @@ type Paper = {
   badgeBg: string;
 };
 
+/* Figma badge: KCI등재 → bg #ECF2FE, text #0B50D0 */
 function getBadgeInfo(paper: ApiPaper): { badge: string; badgeColor: string; badgeBg: string } {
   if (paper.venue_type) {
-    return { badge: paper.venue_type, badgeColor: '#2563EB', badgeBg: '#EFF4FF' };
+    return { badge: paper.venue_type, badgeColor: '#0B50D0', badgeBg: '#ECF2FE' };
   }
 
   const raw = (
@@ -149,9 +147,9 @@ function getBadgeInfo(paper: ApiPaper): { badge: string; badgeColor: string; bad
   ).toLowerCase();
 
   if (raw.includes('후보')) return { badge: '등재후보', badgeColor: '#DC2626', badgeBg: '#FEF2F2' };
-  if (raw.includes('등재') || raw.includes('kci')) return { badge: 'KCI등재', badgeColor: '#2563EB', badgeBg: '#EFF4FF' };
+  if (raw.includes('등재') || raw.includes('kci')) return { badge: 'KCI등재', badgeColor: '#0B50D0', badgeBg: '#ECF2FE' };
   if (raw.includes('정보')) return { badge: '등재정보', badgeColor: '#16A34A', badgeBg: '#EEFBF3' };
-  return { badge: 'KCI등재', badgeColor: '#2563EB', badgeBg: '#EFF4FF' };
+  return { badge: 'KCI등재', badgeColor: '#0B50D0', badgeBg: '#ECF2FE' };
 }
 
 function resolveAuthor(paper: ApiPaper): string {
@@ -228,159 +226,42 @@ function extractFeaturedVenues(raw: unknown): FeaturedVenue[] {
 const ff = 'Pretendard GOV, Pretendard, sans-serif';
 
 /* ───────────────────────────────────────────
-   히어로 일러스트 SVG (PNG 디자인 참고)
-   - 2명의 캐릭터가 논문/문서를 검색하는 모습
-   - 떠다니는 문서, 구름, 돋보기 아이콘
+   섹션 타이틀 (Figma: section_title)
+   타이틀 32px Bold #1E2124 / 보조문 17px #464C53, gap 4px
    ─────────────────────────────────────────── */
-function HeroIllustration() {
+function SectionTitle({ title, sub, isMobile }: { title: string; sub: string; isMobile: boolean }) {
   return (
-    <svg width="480" height="320" viewBox="0 0 480 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* ── 떠다니는 구름 ── */}
-      <g opacity="0.6">
-        <rect x="30" y="28" width="70" height="6" rx="3" fill="rgba(255,255,255,0.25)" />
-        <rect x="20" y="38" width="90" height="6" rx="3" fill="rgba(255,255,255,0.18)" />
-        <rect x="110" y="18" width="55" height="5" rx="2.5" fill="rgba(255,255,255,0.2)" />
-        <rect x="340" y="10" width="65" height="5" rx="2.5" fill="rgba(255,255,255,0.22)" />
-        <rect x="350" y="20" width="85" height="5" rx="2.5" fill="rgba(255,255,255,0.15)" />
-        <rect x="200" y="5" width="50" height="4" rx="2" fill="rgba(255,255,255,0.15)" />
-        <rect x="80" y="270" width="60" height="5" rx="2.5" fill="rgba(255,255,255,0.12)" />
-        <rect x="300" y="280" width="70" height="5" rx="2.5" fill="rgba(255,255,255,0.1)" />
-      </g>
-
-      {/* ── 문서 카드 1 (뒤쪽, 왼쪽) ── */}
-      <g transform="translate(55, 55) rotate(-4)">
-        <rect width="110" height="148" rx="8" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-        <rect x="12" y="16" width="60" height="7" rx="3.5" fill="rgba(255,255,255,0.35)" />
-        <rect x="12" y="30" width="86" height="4" rx="2" fill="rgba(255,255,255,0.18)" />
-        <rect x="12" y="40" width="78" height="4" rx="2" fill="rgba(255,255,255,0.18)" />
-        <rect x="12" y="50" width="82" height="4" rx="2" fill="rgba(255,255,255,0.18)" />
-        <rect x="12" y="66" width="50" height="3" rx="1.5" fill="rgba(255,255,255,0.1)" />
-        <rect x="12" y="76" width="62" height="3" rx="1.5" fill="rgba(255,255,255,0.1)" />
-        <rect x="12" y="86" width="54" height="3" rx="1.5" fill="rgba(255,255,255,0.1)" />
-        <rect x="12" y="104" width="40" height="3" rx="1.5" fill="rgba(255,255,255,0.07)" />
-        <rect x="12" y="114" width="48" height="3" rx="1.5" fill="rgba(255,255,255,0.07)" />
-      </g>
-
-      {/* ── 문서 카드 2 (앞쪽, 가운데) ── */}
-      <g transform="translate(185, 40) rotate(2)">
-        <rect width="120" height="160" rx="8" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.28)" strokeWidth="1" />
-        {/* 상단 하이라이트 바 */}
-        <rect x="0" y="0" width="120" height="28" rx="8" fill="rgba(79,140,255,0.15)" />
-        <rect x="12" y="10" width="50" height="6" rx="3" fill="rgba(255,255,255,0.5)" />
-        <rect x="12" y="38" width="96" height="5" rx="2.5" fill="rgba(255,255,255,0.3)" />
-        <rect x="12" y="50" width="84" height="4" rx="2" fill="rgba(255,255,255,0.2)" />
-        <rect x="12" y="60" width="90" height="4" rx="2" fill="rgba(255,255,255,0.2)" />
-        <rect x="12" y="70" width="76" height="4" rx="2" fill="rgba(255,255,255,0.2)" />
-        <rect x="12" y="88" width="56" height="3" rx="1.5" fill="rgba(255,255,255,0.12)" />
-        <rect x="12" y="98" width="68" height="3" rx="1.5" fill="rgba(255,255,255,0.12)" />
-        <rect x="12" y="108" width="60" height="3" rx="1.5" fill="rgba(255,255,255,0.12)" />
-        <rect x="12" y="126" width="44" height="3" rx="1.5" fill="rgba(255,255,255,0.08)" />
-        <rect x="12" y="136" width="52" height="3" rx="1.5" fill="rgba(255,255,255,0.08)" />
-      </g>
-
-      {/* ── 돋보기 아이콘 (우상단) ── */}
-      <g transform="translate(330, 50)">
-        <circle cx="40" cy="40" r="38" fill="rgba(99,130,255,0.08)" stroke="rgba(99,130,255,0.5)" strokeWidth="4" />
-        <circle cx="40" cy="40" r="26" fill="none" stroke="rgba(99,130,255,0.2)" strokeWidth="1" />
-        {/* 돋보기 안 텍스트 라인 */}
-        <rect x="24" y="32" width="32" height="4" rx="2" fill="rgba(255,255,255,0.5)" />
-        <rect x="24" y="42" width="24" height="3" rx="1.5" fill="rgba(255,255,255,0.35)" />
-        <rect x="24" y="50" width="28" height="3" rx="1.5" fill="rgba(255,255,255,0.35)" />
-        {/* 돋보기 손잡이 */}
-        <line x1="70" y1="70" x2="96" y2="96" stroke="rgba(99,130,255,0.5)" strokeWidth="6" strokeLinecap="round" />
-      </g>
-
-      {/* ── 캐릭터 1 (왼쪽, 파란 옷) ── */}
-      <g transform="translate(120, 160)">
-        {/* 몸통 */}
-        <rect x="-16" y="30" width="32" height="42" rx="10" fill="#4A5FBF" />
-        {/* 왼팔 (노트북 들고있는) */}
-        <rect x="-30" y="34" width="16" height="8" rx="4" fill="#4A5FBF" />
-        {/* 오른팔 */}
-        <rect x="14" y="34" width="16" height="8" rx="4" fill="#4A5FBF" />
-        {/* 머리 */}
-        <circle cx="0" cy="14" r="18" fill="#FFD8A8" />
-        {/* 머리카락 */}
-        <path d="M-18 8 Q-18 -8, 0 -10 Q18 -8, 18 8 Q16 0, 0 -2 Q-16 0, -18 8Z" fill="#3D3D5C" />
-        {/* 눈 */}
-        <circle cx="-6" cy="14" r="2" fill="#2D2D4C" />
-        <circle cx="6" cy="14" r="2" fill="#2D2D4C" />
-        {/* 입 */}
-        <path d="M-4 20 Q0 24, 4 20" stroke="#E8A070" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        {/* 다리 */}
-        <rect x="-10" y="70" width="10" height="22" rx="5" fill="#3D4A99" />
-        <rect x="0" y="70" width="10" height="22" rx="5" fill="#3D4A99" />
-        {/* 신발 */}
-        <ellipse cx="-5" cy="94" rx="7" ry="4" fill="#2D2D4C" />
-        <ellipse cx="5" cy="94" rx="7" ry="4" fill="#2D2D4C" />
-      </g>
-
-      {/* ── 캐릭터 2 (오른쪽, 주황 옷) ── */}
-      <g transform="translate(330, 170)">
-        {/* 몸통 */}
-        <rect x="-14" y="28" width="28" height="38" rx="9" fill="#E8711A" />
-        {/* 왼팔 */}
-        <rect x="-26" y="32" width="14" height="7" rx="3.5" fill="#E8711A" />
-        {/* 오른팔 (위로 들기) */}
-        <rect x="12" y="18" width="14" height="7" rx="3.5" fill="#E8711A" transform="rotate(-30, 19, 21.5)" />
-        {/* 머리 */}
-        <circle cx="0" cy="12" r="16" fill="#FFD8A8" />
-        {/* 머리카락 */}
-        <path d="M-16 6 Q-16 -8, 0 -10 Q16 -8, 16 6 Q14 -2, 0 -4 Q-14 -2, -16 6Z" fill="#5C3D1E" />
-        {/* 안경 */}
-        <circle cx="-6" cy="12" r="5" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" />
-        <circle cx="6" cy="12" r="5" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" />
-        <line x1="-1" y1="12" x2="1" y2="12" stroke="rgba(255,255,255,0.7)" strokeWidth="1" />
-        {/* 눈 */}
-        <circle cx="-6" cy="12" r="1.5" fill="#2D2D4C" />
-        <circle cx="6" cy="12" r="1.5" fill="#2D2D4C" />
-        {/* 입 */}
-        <path d="M-3 18 Q0 21, 3 18" stroke="#E8A070" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-        {/* 다리 */}
-        <rect x="-8" y="64" width="8" height="20" rx="4" fill="#C45A10" />
-        <rect x="0" y="64" width="8" height="20" rx="4" fill="#C45A10" />
-        {/* 신발 */}
-        <ellipse cx="-4" cy="86" rx="6" ry="3.5" fill="#2D2D4C" />
-        <ellipse cx="4" cy="86" rx="6" ry="3.5" fill="#2D2D4C" />
-      </g>
-
-      {/* ── 떠다니는 아이콘/도형들 ── */}
-      {/* 작은 문서 아이콘 */}
-      <g transform="translate(260, 120)" opacity="0.7">
-        <rect width="28" height="36" rx="4" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" strokeWidth="0.8" />
-        <rect x="5" y="6" width="18" height="2.5" rx="1.25" fill="rgba(255,255,255,0.3)" />
-        <rect x="5" y="12" width="14" height="2" rx="1" fill="rgba(255,255,255,0.2)" />
-        <rect x="5" y="17" width="16" height="2" rx="1" fill="rgba(255,255,255,0.2)" />
-      </g>
-
-      {/* 작은 체크마크 원 */}
-      <circle cx="440" cy="140" r="10" fill="rgba(74,222,128,0.25)" stroke="rgba(74,222,128,0.6)" strokeWidth="1.5" />
-      <path d="M435 140 L438 143 L445 136" stroke="rgba(74,222,128,0.8)" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* 장식 원들 */}
-      <circle cx="55" cy="260" r="7" fill="#4ADE80" opacity="0.6" />
-      <circle cx="450" cy="30" r="9" fill="#60A5FA" opacity="0.6" />
-      <circle cx="165" cy="18" r="5" fill="#F472B6" opacity="0.5" />
-      <circle cx="420" cy="250" r="6" fill="#FBBF24" opacity="0.5" />
-      <circle cx="240" cy="275" r="4" fill="#A78BFA" opacity="0.4" />
-      <circle cx="10" cy="140" r="4" fill="#38BDF8" opacity="0.4" />
-
-      {/* 작은 별/반짝이 */}
-      <g transform="translate(380, 180)" opacity="0.5">
-        <path d="M0 -5 L1.5 -1.5 L5 0 L1.5 1.5 L0 5 L-1.5 1.5 L-5 0 L-1.5 -1.5Z" fill="white" />
-      </g>
-      <g transform="translate(100, 80)" opacity="0.4">
-        <path d="M0 -4 L1.2 -1.2 L4 0 L1.2 1.2 L0 4 L-1.2 1.2 L-4 0 L-1.2 -1.2Z" fill="white" />
-      </g>
-      <g transform="translate(460, 100)" opacity="0.35">
-        <path d="M0 -3 L1 -1 L3 0 L1 1 L0 3 L-1 1 L-3 0 L-1 -1Z" fill="white" />
-      </g>
-    </svg>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <h2
+        style={{
+          fontSize: isMobile ? 24 : 32,
+          fontWeight: 700,
+          color: '#1E2124',
+          lineHeight: 1.5,
+          letterSpacing: '0.03em',
+          margin: 0,
+        }}
+      >
+        {title}
+      </h2>
+      <p
+        style={{
+          fontSize: isMobile ? 15 : 17,
+          color: '#464C53',
+          fontWeight: 400,
+          lineHeight: 1.5,
+          margin: 0,
+        }}
+      >
+        {sub}
+      </p>
+    </div>
   );
 }
 
 /* ───────────────────────────────────────────
-   논문 카드 컴포넌트
+   논문 카드 컴포넌트 (Figma: article_card)
+   padding 24 / border 1px #CDD1D5 / radius 0 / gap 8
    ─────────────────────────────────────────── */
 function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
   const navigate = useNavigate();
@@ -390,8 +271,8 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
       style={{
         background: '#FFFFFF',
         border: '1px solid #CDD1D5',
-        borderRadius: '0',
-        padding: '1.5rem',
+        borderRadius: 0,
+        padding: 24,
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
@@ -401,72 +282,79 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
-        e.currentTarget.style.borderColor = '#C5CAD0';
+        e.currentTarget.style.borderColor = '#9DA3AB';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.style.borderColor = '#E4E7EA';
+        e.currentTarget.style.borderColor = '#CDD1D5';
       }}
     >
-      {/* 뱃지 */}
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          fontSize: 13,
-          fontWeight: 500,
-          color: paper.badgeColor,
-          background: paper.badgeBg,
-          borderRadius: 2,
-          padding: '2px 8px',
-          lineHeight: '16px ',
-          alignSelf: 'flex-start',
-          // letterSpacing: '-0.01em',
-        }}
-      >
-        {paper.badge}
-      </span>
+      {/* row-1 : 뱃지 */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 20,
+            fontSize: 13,
+            fontWeight: 400,
+            color: paper.badgeColor,
+            background: paper.badgeBg,
+            borderRadius: 4,
+            padding: '0 8px',
+            lineHeight: 1.5,
+          }}
+        >
+          {paper.badge}
+        </span>
+      </div>
 
-      {/* 제목 — 2줄 */}
-      <p
-        style={{
-          fontSize: isMobile ? 15 : 17,
-          fontWeight: 700,
-          color: '#1E2124',
-          lineHeight: 1.35,
-          margin: 0,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          wordBreak: 'keep-all',
-        }}
-      >
-        {paper.title}
-      </p>
+      {/* row-2 : 제목 + 초록 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p
+          style={{
+            fontSize: isMobile ? 15 : 17,
+            fontWeight: 600,
+            color: '#1E2124',
+            lineHeight: 1.5,
+            margin: 0,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            wordBreak: 'keep-all',
+          }}
+        >
+          {paper.title}
+        </p>
+        <p
+          style={{
+            fontSize: isMobile ? 13 : 15,
+            color: '#464C53',
+            fontWeight: 400,
+            lineHeight: 1.5,
+            margin: 0,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {paper.abstract}
+        </p>
+      </div>
 
-      {/* 초록 — 2줄, 작은 회색 */}
-      <p
-        style={{
-          fontSize: isMobile ? 13 : 15,
-          color: '#464C53',
-          lineHeight: 1.5,
-          margin: 0,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}
-      >
-        {paper.abstract}
-      </p>
-
-      {/* 저자 + 저널/권호 — 하단 고정 */}
-      <div style={{ marginTop: 'auto', paddingTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <span style={{ fontSize: 15, color: '#464C53', fontWeight: 400 }}>{paper.author}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 15, color: '#464C53' }}>
+      {/* row-3 : 저자 + 저널/권호 — 하단 고정 */}
+      <div style={{ marginTop: 'auto', paddingTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ fontSize: 15, color: '#464C53', fontWeight: 400, lineHeight: 1.5 }}>{paper.author}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 15, color: '#464C53', lineHeight: 1.5 }}>
           <span>{paper.journal}</span>
-          <span style={{ color: '#8A949E', fontSize: 10 }}>&gt;</span>
+          {paper.journal && paper.volume && (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M6 4L10 8L6 12" stroke="#8A949E" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
           <span>{paper.volume}</span>
         </div>
       </div>
@@ -481,6 +369,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [query, setQuery] = useState('');
+  const [searchScope, setSearchScope] = useState('all');
   const [selectedTab, setSelectedTab] = useState('');
   const [showDetailedSearch, setShowDetailedSearch] = useState(false);
 
@@ -506,13 +395,14 @@ export default function HomePage() {
     }
   }, [categoryData, selectedTab]);
 
-  const { data: featuredVenues = [] } = useQuery<FeaturedVenue[]>({
+  const { data: featuredVenues = [], isLoading: venuesLoading } = useQuery<FeaturedVenue[]>({
     queryKey: ['home', 'featured-venues'],
     queryFn: async () => {
       const res = await customFetch<{ data: unknown }>('/api/home/featured-venues?limit=12');
       return extractFeaturedVenues((res.data as Record<string, unknown>)?.data ?? res.data);
     },
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const [conditions, setConditions] = useState<DetailedSearchCondition[]>([
@@ -553,13 +443,12 @@ export default function HomePage() {
   const categoryTabs = Object.keys(categoryData);
   const rawPapers = categoryData[selectedTab];
   const displayedPapers = Array.isArray(rawPapers) ? rawPapers.map(adaptPaper) : [];
-  const px = isMobile ? '16px' : '40px';
 
   return (
-    <div style={{ fontFamily: ff, backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', flex: 1 }}>
+    <div style={{ fontFamily: ff, backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', flex: 1, width: '100%', margin: 0, padding: 0 }}>
 
       {/* ════════════════════════════════════════
-          1. HERO — 진한 네이비 그라데이션 + 일러스트
+          1. HERO — 배경 이미지 + 타이틀 + 검색바
       ════════════════════════════════════════ */}
       <section
         style={{
@@ -568,17 +457,16 @@ export default function HomePage() {
           backgroundPosition: isMobile ? '0% 80%' : 'center center',
           position: 'relative',
           zIndex: 10,
-          height: '400px',
+          height: 400,
           display: 'flex',
+          width: '100%',
         }}
       >
-
         <div
           style={{
             width: '100%',
-            maxWidth: 1280,
-            margin: '0 auto',
             padding: '0 16px',
+            boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -588,314 +476,346 @@ export default function HomePage() {
             zIndex: 1,
           }}
         >
-          {/* ── 가운데: 타이틀 + 검색바 ── */}
-          <div style={{ width: '100%', maxWidth: isMobile ? '100%' : 640, textAlign: 'center' }}>
+          {/* ── 타이틀 ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
             <h1
               style={{
-                fontSize: isMobile ? 32 : 48,
-                fontWeight: 650,
-                color: '#FFFFFF',
-                marginBottom: isMobile ? 8 : 14,
-                lineHeight: 1.3,
-                letterSpacing: '-0.5px',
-                whiteSpace: 'nowrap',
+                fontSize: isMobile ? 28 : 48,
+                fontWeight: 700,
+                color: '#E6E8EA',
+                margin: 0,
+                lineHeight: 1.5,
+                letterSpacing: '-0.0208em',
+                whiteSpace: isMobile ? 'normal' : 'nowrap',
+                wordBreak: 'keep-all',
               }}
             >
               빠르고 정확한 학술 문헌 검색 서비스
             </h1>
             <p
               style={{
-                fontSize: isMobile ? 17 : 28,
-                color: '#FFFFFF',
-                marginBottom: isMobile ? 28 : 40,
+                fontSize: isMobile ? 17 : 32,
+                color: '#E6E8EA',
+                margin: 0,
                 fontWeight: 400,
                 lineHeight: 1.5,
               }}
             >
               신뢰할 수 있는 지식, 국내 연구의 기준
             </p>
+          </div>
 
-            {/* 검색 바 */}
-            <div style={{ position: 'relative', width: '100%', maxWidth: isMobile ? '100%' : 640, zIndex: 100 }}>
-              <form onSubmit={handleSearch}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: '#FFFFFF',
-                    border: '1px solid #D8E5FD',
-                    borderRadius: 1000,
-                    overflow: 'hidden',
-                    width: '100%',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-                    padding: '8px 8px 8px 32px',
-                  }}
-                >
+          {/* ── 검색 바 (Figma: search-box) ── */}
+          <div style={{ position: 'relative', width: '100%', maxWidth: 720, zIndex: 100 }}>
+            <form onSubmit={handleSearch}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  background: '#FFFFFF',
+                  border: '2px solid #1E2124',
+                  borderRadius: 8,
+                  width: '100%',
+                  padding: isMobile ? '12px 16px' : '16px 24px',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {/* search 영역 (scope + divider + 입력) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
+                  {/* scopefilter : 전체 ▾ */}
+                  <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                    <select
+                      value={searchScope}
+                      onChange={(e) => setSearchScope(e.target.value)}
+                      style={{
+                        appearance: 'none',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'none',
+                        border: 'none',
+                        outline: 'none',
+                        background: 'transparent',
+                        fontSize: isMobile ? 15 : 19,
+                        color: '#1E2124',
+                        fontFamily: ff,
+                        cursor: 'pointer',
+                        padding: '0 22px 0 4px',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <option value="all">전체</option>
+                      <option value="title">제목</option>
+                      <option value="author">저자</option>
+                      <option value="abstract">초록</option>
+                      <option value="keyword">키워드</option>
+                    </select>
+                    <svg
+                      width="20" height="20" viewBox="0 0 20 20" fill="none"
+                      style={{ position: 'absolute', right: 0, pointerEvents: 'none' }}
+                    >
+                      <path d="M5 8L10 13L15 8" stroke="#1E2124" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+
+                  {/* divider */}
+                  <div style={{ width: 1, alignSelf: 'stretch', background: '#8A949E', flexShrink: 0 }} />
+
+                  {/* keyword 입력 */}
                   <input
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={isMobile ? '키워드를 입력하세요' : '찾고 싶은 논문, 저자, 키워드를 입력하세요'}
+                    placeholder="검색어를 입력하세요"
                     style={{
                       flex: 1,
                       minWidth: 0,
-                      padding: '8px 28px',
                       border: 'none',
                       outline: 'none',
-                      fontSize: isMobile ? 17 : 19,
-                      color: '#464C53',
                       background: 'transparent',
+                      fontSize: isMobile ? 15 : 19,
+                      color: '#1E2124',
                       fontFamily: ff,
+                      lineHeight: 1.5,
                     }}
                   />
-                  {/* 상세검색 토글 */}
+                </div>
+
+                {/* button 영역 (3-dots + 검색) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+                  {/* 상세검색 토글 (three-dots) */}
                   <button
                     type="button"
                     onClick={() => setShowDetailedSearch(v => !v)}
                     title="상세 검색"
                     style={{
-                      width: 44,
-                      height: isMobile ? 50 : 58,
-                      background: showDetailedSearch ? '#F0F4FF' : 'transparent',
+                      width: 32,
+                      height: 32,
+                      background: 'transparent',
                       border: 'none',
-                      // borderLeft: '1px solid #E4E7EA',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flexShrink: 0,
-                      color: showDetailedSearch ? '#256EF4' : '#33363D',
-                      transition: 'background 0.15s, color 0.15s',
+                      padding: 0,
+                      color: showDetailedSearch ? '#256EF4' : '#1E2124',
+                      transition: 'color 0.15s',
                     }}
                   >
-                    <svg width="32" height="32" viewBox="0 0 20 20" fill="none">
-                      <circle cx="4" cy="10" r="1.5" fill="currentColor"/>
-                      <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
-                      <circle cx="16" cy="10" r="1.5" fill="currentColor"/>
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                      <circle cx="8" cy="16" r="2" fill="currentColor" />
+                      <circle cx="16" cy="16" r="2" fill="currentColor" />
+                      <circle cx="24" cy="16" r="2" fill="currentColor" />
                     </svg>
                   </button>
-                  {/* 검색 버튼 (파란색 동그란 아이콘, PNG 참고) */}
+                  {/* 검색 버튼 */}
                   <button
                     type="submit"
+                    title="검색"
                     style={{
-                      width: isMobile ? 42 : 50,
-                      height: isMobile ? 42 : 50,
-                      background: '#3B5BDB',
+                      width: 32,
+                      height: 32,
+                      background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flexShrink: 0,
-                      borderRadius: '1000px',
+                      padding: 0,
+                      color: '#1E2124',
                     }}
                   >
-                    <svg width="24" height="24" viewBox="0 0 22 22" fill="none">
-                      <circle cx="10" cy="10" r="7" stroke="white" strokeWidth="2.2" />
-                      <line x1="15.5" y1="15.5" x2="20" y2="20" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                      <circle cx="14.5" cy="14.5" r="8.5" stroke="currentColor" strokeWidth="2.2" />
+                      <line x1="20.8" y1="20.8" x2="27" y2="27" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
                     </svg>
                   </button>
                 </div>
-              </form>
+              </div>
+            </form>
 
-              {/* ── 상세 검색 팝업 ── */}
-              {showDetailedSearch && (
-                <>
-                  <div onClick={() => setShowDetailedSearch(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
-                  <div
-                    style={{
-                      position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
-                      background: '#FFFFFF', borderRadius: 12,
-                      boxShadow: '0 12px 40px rgba(0,0,0,0.22)',
-                      padding: isMobile ? '16px 12px 12px' : '20px 20px 16px', zIndex: 9999,
-                      minWidth: isMobile ? 'auto' : 480,
-                      maxWidth: '100%',
-                      boxSizing: 'border-box' as const,
-                    }}
-                  >
-                    <p style={{ fontSize: 13, fontWeight: 700, color: '#1E2124', marginBottom: 12, fontFamily: ff }}>상세 검색 조건</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {conditions.map((cond, idx) => (
-                        <div key={idx} style={{ display: 'flex', gap: isMobile ? 4 : 6, alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-                          {idx === 0 ? (
-                            !isMobile && <div style={{ width: 68, flexShrink: 0 }} />
-                          ) : (
-                            <div style={{ width: isMobile ? 40 : 68, height: 36, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#8A949E', letterSpacing: '0.08em' }}>AND</div>
-                          )}
-                          <select
-                            value={cond.field}
-                            onChange={(e) => updateCondition(idx, { field: e.target.value as DetailedSearchCondition['field'] })}
-                            style={{ width: isMobile ? 64 : 80, height: 36, padding: '0 4px', border: '1px solid #CDD1D5', borderRadius: 6, fontSize: isMobile ? 12 : 13, color: '#1E2124', background: '#FFFFFF', flexShrink: 0, cursor: 'pointer', outline: 'none', fontFamily: ff }}
-                          >
-                            <option value="title">제목</option>
-                            <option value="author">저자</option>
-                            <option value="abstract">초록</option>
-                            <option value="keyword">키워드</option>
-                            <option value="full_text">전문</option>
-                          </select>
-                          <input
-                            type="text" value={cond.keyword}
-                            onChange={(e) => updateCondition(idx, { keyword: e.target.value })}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleDetailedSearch(); }}
-                            placeholder="검색어 입력"
-                            style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', border: '1px solid #CDD1D5', borderRadius: 6, fontSize: isMobile ? 12 : 13, color: '#1E2124', outline: 'none', fontFamily: ff }}
-                          />
-                          {idx > 0 ? (
-                            <button onClick={() => removeCondition(idx)} style={{ width: 28, height: 36, flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8A949E', padding: 0 }}>
-                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-                            </button>
-                          ) : <div style={{ width: isMobile ? 0 : 32, flexShrink: 0 }} />}
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
-                      {conditions.length < 10 && (
-                        <button onClick={addCondition} style={{ height: 34, padding: '0 14px', fontSize: 13, fontWeight: 500, color: '#256EF4', background: '#EEF4FF', border: '1px solid #256EF4', borderRadius: 6, cursor: 'pointer', fontFamily: ff }}>+ 조건 추가</button>
-                      )}
-                      <button onClick={handleDetailedSearch} style={{ height: 34, padding: '0 18px', fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: '#063A74', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: ff }}>
-                        <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><circle cx="14.67" cy="14.67" r="8" stroke="white" strokeWidth="2.5"/><path d="M21.33 21.33L26.67 26.67" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
-                        검색
-                      </button>
-                    </div>
+            {/* ── 상세 검색 팝업 ── */}
+            {showDetailedSearch && (
+              <>
+                <div onClick={() => setShowDetailedSearch(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
+                <div
+                  style={{
+                    position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
+                    background: '#FFFFFF', borderRadius: 12,
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.22)',
+                    padding: isMobile ? '16px 12px 12px' : '20px 20px 16px', zIndex: 9999,
+                    minWidth: isMobile ? 'auto' : 480,
+                    maxWidth: '100%',
+                    boxSizing: 'border-box' as const,
+                  }}
+                >
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1E2124', marginBottom: 12, fontFamily: ff }}>상세 검색 조건</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {conditions.map((cond, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: isMobile ? 4 : 6, alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                        {idx === 0 ? (
+                          !isMobile && <div style={{ width: 68, flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: isMobile ? 40 : 68, height: 36, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#8A949E', letterSpacing: '0.08em' }}>AND</div>
+                        )}
+                        <select
+                          value={cond.field}
+                          onChange={(e) => updateCondition(idx, { field: e.target.value as DetailedSearchCondition['field'] })}
+                          style={{ width: isMobile ? 64 : 80, height: 36, padding: '0 4px', border: '1px solid #CDD1D5', borderRadius: 6, fontSize: isMobile ? 12 : 13, color: '#1E2124', background: '#FFFFFF', flexShrink: 0, cursor: 'pointer', outline: 'none', fontFamily: ff }}
+                        >
+                          <option value="title">제목</option>
+                          <option value="author">저자</option>
+                          <option value="abstract">초록</option>
+                          <option value="keyword">키워드</option>
+                          <option value="full_text">전문</option>
+                        </select>
+                        <input
+                          type="text" value={cond.keyword}
+                          onChange={(e) => updateCondition(idx, { keyword: e.target.value })}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleDetailedSearch(); }}
+                          placeholder="검색어 입력"
+                          style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', border: '1px solid #CDD1D5', borderRadius: 6, fontSize: isMobile ? 12 : 13, color: '#1E2124', outline: 'none', fontFamily: ff }}
+                        />
+                        {idx > 0 ? (
+                          <button onClick={() => removeCondition(idx)} style={{ width: 28, height: 36, flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8A949E', padding: 0 }}>
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                          </button>
+                        ) : <div style={{ width: isMobile ? 0 : 32, flexShrink: 0 }} />}
+                      </div>
+                    ))}
                   </div>
-                </>
-              )}
-            </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
+                    {conditions.length < 10 && (
+                      <button onClick={addCondition} style={{ height: 34, padding: '0 14px', fontSize: 13, fontWeight: 500, color: '#256EF4', background: '#EEF4FF', border: '1px solid #256EF4', borderRadius: 6, cursor: 'pointer', fontFamily: ff }}>+ 조건 추가</button>
+                    )}
+                    <button onClick={handleDetailedSearch} style={{ height: 34, padding: '0 18px', fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: '#063A74', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: ff }}>
+                      <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><circle cx="14.67" cy="14.67" r="8" stroke="white" strokeWidth="2.5" /><path d="M21.33 21.33L26.67 26.67" stroke="white" strokeWidth="2.5" strokeLinecap="round" /></svg>
+                      검색
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-
-          {/* ── 우측: 일러스트 (PC only) ──
-          {!isMobile && (
-            <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-              <HeroIllustration />
-            </div>
-          )} */}
         </div>
       </section>
 
       {/* ════════════════════════════════════════
-          2. 주제별 인기논문 — 흰 배경, 탭 + 4열 카드
+          2. 주제별 인기논문 — bg #F8FAFF
       ════════════════════════════════════════ */}
-      <section style={{ backgroundColor: '#F8FAFF', padding: '64px 0' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
-          {/* 섹션 타이틀 */}
-          <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#1E2124', marginBottom: 6, letterSpacing: '0px' }}>
-            주제별 인기논문
-          </h2>
-          <p style={{ fontSize: isMobile ? 15 : 17, color: '#464C53', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
-            최근 7일, 분야별 핫한 논문들을 모았습니다.
-          </p>
+      <section style={{ backgroundColor: '#F8FAFF', padding: '64px 0', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: '0 16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <SectionTitle title="주제별 인기논문" sub="최근 7일, 분야별 핫한 논문들을 모았습니다." isMobile={isMobile} />
 
-          {/* 탭 — 동적 (API 분야 목록) */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 6 : 8, marginBottom: isMobile ? 20 : 28 }}>
-            {papersLoading
-              ? Array.from({ length: 7 }).map((_, i) => (
+          {/* article : 탭 + 카드, gap 16 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* 탭 (Shortcut__nnm) — gap 10 */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {papersLoading
+                ? Array.from({ length: 7 }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: isMobile ? 64 : 80,
+                        height: 40,
+                        borderRadius: 0,
+                        background: '#F3F4F6',
+                        animation: 'pulse 1.5s ease-in-out infinite',
+                      }}
+                    />
+                  ))
+                : categoryTabs.map((tab) => {
+                    const isActive = selectedTab === tab;
+                    return (
+                      <button
+                        key={tab}
+                        onClick={() => setSelectedTab(tab)}
+                        style={{
+                          height: 40,
+                          padding: '0 16px',
+                          borderRadius: 0,
+                          border: isActive ? 'none' : '1px solid #CDD1D5',
+                          background: isActive ? '#083891' : '#FFFFFF',
+                          color: isActive ? '#FFFFFF' : '#464C53',
+                          fontSize: 17,
+                          fontWeight: 400,
+                          cursor: 'pointer',
+                          fontFamily: ff,
+                          transition: 'all 0.15s',
+                          lineHeight: 1.5,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    );
+                  })}
+            </div>
+
+            {/* 논문 카드 — 4열 (모바일 1열), gap 16 */}
+            {papersError ? (
+              <p style={{ color: '#8A949E', fontSize: 14, textAlign: 'center', padding: '40px 0' }}>
+                데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+              </p>
+            ) : papersLoading ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+                  gap: 16,
+                }}
+              >
+                {Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
                     style={{
-                      width: isMobile ? 64 : 80,
-                      height: isMobile ? 36 : 38,
-                      borderRadius: 0,
+                      height: 200,
                       background: '#F3F4F6',
                       animation: 'pulse 1.5s ease-in-out infinite',
+                      animationDelay: `${i * 0.1}s`,
                     }}
                   />
-                ))
-              : categoryTabs.map((tab) => {
-                  const isActive = selectedTab === tab;
-                  return (
-                    <button
-                      key={tab}
-                      onClick={() => setSelectedTab(tab)}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: 0,
-                        border: isActive ? 'none' : '1px solid #D1D5DB',
-                        background: isActive ? '#083891' : '#FFFFFF',
-                        color: isActive ? '#FFFFFF' : '#6B7280',
-                        fontSize: 17,
-                        fontWeight: isActive ? 600 : 500,
-                        cursor: 'pointer',
-                        fontFamily: ff,
-                        transition: 'all 0.15s',
-                        lineHeight: '1.5rem',
-                      }}
-                    >
-                      {tab}
-                    </button>
-                  );
-                })}
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+                  gap: 16,
+                }}
+              >
+                {displayedPapers.map((p) => (
+                  <PaperCard key={p.id} paper={p} isMobile={isMobile} />
+                ))}
+              </div>
+            )}
           </div>
-
-          {/* 논문 카드 — 4열 (모바일 1열) */}
-          {papersError ? (
-            <p style={{ color: '#8A949E', fontSize: 14, textAlign: 'center', padding: '40px 0' }}>
-              데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
-            </p>
-          ) : papersLoading ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
-                gap: isMobile ? 12 : 16,
-              }}
-            >
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    height: 200,
-                    borderRadius: 10,
-                    background: '#F3F4F6',
-                    animation: 'pulse 1.5s ease-in-out infinite',
-                    animationDelay: `${i * 0.1}s`,
-                  }}
-                />
-              ))}
-            </div>
-          ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
-                gap: isMobile ? 12 : 16,
-              }}
-            >
-              {displayedPapers.map((p) => (
-                <PaperCard key={p.id} paper={p} isMobile={isMobile} />
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
       {/* ════════════════════════════════════════
-          3. 인기 검색 키워드 — 연회색 배경
+          3. 인기 검색 키워드 — bg 흰색
       ════════════════════════════════════════ */}
-      <section style={{ backgroundColor: '#FFFFFF', padding: '64px 0' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
-          <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#1E2124', marginBottom: 6, letterSpacing: '0px' }}>
-            인기 검색 키워드
-          </h2>
-          <p style={{ fontSize: isMobile ? 15 : 17, color: '#464C53', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
-            다른 연구자들은 어떤 키워드에 주목하고 있을까요?
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 8 : 10 }}>
+      <section style={{ backgroundColor: '#FFFFFF', padding: '64px 0', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: '0 16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <SectionTitle title="인기 검색 키워드" sub="다른 연구자들은 어떤 키워드에 주목하고 있을까요?" isMobile={isMobile} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
             {POPULAR_KEYWORDS.map((kw, i) => (
               <button
                 key={i}
                 onClick={() => { setQuery(kw); navigate(`/search?q=${encodeURIComponent(kw)}`); }}
                 style={{
-                  padding: isMobile ? '8px 20px' : '10px 24px',
-                  borderRadius: 100,
-                  // border: '1px solid #D1D5DB',
+                  padding: '10px 24px',
+                  borderRadius: 1000,
+                  border: 'none',
                   background: '#EFF2F5',
-                  fontSize: isMobile ? 15 : 17,
-                  fontWeight: 500,
+                  fontSize: 17,
+                  fontWeight: 400,
                   color: '#052B57',
                   cursor: 'pointer',
                   fontFamily: ff,
                   transition: 'all 0.15s',
-                  lineHeight: '1.5rem',
+                  lineHeight: 1.5,
                 }}
                 onMouseEnter={(e) => { const b = e.currentTarget; b.style.background = '#052B57'; b.style.color = '#FFFFFF'; }}
                 onMouseLeave={(e) => { const b = e.currentTarget; b.style.background = '#EFF2F5'; b.style.color = '#052B57'; }}
@@ -908,24 +828,48 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════
-          4. 추천 저널 — 커버 + 타이틀 + 발행기관
+          4. 추천 저널 — bg #F8FAFF, 커버 180x250
       ════════════════════════════════════════ */}
-      <section style={{ backgroundColor: '#FFFFFF', padding: '64px 0' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
-          <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#1E2124', marginBottom: 6, letterSpacing: '0px' }}>
-            추천 저널
-          </h2>
-          <p style={{ fontSize: isMobile ? 15 : 17, color: '#464C53', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
-            가장 많이 읽힌 저널을 만나보세요.
-          </p>
+      <section style={{ backgroundColor: '#F8FAFF', padding: '64px 0', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: '0 16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <SectionTitle title="추천 저널" sub="가장 많이 읽힌 저널을 만나보세요." isMobile={isMobile} />
 
           {/* 저널 슬라이더 */}
-          {(() => {
+          {venuesLoading ? (
+            <div style={{ display: 'flex', gap: isMobile ? 12 : 24, overflow: 'hidden' }}>
+              {Array.from({ length: isMobile ? 3 : 6 }).map((_, i) => {
+                const itemsPerPage = isMobile ? 3 : 6;
+                const gap = isMobile ? 12 : 24;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      flexShrink: 0,
+                      width: `calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '100%',
+                        aspectRatio: '180 / 250',
+                        background: '#F3F4F6',
+                        animation: 'pulse 1.5s ease-in-out infinite',
+                        animationDelay: `${i * 0.1}s`,
+                        marginBottom: 16,
+                      }}
+                    />
+                    <div style={{ height: 20, background: '#F3F4F6', borderRadius: 4, marginBottom: 6, animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
+                    <div style={{ height: 16, background: '#F3F4F6', borderRadius: 4, width: '60%', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (() => {
             const gap = isMobile ? 12 : 24;
             const itemsPerPage = isMobile ? 3 : 6;
             const n = featuredVenues.length;
             const canScroll = n > itemsPerPage;
-            const arrowSize = isMobile ? 32 : 40;
+            const arrowSize = 40;
             const arrowOffset = isMobile ? -14 : -20;
 
             // 무한 순환을 위해 앞뒤에 itemsPerPage만큼 복제
@@ -933,7 +877,6 @@ export default function HomePage() {
               ? [...featuredVenues.slice(-itemsPerPage), ...featuredVenues, ...featuredVenues.slice(0, itemsPerPage)]
               : featuredVenues;
 
-            // 실제 화면에 표시되는 위치 (복제 아이템 offset 포함)
             const displayIndex = canScroll ? venueSlideIndex + itemsPerPage : 0;
 
             const goLeft = () => {
@@ -968,14 +911,14 @@ export default function HomePage() {
                 style={{
                   position: 'absolute',
                   [dir]: arrowOffset,
-                  top: '38%',
+                  top: '40%',
                   transform: 'translateY(-50%)',
                   zIndex: 2,
                   width: arrowSize,
                   height: arrowSize,
                   borderRadius: '50%',
                   background: '#FFFFFF',
-                  border: '1px solid #E5E7EB',
+                  border: '1px solid #CDD1D5',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -985,10 +928,10 @@ export default function HomePage() {
                   flexShrink: 0,
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   {dir === 'left'
-                    ? <path d="M10 3L5 8L10 13" stroke="#1E2124" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    : <path d="M6 3L11 8L6 13" stroke="#1E2124" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />}
+                    ? <path d="M15 5L8 12L15 19" stroke="#1E2124" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    : <path d="M9 5L16 12L9 19" stroke="#1E2124" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />}
                 </svg>
               </button>
             );
@@ -1004,7 +947,6 @@ export default function HomePage() {
                     style={{
                       display: 'flex',
                       gap,
-                      // 아이템 하나의 폭 + gap = (100% + gap) / itemsPerPage
                       transform: `translateX(calc(-${displayIndex} * (100% + ${gap}px) / ${itemsPerPage}))`,
                       transition: venueNoTransition ? 'none' : 'transform 0.35s ease',
                       width: '100%',
@@ -1015,7 +957,7 @@ export default function HomePage() {
                       const publisher = venue.publisher ?? venue.publisher_name ?? '';
                       const rawCoverUrl = venue.cover_url;
                       const coverUrl = rawCoverUrl
-                        ? (rawCoverUrl.startsWith('http') ? rawCoverUrl : `${API_BASE_URL}${rawCoverUrl}`)
+                        ? (rawCoverUrl.startsWith('http') ? fixImageUrl(rawCoverUrl) : `${API_BASE_URL}${rawCoverUrl}`)
                         : null;
                       return (
                         <div
@@ -1026,18 +968,21 @@ export default function HomePage() {
                             width: `calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
                             minWidth: 0,
                             cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
                           }}
                           onClick={() => venue.id && navigate(`/journal/${venue.id}`)}
                         >
+                          {/* image 180x250 비율, border 1px #CDD1D5, radius 0 */}
                           <div
                             style={{
                               width: '100%',
-                              aspectRatio: '3 / 4',
-                              borderRadius: 8,
+                              aspectRatio: '180 / 250',
                               background: coverUrl ? 'transparent' : '#F3F4F5',
-                              border: '1px solid #E5E7EB',
+                              border: '1px solid #CDD1D5',
                               overflow: 'hidden',
-                              marginBottom: 16,
+                              marginBottom: 14,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -1062,12 +1007,15 @@ export default function HomePage() {
                               </svg>
                             )}
                           </div>
-                          <p style={{ fontSize: isMobile ? 15 : 17, fontWeight: 500, color: '#1E2124', lineHeight: 1.5, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                            {title}
-                          </p>
-                          <p style={{ fontSize: isMobile ? 13 : 15, color: '#464C53', fontWeight: 400, margin: 0 }}>
-                            {publisher}
-                          </p>
+                          {/* meta : title 17 SemiBold #1E2124 / publisher 15 #464C53 */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <p style={{ fontSize: isMobile ? 15 : 17, fontWeight: 600, color: '#1E2124', lineHeight: 1.5, margin: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                              {title}
+                            </p>
+                            <p style={{ fontSize: isMobile ? 13 : 15, color: '#464C53', fontWeight: 400, lineHeight: 1.5, margin: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                              {publisher}
+                            </p>
+                          </div>
                         </div>
                       );
                     })}
@@ -1080,7 +1028,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════
-          5. 학회통합관리시스템 SIMS — 카드 슬라이더
+          5. 학회통합관리시스템 SIMS — bg 흰색
       ════════════════════════════════════════ */}
       <SimsSection isMobile={isMobile} navigate={navigate} />
 
@@ -1089,7 +1037,8 @@ export default function HomePage() {
 }
 
 /* ───────────────────────────────────────────
-   SIMS 서비스 카드 섹션
+   SIMS 서비스 카드 섹션 (Figma: 테두리 없는 카드)
+   이미지 276x160 비율 / 하단 텍스트 padding 24px 0 / gap 48
    ─────────────────────────────────────────── */
 const SIMS_SERVICES = [
   {
@@ -1154,14 +1103,13 @@ function SimsSection({ isMobile, navigate: _navigate }: { isMobile: boolean; nav
   const [slideIndex, setSlideIndex] = useState(0);
   const [noTransition, setNoTransition] = useState(false);
 
-  const gap = isMobile ? 12 : 24;
+  const gap = isMobile ? 24 : 48;
   const itemsPerPage = isMobile ? 1 : 4;
   const n = SIMS_SERVICES.length;
   const canScroll = n > itemsPerPage;
-  const arrowSize = isMobile ? 32 : 40;
+  const arrowSize = 40;
   const arrowOffset = isMobile ? -14 : -20;
 
-  // 저널 슬라이더와 동일한 방식: 앞뒤에 itemsPerPage만큼 복제 후 1개씩 이동
   const clonedItems = canScroll
     ? [...SIMS_SERVICES.slice(-itemsPerPage), ...SIMS_SERVICES, ...SIMS_SERVICES.slice(0, itemsPerPage)]
     : SIMS_SERVICES;
@@ -1200,14 +1148,14 @@ function SimsSection({ isMobile, navigate: _navigate }: { isMobile: boolean; nav
       style={{
         position: 'absolute',
         [dir]: arrowOffset,
-        top: '38%',
+        top: '30%',
         transform: 'translateY(-50%)',
         zIndex: 2,
         width: arrowSize,
         height: arrowSize,
         borderRadius: '50%',
         background: '#FFFFFF',
-        border: '1px solid #E5E7EB',
+        border: '1px solid #CDD1D5',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
@@ -1217,23 +1165,18 @@ function SimsSection({ isMobile, navigate: _navigate }: { isMobile: boolean; nav
         flexShrink: 0,
       }}
     >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
         {dir === 'left'
-          ? <path d="M10 3L5 8L10 13" stroke="#1E2124" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          : <path d="M6 3L11 8L6 13" stroke="#1E2124" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />}
+          ? <path d="M15 5L8 12L15 19" stroke="#1E2124" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          : <path d="M9 5L16 12L9 19" stroke="#1E2124" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />}
       </svg>
     </button>
   );
 
   return (
-    <section style={{ backgroundColor: '#F8FAFF', padding: '64px 0' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px' }}>
-        <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#1E2124', marginBottom: 6, letterSpacing: '0px' }}>
-          학회통합관리시스템 SIMS
-        </h2>
-        <p style={{ fontSize: isMobile ? 15 : 17, color: '#464C53', marginBottom: isMobile ? 20 : 28, fontWeight: 400 }}>
-          학회 운영에 필요한 시스템을 제공합니다.
-        </p>
+    <section style={{ backgroundColor: '#FFFFFF', padding: '64px 0', width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: '0 16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 32 }}>
+        <SectionTitle title="학회통합관리시스템 SIMS" sub="학회 운영에 필요한 시스템을 제공합니다." isMobile={isMobile} />
 
         <div style={{ position: 'relative' }}>
           {canScroll && <ArrowBtn dir="left" />}
@@ -1263,28 +1206,16 @@ function SimsSection({ isMobile, navigate: _navigate }: { isMobile: boolean; nav
                     minWidth: 0,
                     cursor: 'pointer',
                     textDecoration: 'none',
-                    display: 'block',
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                    border: '1px solid #E5E7EB',
-                    background: '#FFFFFF',
-                    transition: 'box-shadow 0.2s, border-color 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.10)';
-                    (e.currentTarget as HTMLAnchorElement).style.borderColor = '#C5CAD0';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'none';
-                    (e.currentTarget as HTMLAnchorElement).style.borderColor = '#E5E7EB';
+                    display: 'flex',
+                    flexDirection: 'column',
                   }}
                 >
-                  {/* 이미지 영역 (플레이스홀더) */}
+                  {/* 이미지 영역 (276x160 비율) */}
                   <div
                     style={{
                       width: '100%',
-                      aspectRatio: '16 / 9',
-                      background: '#F3F4F5',
+                      aspectRatio: '276 / 160',
+                      background: '#DFE8F4',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1299,32 +1230,32 @@ function SimsSection({ isMobile, navigate: _navigate }: { isMobile: boolean; nav
                       />
                     ) : (
                       <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                        <rect x="4" y="4" width="40" height="40" rx="4" stroke="#D1D5DB" strokeWidth="1.5" fill="none" />
-                        <line x1="12" y1="12" x2="36" y2="36" stroke="#D1D5DB" strokeWidth="1.5" />
-                        <line x1="36" y1="12" x2="12" y2="36" stroke="#D1D5DB" strokeWidth="1.5" />
+                        <rect x="4" y="4" width="40" height="40" rx="4" stroke="#B7C6DD" strokeWidth="1.5" fill="none" />
+                        <line x1="12" y1="12" x2="36" y2="36" stroke="#B7C6DD" strokeWidth="1.5" />
+                        <line x1="36" y1="12" x2="12" y2="36" stroke="#B7C6DD" strokeWidth="1.5" />
                       </svg>
                     )}
                   </div>
 
-                  {/* 텍스트 영역 */}
-                  <div style={{ padding: isMobile ? '14px 16px 16px' : '18px 20px 20px' }}>
+                  {/* 텍스트 영역 : padding 24px 0, gap 16 */}
+                  <div style={{ padding: '24px 0', display: 'flex', flexDirection: 'column', gap: 16, background: '#FFFFFF' }}>
                     <p
                       style={{
-                        fontSize: isMobile ? 15 : 17,
+                        fontSize: isMobile ? 17 : 19,
                         fontWeight: 700,
                         color: '#1E2124',
-                        marginBottom: 6,
-                        lineHeight: 1.4,
+                        lineHeight: 1.5,
+                        margin: 0,
                       }}
                     >
                       {service.title}
                     </p>
                     <p
                       style={{
-                        fontSize: isMobile ? 13 : 15,
+                        fontSize: isMobile ? 15 : 17,
                         color: '#464C53',
                         fontWeight: 400,
-                        lineHeight: 1.6,
+                        lineHeight: 1.5,
                         margin: 0,
                         display: '-webkit-box',
                         WebkitLineClamp: 2,

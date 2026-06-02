@@ -20,8 +20,24 @@ const DEFAULT_FILTERS: JournalFilters = {
 };
 
 const ChevronIcon = ({ open }: { open: boolean }) => (
-  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className={`transition-transform ${open ? '' : 'rotate-180'}`}>
-    <path d="M5 12.5L10 7.5L15 12.5" stroke="#33363D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    style={{
+      transition: 'transform 0.2s',
+      transform: open ? 'rotate(0deg)' : 'rotate(180deg)',
+      flexShrink: 0,
+    }}
+  >
+    <path
+      d="M6 15L12 9L18 15"
+      stroke="#33363D"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
@@ -65,104 +81,245 @@ export default function JournalFilterSidebar({ onSearch, onReset }: Props) {
   };
 
   return (
-    <aside className="w-full md:w-[300px] flex-shrink-0">
-      <div className="bg-white rounded-xl border border-[#D6E0EB]">
-        <div className="px-6 pt-6 pb-4 space-y-0">
-
-          {/* 결과 내 검색 */}
-          <div className="border-b border-[#E4E7EA]">
-            <button onClick={() => toggle('search')} className="flex items-center justify-between w-full py-3.5">
-              <span className="text-[16px] font-bold text-[#1E2124]">결과 내 검색</span>
-              <ChevronIcon open={accordionOpen.search} />
-            </button>
-            {accordionOpen.search && (
-              <div className="pb-5 pt-1">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={withinQuery}
-                    onChange={(e) => setWithinQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleWithinSearch();
-                    }}
-                    placeholder="검색어를 입력해주세요."
-                    className="w-full h-10 px-4 pr-12 border border-[#CDD1D5] rounded-md text-[14px] text-[#1E2124] placeholder:text-[#8A949E] focus:outline-none focus:border-[#256EF4]"
-                  />
-                  <button
-                    onClick={handleWithinSearch}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                      <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="#8A949E" strokeWidth="2" />
-                      <path d="M19 19L14.65 14.65" stroke="#8A949E" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 발행일 */}
-          <div className="border-b border-[#E4E7EA]">
-            <button onClick={() => toggle('year')} className="flex items-center justify-between w-full py-3.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold text-[#1E2124]">발행일</span>
-                {(filters.yearFrom || filters.yearTo) && (
-                  <div className="w-5 h-5 flex items-center justify-center bg-[#256EF4] rounded-full">
-                    <span className="text-[11px] font-medium text-white leading-none">1</span>
-                  </div>
-                )}
-              </div>
-              <ChevronIcon open={accordionOpen.year} />
-            </button>
-            {accordionOpen.year && (
-              <div className="pb-5 pt-1 space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {yearButtons.map(({ label, years }) => {
-                    const isActive = activeYearBtn === label;
-                    const fromYear = years < 1
-                      ? String(currentYear)
-                      : String(currentYear - Math.round(years) + 1);
-                    return (
-                      <button
-                        key={label}
-                        onClick={() => {
-                          setActiveYearBtn(isActive ? null : label);
-                          setFilters(prev => ({
-                            ...prev,
-                            yearFrom: isActive ? '' : fromYear,
-                            yearTo: isActive ? '' : String(currentYear),
-                            yearLabel: isActive ? '' : label,
-                          }));
-                        }}
-                        className={`h-8 px-3 rounded-md text-[13px] font-normal transition-colors border ${
-                          isActive
-                            ? 'bg-[#ECF2FE] text-[#256EF4] border-[#256EF4]'
-                            : 'bg-white text-[#464C53] border-[#CDD1D5] hover:border-[#256EF4]'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-        </div>
-
-        {/* 초기화 / 적용하기 */}
-        <div className="flex gap-3 px-6 pb-6 pt-2">
+    <aside style={{ width: 300, flexShrink: 0 }}>
+      <div
+        style={{
+          background: '#FFFFFF',
+          borderRadius: 12,
+          border: '1px solid #CDD1D5',
+          padding: '16px 32px 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        {/* ── 결과 내 검색 ── */}
+        <section style={{ width: '100%', padding: '4px 0' }}>
           <button
+            type="button"
+            onClick={() => toggle('search')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              padding: '12px 0',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              gap: 16,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Pretendard GOV', sans-serif",
+                fontWeight: 700,
+                fontSize: 17,
+                lineHeight: '150%',
+                color: '#1E2124',
+              }}
+            >
+              결과 내 검색
+            </span>
+            <ChevronIcon open={accordionOpen.search} />
+          </button>
+
+          {accordionOpen.search && (
+            <div style={{ paddingBottom: 24, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div
+                style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: 48,
+                  padding: '0 16px',
+                  background: '#F4F5F6',
+                  gap: 8,
+                }}
+              >
+                <input
+                  type="text"
+                  value={withinQuery}
+                  onChange={(e) => setWithinQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleWithinSearch();
+                  }}
+                  placeholder="검색어를 입력해주세요."
+                  style={{
+                    flex: 1,
+                    height: '100%',
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    fontFamily: "'Pretendard GOV', sans-serif",
+                    fontWeight: 400,
+                    fontSize: 17,
+                    lineHeight: '150%',
+                    color: '#1E2124',
+                    minWidth: 0,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleWithinSearch}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                  aria-label="검색"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="9" cy="9" r="6.5" stroke="#33363D" strokeWidth="1.5" />
+                    <path d="M14 14L18 18" stroke="#33363D" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ── 발행일 ── */}
+        <section style={{ width: '100%', padding: '4px 0', borderTop: '1px solid #CDD1D5' }}>
+          <button
+            type="button"
+            onClick={() => toggle('year')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              padding: '12px 0',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              gap: 16,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span
+                style={{
+                  fontFamily: "'Pretendard GOV', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 17,
+                  lineHeight: '150%',
+                  color: '#1E2124',
+                }}
+              >
+                발행일
+              </span>
+              {(filters.yearFrom || filters.yearTo) && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 26,
+                    height: 20,
+                    padding: '0 8px',
+                    background: '#256EF4',
+                    borderRadius: 1000,
+                    fontFamily: "'Pretendard GOV', sans-serif",
+                    fontWeight: 400,
+                    fontSize: 15,
+                    lineHeight: 1,
+                    color: '#FFFFFF',
+                  }}
+                >
+                  1
+                </span>
+              )}
+            </div>
+            <ChevronIcon open={accordionOpen.year} />
+          </button>
+
+          {accordionOpen.year && (
+            <div style={{ paddingBottom: 24, paddingTop: 4 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {yearButtons.map(({ label, years }) => {
+                  const isActive = activeYearBtn === label;
+                  const fromYear = years < 1
+                    ? String(currentYear)
+                    : String(currentYear - Math.round(years) + 1);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => {
+                        setActiveYearBtn(isActive ? null : label);
+                        setFilters(prev => ({
+                          ...prev,
+                          yearFrom: isActive ? '' : fromYear,
+                          yearTo: isActive ? '' : String(currentYear),
+                          yearLabel: isActive ? '' : label,
+                        }));
+                      }}
+                      style={{
+                        height: 32,
+                        padding: '0 12px',
+                        borderRadius: 6,
+                        fontFamily: "'Pretendard GOV', sans-serif",
+                        fontWeight: 400,
+                        fontSize: 15,
+                        lineHeight: '150%',
+                        cursor: 'pointer',
+                        border: isActive ? '1px solid #256EF4' : '1px solid #CDD1D5',
+                        background: isActive ? '#ECF2FE' : '#FFFFFF',
+                        color: isActive ? '#256EF4' : '#464C53',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ── 버튼 영역 ── */}
+        <div style={{ display: 'flex', gap: 8, width: '100%', paddingTop: 24 }}>
+          <button
+            type="button"
             onClick={handleReset}
-            className="flex-1 h-11 rounded-md border border-[#CDD1D5] text-[15px] font-normal text-[#464C53] hover:bg-gray-50 transition-colors"
+            style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 6,
+              border: '1px solid #CDD1D5',
+              background: '#FFFFFF',
+              fontFamily: "'Pretendard GOV', sans-serif",
+              fontWeight: 400,
+              fontSize: 15,
+              lineHeight: '150%',
+              color: '#464C53',
+              cursor: 'pointer',
+            }}
           >
             초기화
           </button>
           <button
+            type="button"
             onClick={handleApply}
-            className="flex-1 h-11 rounded-md bg-[#256EF4] text-[15px] font-normal text-white hover:bg-[#1e4ec9] transition-colors"
+            style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 6,
+              border: 'none',
+              background: '#256EF4',
+              fontFamily: "'Pretendard GOV', sans-serif",
+              fontWeight: 400,
+              fontSize: 15,
+              lineHeight: '150%',
+              color: '#FFFFFF',
+              cursor: 'pointer',
+            }}
           >
             적용하기
           </button>

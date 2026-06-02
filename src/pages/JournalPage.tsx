@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { API_BASE_URL } from '../api/client';
+import { API_BASE_URL, fixImageUrl } from '../api/client';
 import JournalFilterSidebar from '@/components/JournalFilterSidebar';
 import { OpenSearchTextResultItem } from '@/api/search';
 import { osSearchText } from '@/api/opensearch-direct';
@@ -9,6 +9,7 @@ import { SearchResultCard } from '@/components/search/SearchResultCard';
 import { SearchControlBar } from '@/components/search/SearchControlBar';
 import { FloatingActionBar } from '@/components/search/FloatingActionBar';
 import { SearchPagination } from '@/components/search/SearchPagination';
+import { JournalTabs } from '@/components/JournalTabs';
 import { isAuthenticated } from '@/lib/auth';
 import { addToCart } from '@/api/cart';
 import { checkScrapBatch } from '@/api/scraps';
@@ -73,6 +74,7 @@ export default function JournalPage() {
 
   const [itemsPerPage, setItemsPerPage] = useState(4);
   const [detailedSort, setDetailedSort] = useState<'relevance' | 'latest'>('latest');
+  const [activeTab, setActiveTab] = useState<'recent' | 'top10'>('recent');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchYearFrom, setSearchYearFrom] = useState('');
   const [searchYearTo, setSearchYearTo] = useState('');
@@ -405,7 +407,7 @@ export default function JournalPage() {
   ];
 
   return (
-    <div className="flex flex-col items-center w-full bg-white">
+    <div className="flex flex-col items-center w-full" style={{ background: '#FAFAFC' }}>
       {/* ── Hero Section ── */}
       <section
         className="w-full flex flex-col items-center"
@@ -455,7 +457,7 @@ export default function JournalPage() {
             >
               {venue?.cover_url ? (
                 <img
-                  src={venue.cover_url?.startsWith('http') ? venue.cover_url : `${API_BASE_URL}${venue.cover_url ?? ''}`}
+                  src={venue.cover_url?.startsWith('http') ? fixImageUrl(venue.cover_url)! : `${API_BASE_URL}${venue.cover_url ?? ''}`}
                   alt="저널 커버"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -509,60 +511,81 @@ export default function JournalPage() {
               </div>
             </div>
 
-            {/* CTA Buttons */}
+            {/* CTA Buttons — Figma: 두 버튼 항상 표시, side 컬럼 width 300, height 48, gap 10px, justify-content flex-end */}
             <div
-              className="flex flex-col justify-end gap-[10px] flex-shrink-0"
-              style={{ width: 300, alignSelf: 'stretch' }}
+              className="flex flex-col flex-shrink-0"
+              style={{
+                width: 300,
+                alignSelf: 'stretch',
+                justifyContent: 'flex-end',
+                gap: 10,
+              }}
             >
-              {venue.submission_url && (
-                <a
-                  href={/^https?:\/\//i.test(venue.submission_url) ? venue.submission_url : `https://${venue.submission_url}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: 48,
-                    background: '#256EF4',
-                    borderRadius: 6,
-                    fontFamily: "'Pretendard GOV', sans-serif",
-                    fontWeight: 400,
-                    fontSize: 17,
-                    lineHeight: '150%',
-                    color: '#FFFFFF',
-                    textDecoration: 'none',
-                  }}
-                >
-                  논문 투고하기
-                </a>
-              )}
-              {venue.provider?.website_url && (
-                <a
-                  href={/^https?:\/\//i.test(venue.provider.website_url) ? venue.provider.website_url : `https://${venue.provider.website_url}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: 48,
-                    background: '#ECF2FE',
-                    border: '1px solid #256EF4',
-                    borderRadius: 6,
-                    fontFamily: "'Pretendard GOV', sans-serif",
-                    fontWeight: 400,
-                    fontSize: 17,
-                    lineHeight: '150%',
-                    color: '#0B50D0',
-                    textDecoration: 'none',
-                  }}
-                >
-                  저널 홈페이지 방문
-                </a>
-              )}
+              <a
+                href={
+                  venue.submission_url
+                    ? (/^https?:\/\//i.test(venue.submission_url)
+                      ? venue.submission_url
+                      : `https://${venue.submission_url}`)
+                    : '#'
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => { if (!venue.submission_url) e.preventDefault(); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
+                  height: 48,
+                  background: '#256EF4',
+                  borderRadius: 6,
+                  fontFamily: "'Pretendard GOV', sans-serif",
+                  fontWeight: 400,
+                  fontSize: 17,
+                  lineHeight: '150%',
+                  color: '#FFFFFF',
+                  textDecoration: 'none',
+                  opacity: venue.submission_url ? 1 : 0.4,
+                  pointerEvents: venue.submission_url ? 'auto' : 'none',
+                  boxSizing: 'border-box',
+                }}
+              >
+                논문 투고하기
+              </a>
+              <a
+                href={
+                  venue.provider?.website_url
+                    ? (/^https?:\/\//i.test(venue.provider.website_url)
+                      ? venue.provider.website_url
+                      : `https://${venue.provider.website_url}`)
+                    : '#'
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => { if (!venue.provider?.website_url) e.preventDefault(); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
+                  height: 48,
+                  background: '#ECF2FE',
+                  border: '1px solid #256EF4',
+                  borderRadius: 6,
+                  fontFamily: "'Pretendard GOV', sans-serif",
+                  fontWeight: 400,
+                  fontSize: 17,
+                  lineHeight: '150%',
+                  color: '#0B50D0',
+                  textDecoration: 'none',
+                  boxSizing: 'border-box',
+                  opacity: venue.provider?.website_url ? 1 : 0.4,
+                  pointerEvents: venue.provider?.website_url ? 'auto' : 'none',
+                }}
+              >
+                저널 홈페이지 방문
+              </a>
             </div>
           </div>
         </div>
@@ -571,13 +594,19 @@ export default function JournalPage() {
       {/* ── Articles + Sidebar Section ── */}
       <section
         className="w-full flex justify-center"
-        style={{ borderTop: '1px solid #D8E5FD', padding: '64px 0' }}
+        style={{ padding: '48px 0 56px' }}
       >
         <div
-          className="flex gap-20"
-          style={{ maxWidth: 1280, width: '100%', padding: '0 16px' }}
+          style={{
+            maxWidth: 1280,
+            width: '100%',
+            padding: '0 16px',
+            display: 'flex',
+            gap: 32,
+            alignItems: 'flex-start',
+          }}
         >
-          {/* Sidebar */}
+          {/* Sidebar — Figma: 300px fixed, border 1px #CDD1D5, border-radius 12px */}
           <JournalFilterSidebar
             venueName={venue.name}
             submissionUrl={venue.submission_url}
@@ -585,11 +614,34 @@ export default function JournalPage() {
             onReset={handleSearchReset}
           />
 
-          {/* Articles */}
+          {/* Articles — Figma: fill remaining, border 1px #CDD1D5, border-radius 12px, padding 32px */}
           <div
-            className="flex flex-col flex-1"
-            style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E4E7EA', padding: '20px 24px' }}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
           >
+            {/* Figma 12505:23277 — 이 저널의 논문 탭 (최근 발간 / Top 10) */}
+            <JournalTabs
+              activeTab={activeTab}
+              onChange={(tab) => {
+                setActiveTab(tab);
+                // 탭에 따라 정렬 변경 — 기존 handleSortChange 그대로 활용
+                handleSortChange(tab === 'recent' ? 'latest' : 'relevance');
+              }}
+            />
+
+            <div
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 12,
+                border: '1px solid #CDD1D5',
+                padding: 32,
+              }}
+            >
             <SearchControlBar
               searchResults={rawSearchResults ?? []}
               totalResults={searchTotal}
@@ -606,11 +658,27 @@ export default function JournalPage() {
             />
 
             {searchLoading ? (
-              <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: "'Pretendard GOV', sans-serif", fontSize: 15, color: '#8A949E' }}>
+              <div
+                style={{
+                  padding: '40px 0',
+                  textAlign: 'center',
+                  fontFamily: "'Pretendard GOV', sans-serif",
+                  fontSize: 15,
+                  color: '#8A949E',
+                }}
+              >
                 검색 중...
               </div>
             ) : rawSearchResults === null ? null : rawSearchResults.length === 0 ? (
-              <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: "'Pretendard GOV', sans-serif", fontSize: 15, color: '#8A949E' }}>
+              <div
+                style={{
+                  padding: '40px 0',
+                  textAlign: 'center',
+                  fontFamily: "'Pretendard GOV', sans-serif",
+                  fontSize: 15,
+                  color: '#8A949E',
+                }}
+              >
                 검색 결과가 없습니다.
               </div>
             ) : (
@@ -650,15 +718,28 @@ export default function JournalPage() {
               onBuy={handleBulkBuy}
               onClear={() => setSelectedIds(new Set())}
             />
+            </div>
 
-            <SearchPagination
-              currentPage={searchPage}
-              totalPages={Math.ceil(searchTotal / itemsPerPage)}
-              totalResults={searchTotal}
-              isLoading={searchLoading}
-              hasError={false}
-              onGoToPage={goToSearchPage}
-            />
+            {/* Figma 12505:21204 — 페이지네이션은 독립 카드 (흰 배경 + border 1px #CDD1D5 + border-radius 12px + padding 32px) */}
+            <div
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 12,
+                border: '1px solid #CDD1D5',
+                padding: 32,
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <SearchPagination
+                currentPage={searchPage}
+                totalPages={Math.ceil(searchTotal / itemsPerPage)}
+                totalResults={searchTotal}
+                isLoading={searchLoading}
+                hasError={false}
+                onGoToPage={goToSearchPage}
+              />
+            </div>
           </div>
         </div>
       </section>

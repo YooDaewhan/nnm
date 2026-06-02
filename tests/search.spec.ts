@@ -6,12 +6,10 @@ test.describe('검색 페이지', () => {
   });
 
   test('검색 결과 헤더 - 검색어 표시 확인', async ({ page }) => {
-    await expect(page.getByText(/교육/)).toBeVisible();
-    await expect(page.getByText(/에 대한 검색결과/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /교육.*에 대한 검색결과/ })).toBeVisible();
   });
 
   test('검색 결과 건수 표시', async ({ page }) => {
-    await expect(page.getByText(/검색 결과/)).toBeVisible();
     await expect(page.getByText(/검색 결과 .+건/)).toBeVisible();
   });
 
@@ -23,9 +21,12 @@ test.describe('검색 페이지', () => {
   });
 
   test('페이지 크기 드롭다운 - 20개씩으로 변경', async ({ page }) => {
-    const pageSizeSelect = page.getByRole('combobox').filter({ hasText: /개씩/ }).first();
+    const pageSizeSelect = page.locator('select:visible').filter({
+      has: page.locator('option[value="20"]'),
+    });
     await expect(pageSizeSelect).toBeVisible();
-    await pageSizeSelect.selectOption({ label: '20개씩' });
+    await pageSizeSelect.selectOption('20');
+    await expect(pageSizeSelect).toHaveValue('20');
   });
 
   test('검색 결과 카드 - 카드 목록 렌더링 확인', async ({ page }) => {

@@ -1,6 +1,6 @@
 const BOT_PATTERN = /googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|linkedinbot|slackbot/i;
 
-const API_BASE = 'https://your-api.com'; // TODO: 백엔드 URL로 교체
+const API_BASE = 'http://125.129.246.231/'; // TODO: 백엔드 URL로 교체
 
 export default {
   async fetch(request, env) {

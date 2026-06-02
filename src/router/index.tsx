@@ -73,6 +73,7 @@ export const router = createBrowserRouter([
       { path: '/register',            element: <RegisterPage /> },
       { path: '/register/complete',   element: <RegisterCompletePage /> },
       { path: '/auth/callback',       element: <AuthCallbackPage /> },
+
     ],
   },
 ]);

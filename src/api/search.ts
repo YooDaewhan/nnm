@@ -824,6 +824,7 @@ export type OpenSearchTextResultItem = {
   year: number;
   score: number;
   price?: number | null;
+  type?: string | null;
   metadata: OpenSearchResultMetadata;
 };
 
@@ -1185,6 +1186,14 @@ export type PostApiSearchOpensearchDetailedBody = {
   sort?: 'relevance' | 'latest';
 };
 
+export type OpenSearchVenue = {
+  id: number;
+  name: string;
+  abbr?: string;
+  type: string;
+  provider_id: number;
+};
+
 export type PostApiSearchOpensearchDetailed200 = {
   success: boolean;
   results: OpenSearchTextResultItem[];
@@ -1194,6 +1203,8 @@ export type PostApiSearchOpensearchDetailed200 = {
   page: number;
   size: number;
   sort?: string;
+  venues?: OpenSearchVenue[];
+  providers?: OpenSearchProvider[];
 };
 
 export type PostApiSearchOpensearchDetailed400 = {
@@ -1228,6 +1239,8 @@ export type DetailedSearchResponse = {
   page: number;
   size: number;
   sort?: string;
+  venues?: OpenSearchVenue[];
+  providers?: OpenSearchProvider[];
 };
 
 export async function searchOpensearchDetailed(params: {
@@ -1254,5 +1267,7 @@ export async function searchOpensearchDetailed(params: {
     page: data.page ?? 1,
     size: data.size ?? 10,
     sort: data.sort,
+    venues: data.venues,
+    providers: data.providers,
   };
 }

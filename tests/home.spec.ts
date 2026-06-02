@@ -6,12 +6,12 @@ test.describe('홈페이지', () => {
   });
 
   test('페이지 로드 - 히어로 섹션 텍스트 확인', async ({ page }) => {
-    await expect(page.getByText('생각은 깊게, 검색은 빠르게')).toBeVisible();
-    await expect(page.getByText('복잡한 절차 없이 핵심 논문을 빠르게 찾아보세요.')).toBeVisible();
+    await expect(page.getByText('빠르고 정확한 학술 문헌 검색 서비스')).toBeVisible();
+    await expect(page.getByText('신뢰할 수 있는 지식, 국내 연구의 기준')).toBeVisible();
   });
 
   test('검색창 - 입력 후 검색 버튼 클릭 시 검색 페이지로 이동', async ({ page }) => {
-    const input = page.getByPlaceholder(/키워드를 입력하세요|찾고 싶은 논문/);
+    const input = page.locator('section form').getByPlaceholder('검색어를 입력하세요');
     await input.fill('교육학');
     // 돋보기 버튼(검색 버튼) 클릭
     await input.press('Enter');

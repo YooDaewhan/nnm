@@ -16,7 +16,7 @@ export default function RootLayout() {
   return (
     <div className="min-h-screen flex flex-col overflow-x-clip">
       {!hideChrome && <Header />}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 w-full">
         <Outlet />
       </div>
       {!hideChrome && <Footer />}
