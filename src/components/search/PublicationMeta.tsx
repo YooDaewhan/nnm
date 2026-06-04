@@ -1,7 +1,6 @@
 export function PublicationMeta({ metadata }: { metadata: Record<string, unknown> }) {
   const providerName = (metadata.provider_name || metadata.publisher_name) as string | null;
-  const venueName = metadata.venue_name as string | null;
-  const journal = metadata.journal as string | null;
+  const venueName = (metadata.venue_name || metadata.journal) as string | null;
   const volume = metadata.volume as string | null | number;
   const issue = (metadata.issue_number || metadata.number) as string | null;
   const volumeIssue = volume || issue
@@ -13,7 +12,7 @@ export function PublicationMeta({ metadata }: { metadata: Record<string, unknown
     || (pageStart || pageEnd
       ? [pageStart, pageEnd].filter(Boolean).join('-') + 'p'
       : null);
-  const segments = [providerName, venueName, journal, volumeIssue, pageRange].filter(Boolean) as string[];
+  const segments = [providerName, venueName, volumeIssue, pageRange].filter(Boolean) as string[];
   if (segments.length === 0) return null;
   return (
     <div className="flex items-center gap-1 flex-wrap text-[14px] text-[#6B7280]">
