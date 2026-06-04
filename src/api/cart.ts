@@ -132,7 +132,7 @@ export const addToCartBatch = async (publicationIds: string[]): Promise<Record<s
 };
 
 /**
- * 장바구니 항목을 삭제합니다.
+ * 장바구니 항목을 cart item id로 삭제합니다.
  */
 export const removeFromCart = async (id: number): Promise<void> => {
   const token = getToken();
@@ -158,4 +158,15 @@ export const removeFromCart = async (id: number): Promise<void> => {
   if (!response.ok) {
     throw new Error('장바구니 삭제에 실패했습니다.');
   }
+};
+
+/**
+ * publication_id로 장바구니에서 제거합니다.
+ * TODO: 백엔드에 DELETE /api/cart/publication/:id 배포 후 직접 호출로 교체
+ */
+export const removeFromCartByPublicationId = async (publicationId: string): Promise<void> => {
+  const items = await getCart();
+  const item = items.find(i => i.publication_id === publicationId);
+  if (!item) return;
+  await removeFromCart(item.id);
 };

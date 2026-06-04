@@ -6,7 +6,7 @@ import { getPaperDetail, PaperDetail } from '../api/search';
 import { API_BASE_URL, fixImageUrl } from '../api/client';
 import { PdfPreviewModal } from '../components/PdfPreviewModal';
 import { PdfFullViewerModal } from '../components/PdfFullViewerModal';
-import { addToCart } from '../api/cart';
+import { addToCart, removeFromCartByPublicationId } from '../api/cart';
 import { addScrapBatch, deleteScrapBatch, getPublicationsStatus } from '../api/scraps';
 
 type OSPaperDetail = PaperDetail & {
@@ -105,6 +105,7 @@ function PaperDetailContent() {
   const loggedIn = isAuthenticated();
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
   const { data: paper, isLoading, error: fetchError } = useQuery<OSPaperDetail>({
     queryKey: ['paper', id],
@@ -132,11 +133,15 @@ function PaperDetailContent() {
   });
 
   const cartMutation = useMutation({
-    mutationFn: () => addToCart({ publication_id: id! }),
+    mutationFn: () =>
+      isInCart
+        ? removeFromCartByPublicationId(id!)
+        : addToCart({ publication_id: id! }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['publications-status', id ? [id] : []] });
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
-    onError: (err) => alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
+    onError: (err) => alert(err instanceof Error ? err.message : '장바구니 처리에 실패했습니다.'),
   });
 
   // 로그인 후 복귀 시 pendingAction 자동 실행
@@ -156,9 +161,11 @@ function PaperDetailContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedIn, paper]);
 
-  const handleShare = () => {
+  const handleShareToggle = () => setShareMenuOpen(prev => !prev);
+
+  const handleShareLink = () => {
     const url = window.location.href;
-    const doCopy = () => { setCopied(true); setTimeout(() => setCopied(false), 1500); };
+    const doCopy = () => { setCopied(true); setTimeout(() => setCopied(false), 2000); };
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(doCopy).catch(() => {
         const ta = document.createElement('textarea');
@@ -170,7 +177,93 @@ function PaperDetailContent() {
       ta.value = url; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta);
       ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); doCopy();
     }
+    setShareMenuOpen(false);
   };
+
+  const handleShareNotion = () => {
+    const url = window.location.href;
+    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => {}); }
+    window.open('https://www.notion.so', '_blank', 'noopener,noreferrer');
+    setShareMenuOpen(false);
+  };
+
+  const handleShareEvernote = () => {
+    const url = window.location.href;
+    const evernoteUrl = `https://www.evernote.com/clip.action?url=${encodeURIComponent(url)}&title=${encodeURIComponent(paper?.title ?? '')}`;
+    window.open(evernoteUrl, '_blank', 'noopener,noreferrer');
+    setShareMenuOpen(false);
+  };
+
+  const handleShareKakao = () => {
+    const url = window.location.href;
+    const text = `${paper?.title ?? ''}\n${url}`;
+    window.location.href = `kakaotalk://send?text=${encodeURIComponent(text)}`;
+    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => {}); }
+    setShareMenuOpen(false);
+  };
+
+  const shareMenuItemStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+    padding: '9px 16px', background: 'transparent', border: 'none',
+    cursor: 'pointer', fontFamily: "'Pretendard GOV', sans-serif",
+    fontSize: 14, color: '#1E2124', textAlign: 'left', whiteSpace: 'nowrap',
+  };
+
+  const renderShareMenu = () => (
+    <>
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 998 }}
+        onClick={() => setShareMenuOpen(false)}
+      />
+      <div
+        style={{
+          position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 999,
+          background: '#FFFFFF', border: '1px solid #CDD1D5', borderRadius: 8,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.12)', padding: '4px 0',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button onClick={handleShareLink} style={shareMenuItemStyle}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F4F5F6'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M6.5 9.5a3.18 3.18 0 0 0 4.5 0l1.5-1.5a3.18 3.18 0 0 0-4.5-4.5L7 5" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M9.5 6.5a3.18 3.18 0 0 0-4.5 0L3.5 8a3.18 3.18 0 0 0 4.5 4.5L9 11" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          링크 복사
+        </button>
+        <button onClick={handleShareNotion} style={shareMenuItemStyle}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F4F5F6'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 16, height: 16, background: '#1E2124', borderRadius: 3,
+            fontWeight: 700, fontSize: 11, color: '#FFFFFF', fontFamily: 'serif', flexShrink: 0,
+          }}>N</span>
+          노션
+        </button>
+        <button onClick={handleShareEvernote} style={shareMenuItemStyle}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F4F5F6'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" fill="#00A82D"/>
+            <path d="M5.5 11.5V7c0-.83.67-1.5 1.5-1.5h2.5c.55 0 1 .45 1 1V8c0 .55-.45 1-1 1H7v2.5" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M7 9h2" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
+          </svg>
+          에버노트
+        </button>
+        <button onClick={handleShareKakao} style={shareMenuItemStyle}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F4F5F6'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <ellipse cx="8" cy="7.2" rx="6.3" ry="5.2" fill="#FEE500"/>
+            <path d="M5.2 9.6 4.3 12l3-2.1M8 5.4v2.4M6.1 6.3l1.9 1.5 1.9-1.5" stroke="#3A1D1D" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          카카오톡
+        </button>
+      </div>
+    </>
+  );
 
   const handleScrap = () => {
     if (!loggedIn) {
@@ -488,7 +581,7 @@ function PaperDetailContent() {
                     <div className="flex flex-row justify-end items-center gap-[16px]">
                       {/* share */}
                       <div className="relative">
-                        <button onClick={handleShare} title="링크 복사" className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors">
+                        <button onClick={handleShareToggle} title="공유하기" className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors">
                           {copied ? (
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                               <path d="M5 12l5 5L19 7" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -502,13 +595,14 @@ function PaperDetailContent() {
                         {copied && (
                           <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">복사됨</span>
                         )}
+                        {shareMenuOpen && renderShareMenu()}
                       </div>
                       {/* heart/scrap */}
                       <button onClick={handleScrap} disabled={scrapMutation.isPending} title={isScraped ? '보관함 해제' : '보관함 담기'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
                         <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={24} height={24} style={{ display: 'block' }} alt="보관함 담기" />
                       </button>
                       {/* bag/cart */}
-                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title={isInCart ? '장바구니에 담김' : '장바구니 담기'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
+                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title={isInCart ? '장바구니 제거' : '장바구니 담기'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
                         <img src={isInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={24} height={24} style={{ display: 'block' }} alt="장바구니 담기" />
                       </button>
                     </div>

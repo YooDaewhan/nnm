@@ -118,6 +118,7 @@ function OpenSearchTextContent() {
 
   const handleCartToggle = () => {
     queryClient.invalidateQueries({ queryKey: ['publications-status', scrapIds] });
+    queryClient.invalidateQueries({ queryKey: ['cart'] });
   };
 
   const buyNowMutation = useMutation({

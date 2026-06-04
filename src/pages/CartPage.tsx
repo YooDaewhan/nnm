@@ -35,6 +35,7 @@ export default function CartPage() {
     onSuccess: (_, id) => {
       setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
       queryClient.invalidateQueries({ queryKey: ['cart'] });
+      queryClient.invalidateQueries({ queryKey: ['publications-status'] });
     },
     onError: (err) => alert(err instanceof Error ? err.message : '삭제에 실패했습니다.'),
   });

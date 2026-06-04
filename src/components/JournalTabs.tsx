@@ -50,14 +50,16 @@ export function JournalTabs({ activeTab, onChange }: JournalTabsProps) {
         onClick={() => onChange('recent')}
         style={tabStyle(activeTab === 'recent', 'first')}
       >
-        최근 발간된 논문
+        <span className="hidden md:inline">최근 발간된 논문</span>
+        <span className="md:hidden">최근논문</span>
       </button>
       <button
         type="button"
         onClick={() => onChange('top10')}
         style={tabStyle(activeTab === 'top10', 'last')}
       >
-        논문 상세정보 열람 Top 10
+        <span className="hidden md:inline">논문 상세정보 열람 Top 10</span>
+        <span className="md:hidden">열람 top10</span>
       </button>
     </div>
   );
