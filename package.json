@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "worker:copy": "node -e \"const fs=require('fs');fs.copyFileSync('_worker.js','dist/_worker.js');console.log('_worker.js copied to dist/')\"",
     "pages:dev": "npm run worker:copy && npx wrangler pages dev dist --port 8788 --ip 0.0.0.0",
+    "deploy": "npx wrangler pages deploy dist --project-name newnonmun-front --branch develop",
     "lint": "eslint src",
     "generate-api": "orval"
   },

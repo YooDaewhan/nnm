@@ -71,6 +71,9 @@ export function SearchResultCard({
   useEffect(() => { setLocalScraped(isScraped); }, [isScraped]);
   useEffect(() => { setLocalInCart(isInCart); }, [isInCart]);
 
+  const resultPrice = result.price ?? result.metadata?.price;
+  const isAccessible = isPurchased || resultPrice === 0;
+
   const scrapMutation = useMutation({
     mutationFn: (wasScraped: boolean) =>
       wasScraped ? deleteScrapBatch([result.id]) : addScrapBatch([result.id]),
@@ -354,11 +357,11 @@ export function SearchResultCard({
 
   /* ── 데스크탑 구매 버튼 ── */
   const renderPurchaseButtons = () => {
-    if (isPurchased) {
+    if (isAccessible) {
       return (
         <div className="flex flex-col items-stretch gap-2 w-[112px]">
           <button
-            onClick={(e) => { e.stopPropagation(); setViewerOpen(true); }}
+            onClick={(e) => { e.stopPropagation(); if (!isLoggedIn) { navigate('/login', { state: { from: location.pathname + location.search } }); return; } setViewerOpen(true); }}
             className="h-9 w-full bg-white border border-[#256EF4] text-[#0B50D0] text-[13px] font-medium rounded-md hover:bg-[#ECF2FE] transition-colors"
           >
             원문보기
@@ -645,10 +648,10 @@ export function SearchResultCard({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {isPurchased ? (
+          {isAccessible ? (
             <>
               <button
-                onClick={(e) => { e.stopPropagation(); setViewerOpen(true); }}
+                onClick={(e) => { e.stopPropagation(); if (!isLoggedIn) { navigate('/login', { state: { from: location.pathname + location.search } }); return; } setViewerOpen(true); }}
                 style={{
                   height: 40,
                   padding: '0 16px',

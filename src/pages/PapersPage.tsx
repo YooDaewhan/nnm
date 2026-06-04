@@ -314,7 +314,7 @@ function PaperDetailContent() {
     if (fetchError) console.error('[PapersPage] error:', fetchError);
   }, [paper, fetchError]);
 
-  const isPurchased = loggedIn && (id ? (publicationStatus?.[id]?.purchased ?? false) : false);
+  const isPurchased = paper?.price === 0 || (loggedIn && (id ? (publicationStatus?.[id]?.purchased ?? false) : false));
 
   const handlePurchase = () => {
     if (!loggedIn) {
@@ -602,9 +602,11 @@ function PaperDetailContent() {
                         <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={24} height={24} style={{ display: 'block' }} alt="보관함 담기" />
                       </button>
                       {/* bag/cart */}
-                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title={isInCart ? '장바구니 제거' : '장바구니 담기'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
-                        <img src={isInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={24} height={24} style={{ display: 'block' }} alt="장바구니 담기" />
-                      </button>
+                      {paper.price !== 0 && (
+                        <button onClick={handleAddToCart} disabled={cartMutation.isPending} title={isInCart ? '장바구니 제거' : '장바구니 담기'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
+                          <img src={isInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={24} height={24} style={{ display: 'block' }} alt="장바구니 담기" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
