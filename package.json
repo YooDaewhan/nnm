@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build && node -e \"const fs=require('fs');fs.copyFileSync('serve.json','dist/serve.json');fs.copyFileSync('_worker.js','dist/_worker.js');\"",
     "preview": "vite preview",
+    "worker:copy": "node -e \"const fs=require('fs');fs.copyFileSync('_worker.js','dist/_worker.js');console.log('_worker.js copied to dist/')\"",
+    "pages:dev": "npm run worker:copy && npx wrangler pages dev dist --port 8788 --ip 0.0.0.0",
     "lint": "eslint src",
     "generate-api": "orval"
   },

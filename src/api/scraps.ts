@@ -1,6 +1,44 @@
 import { API_BASE_URL } from './client';
 import { getToken, handleAuthExpired } from '@/lib/auth';
 
+export interface PublicationStatus {
+  scrapped: boolean;
+  in_cart: boolean;
+  purchased: boolean;
+}
+
+/**
+ * 여러 논문의 스크랩/장바구니/구매 여부를 한 번에 확인합니다.
+ * POST /api/publications/status
+ */
+export const getPublicationsStatus = async (
+  publicationIds: string[],
+): Promise<Record<string, PublicationStatus>> => {
+  const token = getToken();
+  if (!token || publicationIds.length === 0) return {};
+
+  const response = await fetch(`${API_BASE_URL}/api/publications/status`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ publication_ids: publicationIds }),
+  });
+
+  if (response.status === 401) { handleAuthExpired(); return {}; }
+  if (!response.ok) return {};
+
+  try {
+    const json = await response.json();
+    return json.status ?? {};
+  } catch {
+    return {};
+  }
+};
+
 export interface ScrapItem {
   id: number;
   publication_id: string;

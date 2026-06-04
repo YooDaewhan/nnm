@@ -7,7 +7,7 @@ import { API_BASE_URL, fixImageUrl } from '../api/client';
 import { PdfPreviewModal } from '../components/PdfPreviewModal';
 import { PdfFullViewerModal } from '../components/PdfFullViewerModal';
 import { addToCart } from '../api/cart';
-import { addScrapBatch, deleteScrapBatch, checkScrapBatch } from '../api/scraps';
+import { addScrapBatch, deleteScrapBatch, getPublicationsStatus } from '../api/scraps';
 
 type OSPaperDetail = PaperDetail & {
   keywords_en?: string[];
@@ -32,7 +32,7 @@ const AWARD_BADGE_MAP: Record<string, { label: string; bg: string; color: string
   book:          { label: '도서',        bg: '#FEF9C3', color: '#92400E' },
   other:         { label: '기타',        bg: '#F3F4F6', color: '#6B7280' },
 };
-import { getPayments } from '../api/payment';
+
 import { isAuthenticated } from '../lib/auth';
 import { addRecentPaper } from './mypage/MyPageRecentPage';
 
@@ -113,39 +113,29 @@ function PaperDetailContent() {
     throwOnError: false,
   });
 
-  const { data: ordersData } = useQuery({
-    queryKey: ['orders-paid'],
-    queryFn: () => getPayments({ status: 'paid', per_page: 100 }),
-    enabled: loggedIn,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const { data: scrappedIds = new Set<string>() } = useQuery({
-    queryKey: ['scrap-batch', id ? [id] : []],
-    queryFn: () => checkScrapBatch([id!]),
-    select: (data) => new Set(data),
+  const { data: publicationStatus } = useQuery({
+    queryKey: ['publications-status', id ? [id] : []],
+    queryFn: () => getPublicationsStatus([id!]),
     enabled: loggedIn && !!id,
     staleTime: 1000 * 60 * 5,
   });
 
-  const isScraped = id ? scrappedIds.has(id) : false;
+  const isScraped = id ? (publicationStatus?.[id]?.scrapped ?? false) : false;
+  const isInCart = id ? (publicationStatus?.[id]?.in_cart ?? false) : false;
 
   const scrapMutation = useMutation({
     mutationFn: () => isScraped ? deleteScrapBatch([id!]) : addScrapBatch([id!]),
     onSuccess: () => {
-      queryClient.setQueryData<Set<string>>(['scrap-batch', id ? [id] : []], (old = new Set()) => {
-        const next = new Set(old);
-        if (isScraped) next.delete(id!);
-        else next.add(id!);
-        return next;
-      });
+      queryClient.invalidateQueries({ queryKey: ['publications-status', id ? [id] : []] });
     },
     onError: (err) => alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.'),
   });
 
   const cartMutation = useMutation({
     mutationFn: () => addToCart({ publication_id: id! }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['cart'] }); alert('장바구니에 추가되었습니다.'); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publications-status', id ? [id] : []] });
+    },
     onError: (err) => alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
   });
 
@@ -231,13 +221,7 @@ function PaperDetailContent() {
     if (fetchError) console.error('[PapersPage] error:', fetchError);
   }, [paper, fetchError]);
 
-  const paidOrders = ordersData?.success ? ordersData.orders.data : [];
-
-  const isPurchased = loggedIn && paidOrders.some(
-    (order) => ((order as any).metadata?.items as { publication_id?: string }[] ?? []).some(
-      (item) => item.publication_id === paper?.id
-    )
-  );
+  const isPurchased = loggedIn && (id ? (publicationStatus?.[id]?.purchased ?? false) : false);
 
   const handlePurchase = () => {
     if (!loggedIn) {
@@ -524,10 +508,8 @@ function PaperDetailContent() {
                         <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={24} height={24} style={{ display: 'block' }} alt="보관함 담기" />
                       </button>
                       {/* bag/cart */}
-                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title="장바구니 담기" className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title={isInCart ? '장바구니에 담김' : '장바구니 담기'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
+                        <img src={isInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={24} height={24} style={{ display: 'block' }} alt="장바구니 담기" />
                       </button>
                     </div>
                   </div>

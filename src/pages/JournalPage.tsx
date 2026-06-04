@@ -11,9 +11,7 @@ import { FloatingActionBar } from '@/components/search/FloatingActionBar';
 import { SearchPagination } from '@/components/search/SearchPagination';
 import { JournalTabs } from '@/components/JournalTabs';
 import { isAuthenticated } from '@/lib/auth';
-import { addToCart } from '@/api/cart';
-import { checkScrapBatch } from '@/api/scraps';
-import { getPayments } from '@/api/payment';
+import { getPublicationsStatus } from '@/api/scraps';
 import { useBulkActions } from '@/hooks/useBulkActions';
 
 interface VenueSettings {
@@ -86,39 +84,23 @@ export default function JournalPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const scrapIds = rawSearchResults?.map(r => r.id) ?? [];
-  const { data: scrappedIds = new Set<string>() } = useQuery({
-    queryKey: ['scrap-batch', scrapIds],
-    queryFn: () => checkScrapBatch(scrapIds),
-    select: (data) => new Set(data),
+  const { data: publicationsStatus = {} } = useQuery({
+    queryKey: ['publications-status', scrapIds],
+    queryFn: () => getPublicationsStatus(scrapIds),
     enabled: isLoggedIn && scrapIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: ordersData } = useQuery({
-    queryKey: ['orders-paid'],
-    queryFn: () => getPayments({ status: 'paid', per_page: 100 }),
-    enabled: isLoggedIn,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const purchasedIds = useMemo(() => {
-    const ids = new Set<string>();
-    const paidOrders = ordersData?.success ? ordersData.orders.data : [];
-    paidOrders.forEach((order) => {
-      const items = (order as any).metadata?.items as { publication_id?: string }[] ?? [];
-      items.forEach((item) => { if (item.publication_id) ids.add(item.publication_id); });
-    });
-    return ids;
-  }, [ordersData]);
+  const scrappedIds = useMemo(() => new Set(Object.entries(publicationsStatus).filter(([, s]) => s.scrapped).map(([id]) => id)), [publicationsStatus]);
+  const cartIds = useMemo(() => new Set(Object.entries(publicationsStatus).filter(([, s]) => s.in_cart).map(([id]) => id)), [publicationsStatus]);
+  const purchasedIds = useMemo(() => new Set(Object.entries(publicationsStatus).filter(([, s]) => s.purchased).map(([id]) => id)), [publicationsStatus]);
 
   const { bulkCartLoading, bulkScrapLoading, handleBulkBuy, handleBulkScrap } =
     useBulkActions(selectedIds, rawSearchResults ?? [], scrapIds, isLoggedIn);
 
-  const cartMutation = useMutation({
-    mutationFn: async (resultId: string) => { await addToCart({ publication_id: resultId }); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['cart'] }); alert('장바구니에 추가되었습니다.'); },
-    onError: (err) => alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.'),
-  });
+  const handleCartToggle = () => {
+    queryClient.invalidateQueries({ queryKey: ['publications-status', scrapIds] });
+  };
 
   const buyNowMutation = useMutation({
     mutationFn: async (resultId: string) => {
@@ -137,15 +119,6 @@ export default function JournalPage() {
     onError: (err) => alert(err instanceof Error ? err.message : '구매하기에 실패했습니다.'),
   });
 
-  const handleAddToCart = (e: React.MouseEvent, resultId: string) => {
-    e.stopPropagation();
-    if (!isLoggedIn) {
-      navigate('/login', { state: { from: location.pathname + location.search } });
-      return;
-    }
-    cartMutation.mutate(resultId);
-  };
-
   const handleBuyNow = (e: React.MouseEvent, resultId: string) => {
     e.stopPropagation();
     if (!isLoggedIn) {
@@ -156,7 +129,7 @@ export default function JournalPage() {
   };
 
   const handleScrapToggle = () => {
-    queryClient.invalidateQueries({ queryKey: ['scrap-batch', scrapIds] });
+    queryClient.invalidateQueries({ queryKey: ['publications-status', scrapIds] });
   };
 
   const handleSelectAll = () => {
@@ -687,7 +660,6 @@ export default function JournalPage() {
                   <SearchResultCard
                     key={result.id}
                     result={result}
-                    onAddToCart={handleAddToCart}
                     onBuyNow={handleBuyNow}
                     isLoggedIn={isLoggedIn}
                     isSelected={selectedIds.has(result.id)}
@@ -699,12 +671,13 @@ export default function JournalPage() {
                         return next;
                       });
                     }}
-                    cartLoading={cartMutation.isPending && cartMutation.variables === result.id}
                     buyLoading={buyNowMutation.isPending && buyNowMutation.variables === result.id}
                     highlightTerms={searchKeyword ? [searchKeyword] : []}
                     isScraped={scrappedIds.has(result.id)}
                     onScrapToggle={handleScrapToggle}
                     isPurchased={purchasedIds.has(result.id)}
+                    isInCart={cartIds.has(result.id)}
+                    onCartToggle={handleCartToggle}
                   />
                 ))}
               </div>

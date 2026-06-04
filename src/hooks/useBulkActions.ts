@@ -70,7 +70,7 @@ export function useBulkActions(
     const ids = [...selectedIds];
     try {
       await addScrapBatch(ids);
-      queryClient.invalidateQueries({ queryKey: ['scrap-batch', scrapIds] });
+      queryClient.invalidateQueries({ queryKey: ['publications-status', scrapIds] });
       alert(`${ids.length}개를 스크랩에 추가했습니다.`);
     } catch (err) {
       alert(err instanceof Error ? err.message : '스크랩 추가에 실패했습니다.');

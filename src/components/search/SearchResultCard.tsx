@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { OpenSearchTextResultItem, fetchAiSummary } from '@/api/search';
 import { getPdfFull, PdfApiError } from '@/api/pdf';
 import { PdfFullViewerModal } from '../PdfFullViewerModal';
 import { addScrapBatch, deleteScrapBatch } from '@/api/scraps';
+import { addToCart } from '@/api/cart';
 import { highlightText } from '@/utils/highlight';
 import { PublicationMeta } from './PublicationMeta';
 import { CitationModal, CITE_FORMATS } from './CitationModal';
@@ -21,32 +22,32 @@ const VENUE_TYPE_MAP: Record<string, { label: string; bg: string; color: string 
 
 interface SearchResultCardProps {
   result: OpenSearchTextResultItem;
-  onAddToCart: (e: React.MouseEvent, id: string) => void;
   onBuyNow: (e: React.MouseEvent, id: string) => void;
   isLoggedIn: boolean;
   isSelected: boolean;
   onToggleSelect: (e: React.MouseEvent) => void;
-  cartLoading: boolean;
   buyLoading: boolean;
   highlightTerms?: string[];
   isScraped: boolean;
   onScrapToggle: () => void;
   isPurchased?: boolean;
+  isInCart?: boolean;
+  onCartToggle?: () => void;
 }
 
 export function SearchResultCard({
   result,
-  onAddToCart,
   onBuyNow,
   isLoggedIn,
   isSelected,
   onToggleSelect,
-  cartLoading,
   buyLoading,
   highlightTerms = [],
   isScraped,
   onScrapToggle,
   isPurchased = false,
+  isInCart = false,
+  onCartToggle,
 }: SearchResultCardProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,17 +65,44 @@ export function SearchResultCard({
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const [aiSummaryError, setAiSummaryError] = useState(false);
 
+  const [localScraped, setLocalScraped] = useState(isScraped);
+  const [localInCart, setLocalInCart] = useState(isInCart);
+  useEffect(() => { setLocalScraped(isScraped); }, [isScraped]);
+  useEffect(() => { setLocalInCart(isInCart); }, [isInCart]);
+
   const scrapMutation = useMutation({
-    mutationFn: () =>
-      isScraped ? deleteScrapBatch([result.id]) : addScrapBatch([result.id]),
+    mutationFn: (wasScraped: boolean) =>
+      wasScraped ? deleteScrapBatch([result.id]) : addScrapBatch([result.id]),
     onSuccess: () => onScrapToggle(),
-    onError: (err) => alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.'),
+    onError: (err, wasScraped) => {
+      setLocalScraped(wasScraped);
+      alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.');
+    },
+  });
+
+  const cartMutation = useMutation({
+    mutationFn: () => addToCart({ publication_id: result.id }),
+    onSuccess: () => { onCartToggle?.(); },
+    onError: (err) => {
+      setLocalInCart(false);
+      alert(err instanceof Error ? err.message : '장바구니 추가에 실패했습니다.');
+    },
   });
 
   const handleScrap = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isLoggedIn) { navigate('/login', { state: { from: location.pathname + location.search } }); return; }
-    scrapMutation.mutate();
+    const wasScraped = localScraped;
+    setLocalScraped(!wasScraped);
+    scrapMutation.mutate(wasScraped);
+  };
+
+  const handleCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isLoggedIn) { navigate('/login', { state: { from: location.pathname + location.search } }); return; }
+    if (localInCart) return;
+    setLocalInCart(true);
+    cartMutation.mutate();
   };
 
   const handleDownload = useCallback(async (e: React.MouseEvent) => {
@@ -354,27 +382,27 @@ export function SearchResultCard({
               <button
                 onClick={handleScrap}
                 disabled={scrapMutation.isPending}
-                title={isScraped ? '보관함 해제' : '보관함 담기'}
+                title={localScraped ? '보관함 해제' : '보관함 담기'}
                 style={{
                   ...mobileIconBtn,
                   opacity: scrapMutation.isPending ? 0.5 : 1,
                 }}
               >
-                <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
+                <img src={localScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
               </button>
 
               {/* 장바구니 (구매 전에만 표시) */}
               {!isPurchased && (
                 <button
-                  onClick={(e) => onAddToCart(e, result.id)}
-                  disabled={cartLoading}
-                  title="장바구니 담기"
+                  onClick={handleCart}
+                  disabled={cartMutation.isPending}
+                  title={localInCart ? '장바구니에 담김' : '장바구니 담기'}
                   style={{
                     ...mobileIconBtn,
-                    opacity: cartLoading ? 0.5 : 1,
+                    opacity: cartMutation.isPending ? 0.5 : 1,
                   }}
                 >
-                  <img src="/svg/bag-B.svg" width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
+                  <img src={localInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
                 </button>
               )}
             </div>
@@ -630,11 +658,11 @@ export function SearchResultCard({
                   <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">복사됨</span>
                 )}
               </div>
-              <button onClick={handleScrap} disabled={scrapMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title={isScraped ? '보관함 해제' : '보관함 담기'}>
-                <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
+              <button onClick={handleScrap} disabled={scrapMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title={localScraped ? '보관함 해제' : '보관함 담기'}>
+                <img src={localScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
               </button>
-              <button onClick={(e) => onAddToCart(e, result.id)} disabled={cartLoading} className={`${iconBtn} disabled:opacity-50`} title="장바구니 담기">
-                <img src="/svg/bag-B.svg" width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
+              <button onClick={handleCart} disabled={cartMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title={localInCart ? '장바구니에 담김' : '장바구니 담기'}>
+                <img src={localInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
               </button>
             </div>
           </div>
