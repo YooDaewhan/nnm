@@ -205,9 +205,9 @@ export default function Footer() {
                     value=""
                     onChange={e => { if (e.target.value) { window.open(e.target.value, '_blank'); e.target.value = ''; } }}
                   >
-                    <option value="" disabled>HCG 콘텐츠그룹</option>
-                    <option value="https://www.hakjisa.co.kr/main.html">HCG 학지사</option>
-                    <option value="https://sims.newnonmun.com/">HCG sims</option>
+                    <option value="" disabled>HCG</option>
+                    <option value="https://branding.hakjisa.kr/">HCG 학지사콘텐츠그룹</option>
+                    <option value="https://sims.newnonmun.com/">SIMS 학회통합관리시스템</option>
                   </select>
                   {/* arrow-drop-up icon */}
                   <svg
