@@ -137,7 +137,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="검색어를 입력하세요"
-                className="flex-1 w-full text-[19px] text-[#1E2124] placeholder:text-[#8A949E]"
+                className="flex-1 w-full text-[19px] text-[#1E2124] placeholder:text-[#8A949E] outline-none"
               />
 
               <div className='flex items-center gap-3'>
@@ -248,7 +248,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="검색어를 입력하세요"
-                className="flex-1 w-full text-[19px] text-[#1E2124] placeholder:text-[#8A949E]"
+                className="flex-1 w-full text-[19px] text-[#1E2124] placeholder:text-[#8A949E] outline-none"
               />
             </div>
 
