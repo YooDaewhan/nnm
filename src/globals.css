@@ -49,36 +49,6 @@ section {
 
 
 
-/* 2026-05-18 css 추가 (Bang) */
-.papers-meta-value {
-  display: inline-flex;
-  align-items: center;
-}
-
-.papers-meta-value:not(:first-of-type)::before {
-  content: "";
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
-  background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_arrow-to-right.svg);
-}
-
-.icon_document-search::before {
-  content: "";
-  width: 20px;
-  height: 20px;
-  background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_document-search.svg);
-}
-
-.icon_double-quotes-fill-L::before {
-  content: "";
-  width: 20px;
-  height: 20px;
-  background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_double-quotes-fill-L.svg);
-}
-
-
-
 /* 2026-06-02 css 추가 (Bang) */
 :root {
   /* text color */
@@ -106,8 +76,10 @@ a {
 body {
   font-family: var(--main-font);
   font-size: 16px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 150%;
+  letter-spacing: 0;
   color: var(--text-basic);
 }
 
@@ -155,4 +127,105 @@ footer .copyright {
   padding: .75rem 1rem;
   overflow: visible;
   position: relative;
+}
+
+/* badge */
+.badge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.badge-large {
+  height: 2rem;
+  font-size: 1.0625rem;
+}
+
+.badge-midium {
+  height: 1.5rem;
+  font-size: 0.9375rem;
+}
+
+.badge-small {
+  height: 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.badge-color-primary {
+  background: #ECF2FE;
+  color: #0B50D0;
+}
+
+.badge-color-info {
+  background: #E7F4FE;
+  color: #096AB3;
+}
+
+/* icon */
+.icon-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0.375rem;
+}
+
+.icon-large {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.125rem; 
+}
+
+/* meta breadcrumb */
+.meta-breadcrumb {}
+
+.meta-value { 
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.0625rem;
+  color: var(--text-subtle);
+}
+
+/* .meta-value.author-divider:not(:first-of-type)::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%238A949E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' /%3E%3C/svg%3E");  background-repeat: no-repeat;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+} */
+
+
+.meta-value.journal-nav:not(:last-child):hover {
+  text-decoration: underline #8A949E;
+}
+
+.meta-value.journal-nav:not(:first-of-type)::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%238A949E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' /%3E%3C/svg%3E");  background-repeat: no-repeat;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* icon-button */
+.icon_document-search::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_document-search.svg);
+}
+
+.icon_double-quotes-fill-L::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background-image: url(https://hakjisa-assets.s3.ap-northeast-2.amazonaws.com/assets/images/nnm/icons/article_double-quotes-fill-L.svg);
 }
