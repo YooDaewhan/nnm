@@ -473,7 +473,7 @@ function PaperDetailContent() {
                         const key = paper.venue?.type?.trim().toLowerCase();
                         const label = (key && AWARD_BADGE_MAP[key]?.label) || '논문';
                         return (
-                          <span className="badge badge-large badge-color-info">
+                          <span className="badge badge-arge badge-primary">
                             {label}
                           </span>
                         );
@@ -495,10 +495,10 @@ function PaperDetailContent() {
                     </div>
 
                     {/* btn-icon-box : share, heart, bag icons (gap 16px) */}
-                    <div className="flex flex-row justify-end items-center gap-[16px]">
+                    <div className="flex flex-row justify-end items-center gap-[8px]">
                       {/* share */}
                       <div className="relative">
-                        <button onClick={handleShare} title="URL복사" className="icon-box icon-large hover:bg-[#F0F2F5] transition-colors">
+                        <button onClick={handleShare} title="URL복사" className="btn_icon-box icon-large">
                           {copied ? (
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                               <path d="M5 12l5 5L19 7" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -514,11 +514,11 @@ function PaperDetailContent() {
                         )}
                       </div>
                       {/* heart/scrap */}
-                      <button onClick={handleScrap} disabled={scrapMutation.isPending} title={isScraped ? '보관함 해제' : '보관함 담기'} className="icon-box icon-large hover:bg-[#F0F2F5] transition-colors">
+                      <button onClick={handleScrap} disabled={scrapMutation.isPending} title={isScraped ? '보관함 해제' : '보관함 담기'} className="btn_icon-box icon-large">
                         <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={24} height={24} style={{ display: 'block' }} alt="보관함 담기" />
                       </button>
                       {/* bag/cart */}
-                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title="장바구니 담기" className="icon-box icon-large hover:bg-[#F0F2F5] transition-colors">
+                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title="장바구니 담기" className="btn_icon-box icon-large">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
                         </svg>
@@ -670,14 +670,14 @@ function PaperDetailContent() {
                       {/* 미리보기 button : h-32px, rounded-[4px], gap 4px, font 17px */}
                       <button
                         onClick={() => { console.log('[미리보기] 클릭 paper:', paper?.id, 'previewOpen:', previewOpen); setPreviewOpen(true); }}
-                        className="icon_document-search flex items-center gap-[4px] px-[2px] h-[32px] rounded text-[17px] leading-[150%] text-[#1E2124] hover:bg-[#F0F2F5] transition-colors"
+                        className="btn_text btn_text-medium icon_document-search"
                       >
                         미리보기
                       </button>
                       {/* 인용하기 button */}
                       <button
                         onClick={handleOpenCite}
-                        className="icon_double-quotes-fill-L flex items-center gap-[4px] px-[2px] h-[32px] rounded text-[17px] leading-[150%] text-[#1E2124] hover:bg-[#F0F2F5] transition-colors"
+                        className="btn_text btn_text-medium icon_double-quotes-fill-L"
                       >
                         인용하기
                       </button>

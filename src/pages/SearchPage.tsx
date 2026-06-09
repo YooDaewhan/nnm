@@ -228,7 +228,7 @@ function OpenSearchTextContent() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFC]">
-      <main className="max-w-[1280px] mx-auto px-4 pt-6 pb-14 md:py-10">
+      <main className="wrap mx-auto py-10">
 
         {/* ─── 데스크탑 전용: AI 검색결과 헤더 ─── */}
         <div className="hidden md:block">
