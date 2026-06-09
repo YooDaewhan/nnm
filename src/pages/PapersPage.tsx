@@ -549,16 +549,11 @@ function PaperDetailContent() {
                     {/* 저자정보 */}
                     {paper.authors && paper.authors.length > 0 && (
                       <MetaRow label="저자정보">
-                        <div className="flex items-center flex-wrap">
+                        <div className="meta-breadcrumb">
                           {paper.authors.map((a, i) => {
                             const name = typeof a === 'string' ? a : a.name;
                             return (
-                              <span key={i} className="inline-flex items-center">
-                                <span className="meta-value">{name}</span>
-                                {i < paper.authors.length - 1 && (
-                                  <span aria-hidden className="inline-block w-px h-[13px] bg-[#CDD1D5] mx-[12px]" />
-                                )}
-                              </span>
+                              <span key={i} className="meta-value author-divider">{name}</span>
                             );
                           })}
                         </div>
@@ -568,7 +563,7 @@ function PaperDetailContent() {
                     {/* 발행정보 : 발행기관 > 저널 > 권호 > 페이지 with arrow icons */}
                     {(paper.venue || paper.published_at || (paper as any).year) && (
                       <MetaRow label="발행정보">
-                        <div className="flex items-center flex-wrap gap-x-[6px]">
+                        <div className="meta-breadcrumb gap-x-[6px]">
                           {paper.provider && (
                             <>
                               {paper.provider.website_url ? (
@@ -642,12 +637,14 @@ function PaperDetailContent() {
                     {/* 발행년월 : YYYY.MM */}
                     {paper.published_at && (
                       <MetaRow label="발행년월">
-                        <span className="meta-value">
-                          {(() => {
-                            const d = new Date(paper.published_at);
-                            return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
-                          })()}
-                        </span>
+                        <div className="meta-breadcrumb">
+                          <span className="meta-value">
+                            {(() => {
+                              const d = new Date(paper.published_at);
+                              return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+                            })()}
+                          </span>
+                        </div>
                       </MetaRow>
                     )}
 

@@ -179,7 +179,11 @@ footer .copyright {
 }
 
 /* meta breadcrumb */
-.meta-breadcrumb {}
+.meta-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
 .meta-value { 
   display: inline-flex;
@@ -188,16 +192,16 @@ footer .copyright {
   color: var(--text-subtle);
 }
 
-/* .meta-value.author-divider:not(:first-of-type)::before {
+.meta-value.author-divider:not(:first-of-type)::before {
   content: "";
   width: 16px;
   height: 16px;
-  margin-right: 6px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%238A949E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' /%3E%3C/svg%3E");  background-repeat: no-repeat;
+  margin: 0 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cg clip-path='url(%23clip0_11037_235)'%3E%3Cpath d='M7.4668 14V2C7.4668 1.70545 7.70545 1.4668 8 1.4668C8.29455 1.4668 8.5332 1.70545 8.5332 2V14C8.5332 14.2946 8.29455 14.5332 8 14.5332C7.70545 14.5332 7.4668 14.2946 7.4668 14Z' fill='%238A949E'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_11037_235'%3E%3Crect width='16' height='16' fill='white'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-} */
+}
 
 
 .meta-value.journal-nav:not(:last-child):hover {
@@ -209,7 +213,7 @@ footer .copyright {
   width: 16px;
   height: 16px;
   margin-right: 6px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%238A949E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' /%3E%3C/svg%3E");  background-repeat: no-repeat;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%238A949E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' /%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
