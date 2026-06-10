@@ -602,13 +602,13 @@ export function SearchResultCard({
         </div>
 
         {/* 본문 */}
-        <div onClick={() => navigate(paperUrl)} className="flex-1 min-w-0">
+        <div onClick={() => navigate(paperUrl)} className="flex flex-col flex-1 min-w-0">
           {/* 뱃지 + 아이콘 3개 */}
-          <div className="flex items-center justify-between gap-4 mb-2">
+          <div className="flex items-start justify-between gap-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               {result.type && VENUE_TYPE_MAP[result.type] && (
                 <span
-                  className="badge badge-small"
+                  className="badge badge-medium"
                   style={{ background: VENUE_TYPE_MAP[result.type].bg, color: VENUE_TYPE_MAP[result.type].color }}
                 >
                   {VENUE_TYPE_MAP[result.type].label}
@@ -633,8 +633,33 @@ export function SearchResultCard({
                   <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-[11px] text-white bg-[#1E2124] rounded px-2 py-0.5 whitespace-nowrap pointer-events-none">복사됨</span>
                 )}
               </div>
-              <button onClick={handleScrap} disabled={scrapMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title={isScraped ? '보관함 해제' : '보관함 담기'}>
-                <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
+              <button 
+                onClick={handleScrap} 
+                disabled={scrapMutation.isPending} 
+                title={isScraped ? '보관함 해제' : '보관함 담기'} 
+                className="btn_icon-box icon-medium"
+              >
+                {isScraped ? (
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 24 24" 
+                    fill="#d63d4a" 
+                    style={{ width: 20, height: 20, display: 'block' }}
+                  >
+                    <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                  </svg>
+                ) : (
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    strokeWidth={1.5} 
+                    stroke="currentColor" 
+                    style={{ width: 20, height: 20, display: 'block' }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                )}
               </button>
               <button onClick={(e) => onAddToCart(e, result.id)} disabled={cartLoading} className={`${iconBtn} disabled:opacity-50`} title="장바구니 담기">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
@@ -645,14 +670,14 @@ export function SearchResultCard({
           </div>
 
           {/* 메타 + 구매 버튼 */}
-          <div className="flex items-start justify-between mb-2 gap-[80px]">
-            <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-[80px]">
+            <div className="flex flex-col flex-1 min-w-0 gap-1">
               {/* 제목 */}
-              <h4 className="text-[19px] font-bold mb-2">
+              <h4 className="text-[19px] font-semibold cursor-pointer">
                 {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
               </h4>
               
-              <div className="flex items-center gap-1 flex-wrap text-[13px] text-[#464C53] mb-1">
+              <div className="flex items-center gap-1 flex-wrap text-[15px] text-[#464C53]">
                 {result.authors && result.authors.length > 0 && (
                   <>
                     {result.authors.slice(0, 3).map((a: string, i: number) => (<span key={i}>{a}</span>))}

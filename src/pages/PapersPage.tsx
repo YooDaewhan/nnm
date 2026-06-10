@@ -44,7 +44,7 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
       <div className="flex-shrink-0 w-[100px]">
         <span className="papers-meta-label text-[17px] font-semibold leading-[150%] text-[#1E2124]">{label}</span>
       </div>
-      <div className="flex items-center flex-wrap gap-x-[6px]">{children}</div>
+      <div className="flex items-center flex-wrap">{children}</div>
     </div>
   );
 }
@@ -514,9 +514,35 @@ function PaperDetailContent() {
                         )}
                       </div>
                       {/* heart/scrap */}
-                      <button onClick={handleScrap} disabled={scrapMutation.isPending} title={isScraped ? '보관함 해제' : '보관함 담기'} className="btn_icon-box icon-large">
-                        <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={24} height={24} style={{ display: 'block' }} alt="보관함 담기" />
+                      <button 
+                        onClick={handleScrap} 
+                        disabled={scrapMutation.isPending} 
+                        title={isScraped ? '보관함 해제' : '보관함 담기'} 
+                        className="btn_icon-box icon-large"
+                      >
+                        {isScraped ? (
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            viewBox="0 0 24 24" 
+                            fill="#d63d4a" 
+                            style={{ width: 24, height: 24, display: 'block' }}
+                          >
+                            <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                          </svg>
+                        ) : (
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            strokeWidth={1.5} 
+                            stroke="currentColor" 
+                            style={{ width: 24, height: 24, display: 'block' }}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                          </svg>
+                        )}
                       </button>
+                      
                       {/* bag/cart */}
                       <button onClick={handleAddToCart} disabled={cartMutation.isPending} title="장바구니 담기" className="btn_icon-box icon-large">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
@@ -563,7 +589,7 @@ function PaperDetailContent() {
                     {/* 발행정보 : 발행기관 > 저널 > 권호 > 페이지 with arrow icons */}
                     {(paper.venue || paper.published_at || (paper as any).year) && (
                       <MetaRow label="발행정보">
-                        <div className="meta-breadcrumb gap-x-[6px]">
+                        <div className="meta-breadcrumb">
                           {paper.provider && (
                             <>
                               {paper.provider.website_url ? (
@@ -612,7 +638,7 @@ function PaperDetailContent() {
                                 ].filter(Boolean).join(' ');
                                 return (
                                   <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#8A949E" className="size-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#8A949E" className="size-4 mx-[2px]">
                                       <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                                     </svg>
                                     <span className="meta-value journal-nav">{issueLabel}</span>

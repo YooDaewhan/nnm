@@ -16,11 +16,10 @@ export function PublicationMeta({ metadata }: { metadata: Record<string, unknown
   const segments = [providerName, venueName, journal, volumeIssue, pageRange].filter(Boolean) as string[];
   if (segments.length === 0) return null;
   return (
-    <div className="flex items-center gap-1 flex-wrap text-[14px] text-[#6B7280]">
+    <div className="meta-breadcrumb">
       {segments.map((seg, i) => (
-        <span key={i} className="flex items-center gap-1">
+        <span key={i} className="meta-value journal-nav text-[15px]" style={{ margin: 0 }}>
           {seg}
-          {i < segments.length - 1 && <span className="text-[#CDD1D5]">›</span>}
         </span>
       ))}
     </div>
