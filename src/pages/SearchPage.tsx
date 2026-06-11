@@ -45,7 +45,11 @@ function OpenSearchTextContent() {
       size: itemsPerPage,
       sort: submittedState!.sort,
       filters: (submittedState!.filters.year_from || submittedState!.filters.year_to || submittedState!.filters.journal)
-        ? submittedState!.filters
+        ? {
+            year_from: submittedState!.filters.year_from,
+            year_to: submittedState!.filters.year_to,
+            journal: submittedState!.filters.journal,
+          }
         : undefined,
     }),
     enabled: submittedState !== null,
