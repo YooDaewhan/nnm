@@ -27,6 +27,11 @@ export default defineConfig({
         target: 'http://192.168.20.231:8000',
         changeOrigin: true,
       },
+      '/api': {
+        target: 'https://api.newnonmun.com',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   preview: {
