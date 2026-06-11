@@ -395,7 +395,7 @@ export function SearchResultCard({
   };
 
   /* ── 아이콘 버튼 공통 클래스 (데스크탑) ── */
-  const iconBtn = 'w-8 h-8 flex items-center justify-center rounded-md text-[#8A949E] hover:text-[#1E2124] hover:bg-[#F4F5F6] transition-colors';
+  const iconBtn = 'btn_icon-box icon-medium';
 
   /* ───────────────────────────────────────────────────────
      모바일 카드 (Figma: article-list__mo / Type=box-mo)
@@ -760,28 +760,31 @@ export function SearchResultCard({
         </div>
 
         {/* 본문 */}
-        <div onClick={() => navigate(paperUrl)} className="flex-1 min-w-0 cursor-pointer">
+        <div onClick={() => navigate(paperUrl)} className="flex flex-col flex-1 min-w-0">
           {/* 뱃지 + 아이콘 3개 */}
-          <div className="flex items-center justify-between gap-4 mb-2">
+          <div className="flex items-start justify-between gap-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               {result.type && VENUE_TYPE_MAP[result.type] && (
                 <span
-                  className="inline-flex items-center h-[22px] px-2.5 text-[12px] font-medium rounded-full"
+                  className="badge badge-medium"
                   style={{ background: VENUE_TYPE_MAP[result.type].bg, color: VENUE_TYPE_MAP[result.type].color }}
                 >
                   {VENUE_TYPE_MAP[result.type].label}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <div className="relative">
-                <button type="button" onClick={handleShareToggle} className={iconBtn} title="공유하기">
+                <button type="button" onClick={handleShare} className={iconBtn} title="URL복사">
                   {copied ? (
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path d="M4 10L8.5 14.5L16 6" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
-                    <img src="/svg/share-android.svg" width={20} height={20} style={{ display: 'block' }} alt="공유하기" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+                    </svg>
+
                   )}
                 </button>
                 {copied && (
@@ -789,26 +792,51 @@ export function SearchResultCard({
                 )}
                 {shareMenuOpen && renderShareMenu()}
               </div>
-              <button onClick={handleScrap} disabled={scrapMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title={localScraped ? '보관함 해제' : '보관함 담기'}>
-                <img src={localScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
+              <button 
+                onClick={handleScrap} 
+                disabled={scrapMutation.isPending} 
+                title={isScraped ? '보관함 해제' : '보관함 담기'} 
+                className="btn_icon-box icon-medium"
+              >
+                {isScraped ? (
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 24 24" 
+                    fill="#d63d4a" 
+                    style={{ width: 20, height: 20, display: 'block' }}
+                  >
+                    <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                  </svg>
+                ) : (
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    strokeWidth={1.5} 
+                    stroke="currentColor" 
+                    style={{ width: 20, height: 20, display: 'block' }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                )}
               </button>
-              {(result.price ?? result.metadata?.price ?? 0) > 0 && !isPurchased && (
-                <button onClick={handleCart} disabled={cartMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title={localInCart ? '장바구니 제거' : '장바구니 담기'}>
-                  <img src={localInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
-                </button>
-              )}
+              <button onClick={(e) => onAddToCart(e, result.id)} disabled={cartLoading} className={`${iconBtn} disabled:opacity-50`} title="장바구니 담기">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          {/* 제목 */}
-          <h4 className="text-[16px] font-bold text-[#1E2124] leading-[1.5em] mb-2">
-            {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
-          </h4>
-
           {/* 메타 + 구매 버튼 */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1 flex-wrap text-[13px] text-[#464C53] mb-1">
+          <div className="flex items-center justify-between gap-[80px]">
+            <div className="flex flex-col flex-1 min-w-0 gap-1">
+              {/* 제목 */}
+              <h4 className="text-[19px] font-semibold cursor-pointer">
+                {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
+              </h4>
+              
+              <div className="flex items-center gap-1 flex-wrap text-[15px] text-[#464C53]">
                 {result.authors && result.authors.length > 0 && (
                   <>
                     {result.authors.slice(0, 3).map((a: string, i: number) => (<span key={i}>{a}</span>))}
@@ -826,34 +854,42 @@ export function SearchResultCard({
           <div className="flex md:hidden justify-end mt-4">{renderPurchaseButtons()}</div>
 
           {/* 하단 액션 버튼 */}
-          <div className="hidden md:flex items-center border-t border-[#F4F5F6] pt-2.5 mt-3" onClick={(e) => e.stopPropagation()}>
+          <div className="hidden md:flex items-centerm pt-2 gap-4" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={(e) => { e.stopPropagation(); setPreviewOpen(true); }}
-              className="flex items-center gap-1 pr-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors"
-            >
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                <path d="M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-                <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.4" />
-              </svg>
+              className="btn_text btn_text-small icon_document-search">
               미리보기
             </button>
-            <div className="w-px h-3 bg-[#CDD1D5]" />
             <button
               onClick={(e) => { e.stopPropagation(); if (result.abstract) setExpanded(v => !v); }}
-              className={`flex items-center gap-1 px-3 text-[13px] transition-colors ${result.abstract ? 'text-[#464C53] hover:text-[#256EF4]' : 'text-[#CDD1D5] cursor-default'}`}
+              className="btn_text btn_text-small icon_document-text"
+              style={{ gap: '4px' }} /* 글자와 화살표 사이의 간격 조정 */
             >
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M4.5 6H11.5M4.5 9.5H8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-              {!result.abstract ? '초록 없음' : expanded ? '접기' : '초록보기'}
+              {!result.abstract ? (
+                '초록 없음'
+              ) : (
+                <>
+                  초록보기
+                  {/* 꺾쇠 아이콘: expanded 상태에 따라 180도 회전 애니메이션 적용 */}
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    strokeWidth="2.5" 
+                    stroke="currentColor" 
+                    style={{ 
+                      width: '12px', 
+                      height: '12px', 
+                      transition: 'transform 0.15s ease-in-out',
+                      transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' 
+                    }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </>
+              )}
             </button>
-            <div className="w-px h-3 bg-[#CDD1D5]" />
-            <button onClick={handleOpenCite} className="flex items-center gap-1 px-3 text-[13px] text-[#464C53] hover:text-[#256EF4] transition-colors">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                <path d="M2.5 5.5C2.5 4.67 3.17 4 4 4H5.5V7.5H2.5V5.5ZM8.5 5.5C8.5 4.67 9.17 4 10 4H11.5V7.5H8.5V5.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-                <path d="M2.5 7.5V12H5.5V7.5M8.5 7.5V12H11.5V7.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-              </svg>
+            <button onClick={handleOpenCite} className="btn_text btn_text-small icon_double-quotes-fill-L">
               인용하기
             </button>
           </div>

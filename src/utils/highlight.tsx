@@ -6,7 +6,7 @@ export function highlightText(text: string, terms: string[]): React.ReactNode {
   const parts = text.split(regex);
   return parts.map((part, i) =>
     i % 2 === 1
-      ? <span key={i} className="text-[#E32929] font-bold">{part}</span>
+      ? <span key={i} className="text-[#D63D4A] font-semibold">{part}</span>
       : part
   );
 }

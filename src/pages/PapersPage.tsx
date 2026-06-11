@@ -44,7 +44,7 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
       <div className="flex-shrink-0 w-[100px]">
         <span className="papers-meta-label text-[17px] font-semibold leading-[150%] text-[#1E2124]">{label}</span>
       </div>
-      <div className="flex items-center flex-wrap gap-x-[6px]">{children}</div>
+      <div className="flex items-center flex-wrap">{children}</div>
     </div>
   );
 }
@@ -464,7 +464,7 @@ function PaperDetailContent() {
             .papers-section-heading { font-size: 22px !important; }
             .papers-badge { font-size: 15px !important; height: 24px !important; }
             .papers-meta-label { font-size: 15px !important; }
-            .papers-meta-value { font-size: 15px !important; }
+            .meta-value { font-size: 15px !important; }
             .papers-body-text { font-size: 15px !important; }
             .papers-btn-row { flex-direction: column !important; gap: 16px !important; }
             .papers-btn-pay-box { width: 100% !important; justify-content: flex-end !important; }
@@ -472,8 +472,8 @@ function PaperDetailContent() {
           }
         `}</style>
 
-        {/* wrap : max-w 1280px, padding 0 16px, gap 48px */}
-        <div className="w-full max-w-[1280px] px-4 flex flex-col gap-[48px]">
+        {/* wrap */}
+        <div className="wrap flex flex-col gap-[48px]">
 
           {/* breadcrumb : display none on PC per CSS spec */}
           {paper && (
@@ -545,20 +545,17 @@ function PaperDetailContent() {
                   <div className="flex flex-row justify-between items-center">
                     {/* badge-box : gap 8px — 자료유형(info) + 등재정보(primary) */}
                     <div className="flex flex-row items-center gap-[8px]">
-                      {/* 자료유형 배지 : bg #E7F4FE, text #096AB3 */}
+                      {/* 자료유형 배지 */}
                       {(() => {
                         const key = paper.venue?.type?.trim().toLowerCase();
                         const label = (key && AWARD_BADGE_MAP[key]?.label) || '논문';
                         return (
-                          <span
-                            className="papers-badge inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
-                            style={{ background: '#E7F4FE', color: '#096AB3' }}
-                          >
+                          <span className="badge badge-arge badge-primary">
                             {label}
                           </span>
                         );
                       })()}
-                      {/* 등재정보 배지 : bg #ECF2FE, text #0B50D0 */}
+                      {/* 등재정보 배지 */}
                       {(() => {
                         const idx = paper.indexing;
                         const indexLabel =
@@ -567,10 +564,7 @@ function PaperDetailContent() {
                           (paper.venue?.settings?.kci ? 'KCI등재' : null);
                         if (!indexLabel) return null;
                         return (
-                          <span
-                            className="papers-badge inline-flex items-center justify-center px-[8px] h-[32px] rounded text-[17px] leading-[150%] font-normal"
-                            style={{ background: '#ECF2FE', color: '#0B50D0' }}
-                          >
+                          <span className="badge badge-large badge-color-primary">
                             {indexLabel}
                           </span>
                         );
@@ -578,17 +572,17 @@ function PaperDetailContent() {
                     </div>
 
                     {/* btn-icon-box : share, heart, bag icons (gap 16px) */}
-                    <div className="flex flex-row justify-end items-center gap-[16px]">
+                    <div className="flex flex-row justify-end items-center gap-[8px]">
                       {/* share */}
                       <div className="relative">
-                        <button onClick={handleShareToggle} title="공유하기" className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors">
+                        <button onClick={handleShare} title="URL복사" className="btn_icon-box icon-large">
                           {copied ? (
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                               <path d="M5 12l5 5L19 7" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           ) : (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                              <path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                             </svg>
                           )}
                         </button>
@@ -598,15 +592,41 @@ function PaperDetailContent() {
                         {shareMenuOpen && renderShareMenu()}
                       </div>
                       {/* heart/scrap */}
-                      <button onClick={handleScrap} disabled={scrapMutation.isPending} title={isScraped ? '보관함 해제' : '보관함 담기'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
-                        <img src={isScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={24} height={24} style={{ display: 'block' }} alt="보관함 담기" />
+                      <button 
+                        onClick={handleScrap} 
+                        disabled={scrapMutation.isPending} 
+                        title={isScraped ? '보관함 해제' : '보관함 담기'} 
+                        className="btn_icon-box icon-large"
+                      >
+                        {isScraped ? (
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            viewBox="0 0 24 24" 
+                            fill="#d63d4a" 
+                            style={{ width: 24, height: 24, display: 'block' }}
+                          >
+                            <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                          </svg>
+                        ) : (
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            strokeWidth={1.5} 
+                            stroke="currentColor" 
+                            style={{ width: 24, height: 24, display: 'block' }}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                          </svg>
+                        )}
                       </button>
+                      
                       {/* bag/cart */}
-                      {paper.price !== 0 && (
-                        <button onClick={handleAddToCart} disabled={cartMutation.isPending} title={isInCart ? '장바구니 제거' : '장바구니 담기'} className="flex items-center justify-center w-[28px] h-[40px] rounded-[6px] hover:bg-[#F0F2F5] transition-colors disabled:opacity-50">
-                          <img src={isInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={24} height={24} style={{ display: 'block' }} alt="장바구니 담기" />
-                        </button>
-                      )}
+                      <button onClick={handleAddToCart} disabled={cartMutation.isPending} title="장바구니 담기" className="btn_icon-box icon-large">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
 
@@ -633,16 +653,11 @@ function PaperDetailContent() {
                     {/* 저자정보 */}
                     {paper.authors && paper.authors.length > 0 && (
                       <MetaRow label="저자정보">
-                        <div className="flex items-center flex-wrap">
+                        <div className="meta-breadcrumb">
                           {paper.authors.map((a, i) => {
                             const name = typeof a === 'string' ? a : a.name;
                             return (
-                              <span key={i} className="inline-flex items-center">
-                                <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{name}</span>
-                                {i < paper.authors.length - 1 && (
-                                  <span aria-hidden className="inline-block w-px h-[13px] bg-[#8A949E] mx-[8px]" />
-                                )}
-                              </span>
+                              <span key={i} className="meta-value author-divider">{name}</span>
                             );
                           })}
                         </div>
@@ -652,21 +667,17 @@ function PaperDetailContent() {
                     {/* 발행정보 : 발행기관 > 저널 > 권호 > 페이지 with arrow icons */}
                     {(paper.venue || paper.published_at || (paper as any).year) && (
                       <MetaRow label="발행정보">
-                        <div className="flex items-center flex-wrap gap-x-[6px]">
+                        <div className="meta-breadcrumb">
                           {paper.provider && (
                             <>
                               {paper.provider.website_url ? (
                                 <a href={/^https?:\/\//i.test(paper.provider.website_url) ? paper.provider.website_url : `https://${paper.provider.website_url}`} target="_blank" rel="noopener noreferrer"
-                                  className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline">
+                                  className="meta-value journal-nav">
                                   {paper.provider.name}
                                 </a>
                               ) : (
-                                <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{paper.provider.name}</span>
+                                <span className="meta-value journal-nav">{paper.provider.name}</span>
                               )}
-                              {/* arrow-to-right icon 16px, stroke #CDD1D5 */}
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
                             </>
                           )}
                           {paper.venue && (
@@ -683,12 +694,12 @@ function PaperDetailContent() {
                                 return journalTo ? (
                                   <Link
                                     to={journalTo}
-                                    className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline"
+                                    className="meta-value journal-nav"
                                   >
                                     {paper.venue.name}
                                   </Link>
                                 ) : (
-                                  <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
+                                  <span className="meta-value journal-nav">
                                     {paper.venue.name}
                                   </span>
                                 );
@@ -705,19 +716,16 @@ function PaperDetailContent() {
                                 ].filter(Boolean).join(' ');
                                 return (
                                   <>
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                      <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#8A949E" className="size-4 mx-[2px]">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                                     </svg>
-                                    <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">{issueLabel}</span>
+                                    <span className="meta-value journal-nav">{issueLabel}</span>
                                   </>
                                 );
                               })()}
                               {(paper.page_start || paper.page_end) && (
                                 <>
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                                    <path d="M6.17 3.67l4.33 4.33-4.33 4.33" stroke="#CDD1D5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                  <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
+                                  <span className="meta-value journal-nav">
                                     {paper.page_start && paper.page_end
                                       ? `pp.${paper.page_start}-${paper.page_end}`
                                       : paper.page_start ? `p.${paper.page_start}` : ''}
@@ -733,12 +741,14 @@ function PaperDetailContent() {
                     {/* 발행년월 : YYYY.MM */}
                     {paper.published_at && (
                       <MetaRow label="발행년월">
-                        <span className="papers-meta-value text-[17px] leading-[150%] text-[#464C53]">
-                          {(() => {
-                            const d = new Date(paper.published_at);
-                            return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
-                          })()}
-                        </span>
+                        <div className="meta-breadcrumb">
+                          <span className="meta-value">
+                            {(() => {
+                              const d = new Date(paper.published_at);
+                              return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+                            })()}
+                          </span>
+                        </div>
                       </MetaRow>
                     )}
 
@@ -749,7 +759,7 @@ function PaperDetailContent() {
                           href={`https://doi.org/${paper.doi}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="papers-meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline break-all"
+                          className="meta-value text-[17px] leading-[150%] text-[#464C53] hover:underline break-all"
                         >
                           {paper.doi}
                         </a>
@@ -764,28 +774,15 @@ function PaperDetailContent() {
                       {/* 미리보기 button : h-32px, rounded-[4px], gap 4px, font 17px */}
                       <button
                         onClick={() => { console.log('[미리보기] 클릭 paper:', paper?.id, 'previewOpen:', previewOpen); setPreviewOpen(true); }}
-                        className="flex items-center gap-[4px] px-[2px] h-[32px] rounded text-[17px] leading-[150%] text-[#1E2124] hover:bg-[#F0F2F5] transition-colors"
+                        className="btn_text btn_text-medium icon_document-search"
                       >
-                        {/* document-search icon 20px */}
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                          <rect x="3.5" y="2.5" width="10" height="13" rx="1.2" stroke="#33363D" strokeWidth="1.6" />
-                          <line x1="6" y1="7" x2="11" y2="7" stroke="#33363D" strokeWidth="1.1" strokeLinecap="round" />
-                          <line x1="6" y1="10" x2="9" y2="10" stroke="#33363D" strokeWidth="1.1" strokeLinecap="round" />
-                          <circle cx="14" cy="14" r="3" stroke="#33363D" strokeWidth="1.6" />
-                          <line x1="16.5" y1="16.5" x2="18" y2="18" stroke="#33363D" strokeWidth="1.6" strokeLinecap="round" />
-                        </svg>
                         미리보기
                       </button>
                       {/* 인용하기 button */}
                       <button
                         onClick={handleOpenCite}
-                        className="flex items-center gap-[4px] px-[2px] h-[32px] rounded text-[17px] leading-[150%] text-[#1E2124] hover:bg-[#F0F2F5] transition-colors"
+                        className="btn_text btn_text-medium icon_double-quotes-fill-L"
                       >
-                        {/* double-quotes icon 20px */}
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                          <path d="M5 8.5C5 7 6 6 7.5 6H8v2H7.5C7.2 8 7 8.2 7 8.5V9h1.5v3.5H5V8.5z" fill="#33363D" />
-                          <path d="M11.5 8.5C11.5 7 12.5 6 14 6h.5v2H14c-.3 0-.5.2-.5.5V9H15v3.5h-3.5V8.5z" fill="#33363D" />
-                        </svg>
                         인용하기
                       </button>
                     </div>
@@ -907,12 +904,12 @@ function PaperDetailContent() {
                       {paper.references.map((ref, idx) => {
                         const text = typeof ref === 'string' ? ref : (ref as { raw_text?: string }).raw_text ?? '';
                         return (
-                          <div key={idx}>
-                            <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] py-[12px]">
+                          <ol key={idx}>
+                            <li className="papers-body-text text-[13px] font-normal leading-[150%] text-[#464C53] py-[8px]">
                               {renderTextWithLinks(text)}
-                            </p>
-                            <div className="w-full h-px bg-[#CDD1D5]" />
-                          </div>
+                            </li>
+                            <div className="w-full h-px border-t-1 border-dashed bg-[#CDD1D5]" />
+                          </ol>
                         );
                       })}
                     </div>

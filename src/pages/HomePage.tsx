@@ -1090,6 +1090,13 @@ const SIMS_SERVICES = [
     href: 'https://sims.newnonmun.com/',
     image: '/images/sims-07.png' as string | null,
   },
+  // {
+  //   id: 8,
+  //   title: '학술대회 관리',
+  //   description: '간단한 설명이 들어가는 영역입니다. 최대 3줄까지 작성합니다.',
+  //   href: 'https://sims.newnonmun.com/',
+  //   image: null as string | null,
+  // },
 ];
 
 function SimsSection({ isMobile, navigate: _navigate }: { isMobile: boolean; navigate: ReturnType<typeof useNavigate> }) {
