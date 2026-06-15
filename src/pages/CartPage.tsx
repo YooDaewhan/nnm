@@ -67,7 +67,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F5F6]">
+    <div className="min-h-screen">
       <div className="flex justify-center py-10">
         <div className="w-full max-w-[1280px] px-4">
       {/* 장바구니 영역 */}
@@ -112,10 +112,10 @@ export default function CartPage() {
           </div>
 
           {/* 설명 박스 */}
-          <div className="px-6 py-6 bg-[#EEF2F7] rounded-xl">
-            <p className="text-[19px] leading-[1.5] text-[#1E2124]">
+          <div className="infobox primary">
+            <div className='infobox-title'>
               장바구니에 담긴 논문은 30일간 보관됩니다
-            </p>
+            </div>
           </div>
         </div>
 
@@ -257,21 +257,28 @@ export default function CartPage() {
         </div>
 
         {/* 이용 기간 및 환불 안내 */}
-        <div className="bg-[#EEF2F7] rounded-xl px-6 py-6 space-y-2">
-          <p className="text-[19px] font-bold leading-[1.5] text-[#D63D4A]">
-            이용 기간 및 환불 안내
-          </p>
-          <p className="text-[17px] leading-[1.5] text-[#1E2124]">
-            다운로드 기간: 구매하신 논문은 [구매내역]에서 결제일로부터 5일간 다운로드하실 수 있습니다.
-          </p>
-          <p className="text-[17px] leading-[1.5] text-[#1E2124]">
-            취소 및 환불: 디지털 콘텐츠 특성상 결제 후에는 원칙적으로 취소 및 환불이 불가합니다. 단, 아래의 경우 고객센터로 문의해 주시면 즉시 확인해 드리겠습니다.
-          </p>
-          <p className="text-[17px] leading-[1.5] text-[#1E2124] pl-4">
-            구매한 정보와 다른 논문이 다운로드된 경우<br />
-            파일에 손상이 있거나 내용을 확인하기 어려운 경우<br />
-            시스템 문제로 72시간 이내에 정상적인 다운로드가 되지 않은 경우
-          </p>
+        <div className="infobox secondary">
+          <div className='infobox-title'>
+            <div>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-5">
+                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 0 1 .67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 1 1-.671-1.34l.041-.022ZM12 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              이용 기간 및 환불 안내
+            </div>
+          </div>
+          <div className='infobox-text'>
+            <div>
+              다운로드 기간: 구매하신 논문은 [구매내역]에서 결제일로부터 5일간 다운로드하실 수 있습니다.<br/>
+              취소 및 환불: 디지털 콘텐츠 특성상 결제 후에는 원칙적으로 취소 및 환불이 불가합니다. 단, 아래의 경우 고객센터로 문의해 주시면 즉시 확인해 드리겠습니다.
+            </div>          
+            <ul className='infobox-list'>
+              <li>구매한 정보와 다른 논문이 다운로드된 경우</li>
+              <li>파일에 손상이 있거나 내용을 확인하기 어려운 경우</li>
+              <li>시스템 문제로 72시간 이내에 정상적인 다운로드가 되지 않은 경우</li>
+            </ul>
+          </div>
         </div>
       </div>
         </div>

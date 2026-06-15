@@ -92,10 +92,10 @@ export default function MyPageRecentPage() {
                 onClick={() => navigate(`/papers/${paper.id}`)}
                 className="flex flex-col gap-1 px-4 sm:px-8 py-4 sm:py-5 hover:bg-[#FAFAFC] transition-colors cursor-pointer"
               >
-                <p className="text-[17px] font-bold leading-[1.5em] text-[#1E2124] line-clamp-2">
+                <p className="text-[17px] font-semibold line-clamp-2">
                   {paper.title}
                 </p>
-                <div className="flex items-center flex-wrap gap-2 text-[15px] text-[#8A949E]">
+                <div className="flex items-center flex-wrap gap-0 text-[15px] text-[#464C53] meta-breadcrumb">
                   {paper.authors.length > 0 && (
                     <span>
                       {paper.authors.slice(0, 3).join(', ')}
@@ -104,18 +104,17 @@ export default function MyPageRecentPage() {
                   )}
                   {paper.venue && (
                     <>
-                      <span>·</span>
-                      <span>{paper.venue}</span>
+                      {/* <span className="w-[1px] h-3 bg-[#B1B8BE]">
+                      </span> */}
+                      <span className='meta-value author-divider'>{paper.venue}</span>
                     </>
                   )}
                   {paper.published_at && (
                     <>
-                      <span>·</span>
-                      <span>{new Date(paper.published_at).getFullYear()}</span>
+                      <span className='meta-value author-divider'>{new Date(paper.published_at).getFullYear()}</span>
                     </>
                   )}
-                  <span>·</span>
-                  <span>{new Date(paper.viewedAt).toLocaleDateString('ko-KR')}</span>
+                  <span className='meta-value author-divider'>{new Date(paper.viewedAt).toLocaleDateString('ko-KR')}</span>
                 </div>
               </div>
             ))}
