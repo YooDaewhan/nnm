@@ -176,19 +176,20 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
                       return (
                         <button
                           key={p.id}
+                          title={p.name}
                           onClick={() => setFilters(prev => ({
                             ...prev,
                             providerName: isSelected
                               ? prev.providerName.filter(n => n !== p.name)
                               : [...prev.providerName, p.name],
                           }))}
-                          className={`h-8 px-3 rounded-full text-[13px] font-normal transition-colors border ${
+                          className={`h-8 px-3 rounded-full text-[13px] font-normal transition-colors border whitespace-nowrap max-w-[160px] overflow-hidden text-ellipsis ${
                             isSelected
                               ? 'bg-[#ECF2FE] text-[#0B50D0] border-[#256EF4]'
                               : 'bg-white text-[#464C53] border-[#CDD1D5] hover:border-[#256EF4]'
                           }`}
                         >
-                          {p.name}
+                          {p.abbr || p.name}
                         </button>
                       );
                     })}
