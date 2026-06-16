@@ -1,5 +1,3 @@
-const API_BASE = 'http://125.129.246.231/api';
-
 function escapeAttr(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -126,6 +124,7 @@ function injectMeta(html, paper, pageUrl) {
 
 export default {
   async fetch(request, env) {
+    const API_BASE = ((env.VITE_API_URL || 'http://125.129.246.231').replace(/\/$/, '')) + '/api';
     const url = new URL(request.url);
     const { pathname } = url;
 
