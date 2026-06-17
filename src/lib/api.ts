@@ -77,7 +77,6 @@ class ApiClient {
       });
     } catch (error) {
       // 백엔드 오류는 무시 (프론트엔드에서 토큰만 삭제하면 됨)
-      console.warn('백엔드 로그아웃 실패 (무시):', error);
     } finally {
       // 항상 로컬 토큰 삭제
       if (typeof window !== 'undefined') {

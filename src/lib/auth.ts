@@ -8,8 +8,7 @@ export const decodeJWT = (token: string) => {
       return payload;
     }
     return null;
-  } catch (e) {
-    console.error('JWT 디코딩 실패:', e);
+  } catch {
     return null;
   }
 };

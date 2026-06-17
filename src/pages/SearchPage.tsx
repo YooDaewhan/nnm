@@ -82,9 +82,6 @@ function OpenSearchTextContent() {
 
   useEffect(() => { setSelectedIds(new Set()); }, [data]);
 
-  useEffect(() => {
-    if (data) console.log(data);
-  }, [data]);
 
   const scrapIds = searchResults.map(r => r.id);
   const { data: publicationsStatus = {} } = useQuery({

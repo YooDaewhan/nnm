@@ -62,12 +62,9 @@ export const getPurchaseLibrary = async (params?: GetPurchaseLibraryParams): Pro
   }
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('구매 목록 API 오류:', response.status, errorText);
     throw new Error(`구매 목록 조회에 실패했습니다. (${response.status})`);
   }
 
   const json = await response.json();
-  console.log('📦 purchase/library 원본 응답:', JSON.stringify(json, null, 2));
   return json;
 };

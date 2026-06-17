@@ -44,7 +44,6 @@ export const getCart = async (): Promise<CartItem[]> => {
   }
 
   const json = await response.json();
-  console.log('[cart] raw API response:', json);
   const items: Array<Record<string, unknown>> = json.cart?.items ?? [];
   return items.map(item => ({
     id: item.id as number,

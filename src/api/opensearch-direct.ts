@@ -131,8 +131,6 @@ export async function osSearchText(params: OsSearchTextParams): Promise<OpenSear
     };
   };
 
-  console.log('[osSearchText] raw hits:', json.hits.hits);
-
   const results = json.hits.hits.map((hit) => ({
     id: hit._source.publication_uuid ?? hit._id,
     title: hit._source.title ?? '',
@@ -250,7 +248,6 @@ export async function osGetPaperById(id: string): Promise<OSPaperDetail> {
   if (!json.found) throw new Error('논문을 찾을 수 없습니다.');
 
   const src = json._source;
-  console.log('[osGetPaperById] _source:', src);
 
   const rawAuthors: string[] = Array.isArray(src.authors)
     ? src.authors

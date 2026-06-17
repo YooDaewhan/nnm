@@ -134,7 +134,6 @@ function PayPageContent() {
           setCartItems(items);
         })
         .catch((err) => {
-          console.error('장바구니 조회 실패:', err);
           if (err.message === '인증이 필요합니다.' || err.message === '인증되지 않았습니다.') {
             navigate('/login?redirect=/pay');
           } else {
@@ -146,8 +145,7 @@ function PayPageContent() {
 
     loadTossPaymentsScript()
       .then(() => setSdkLoaded(true))
-      .catch((err) => {
-        console.error('SDK 로드 실패:', err);
+      .catch(() => {
         setError('결제 시스템을 불러오는데 실패했습니다.');
       });
   }, [authChecked, navigate, isDirect]);
@@ -170,8 +168,6 @@ function PayPageContent() {
 
       const firstItem = displayItems[0].title;
       const orderName = displayItems.length > 1 ? `${firstItem} 외 ${displayItems.length - 1}건` : firstItem;
-
-      console.log('[PayPage] displayItems:', displayItems.map(i => ({ id: i.id, publication_id: i.publication_id, title: i.title })));
 
       const orderResponse = await createOrder({
         order_name: orderName,
@@ -205,7 +201,6 @@ function PayPageContent() {
       });
       if (isDirect) sessionStorage.removeItem('directBuyItem');
     } catch (err) {
-      console.error('결제 오류:', err);
       setError(err instanceof Error ? err.message : '결제 처리 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);

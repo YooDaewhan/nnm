@@ -138,13 +138,7 @@ export const createOrder = async (data: CreateOrderRequest): Promise<CreateOrder
   }
 
   let errorBody = '';
-  try {
-    errorBody = await response.text();
-    console.error('주문 생성 실패 응답:', response.status, errorBody);
-  } catch {
-    // ignore
-  }
-
+  try { errorBody = await response.text(); } catch { /* ignore */ }
   throw new Error(`주문 생성에 실패했습니다. (${response.status})${errorBody ? ': ' + errorBody : ''}`);
 };
 
@@ -183,9 +177,6 @@ export const confirmPayment = async (data: ConfirmPaymentRequest): Promise<Confi
     throw new Error(errorData.message);
   }
 
-  // 디버깅: 예상치 못한 상태 코드
-  const errorText = await response.text();
-  console.error('결제 확인 실패:', response.status, errorText);
   throw new Error(`결제 확인에 실패했습니다. (${response.status})`);
 };
 

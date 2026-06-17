@@ -140,7 +140,6 @@ function PaymentSuccessContent() {
           sessionStorage.removeItem('pendingCartItemIds');
         }
       } catch (err) {
-        console.error('결제 승인 오류:', err);
         setError(err instanceof Error ? err.message : '결제 승인에 실패했습니다.');
       } finally {
         setLoading(false);

@@ -50,7 +50,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
   }, []);
 
   const handleLogout = async () => {
-    try { await apiClient.logout(); } catch (err) { console.error(err); }
+    try { await apiClient.logout(); } catch { /* ignore */ }
     finally {
       removeToken();
       localStorage.removeItem('user_data');

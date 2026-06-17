@@ -34,7 +34,6 @@ function ProviderDetailContent() {
     }
 
     const url = `http://192.168.20.60:8055/api/providers/${numId}`;
-    console.log('Fetching:', url);
 
     fetch(url)
       .then(async (res) => {

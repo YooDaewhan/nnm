@@ -30,9 +30,7 @@ export function useBulkActions(
     try {
       await navigator.clipboard.writeText(citations);
       alert('인용 정보가 복사되었습니다.');
-    } catch (e) {
-      console.error('복사 실패', e);
-    }
+    } catch { /* ignore */ }
   };
 
   const handleBulkBuy = async () => {

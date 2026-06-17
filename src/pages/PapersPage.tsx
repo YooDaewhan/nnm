@@ -289,20 +289,6 @@ function PaperDetailContent() {
   useEffect(() => {
     if (paper && loggedPaperIdRef.current !== paper.id) {
       loggedPaperIdRef.current = paper.id;
-      console.log('[PaperDetail] 전체 응답:', paper);
-      console.log('[PaperDetail] table_of_contents:', paper.table_of_contents);
-      console.log('[PaperDetail] abstract:', paper.abstract);
-      console.log('[PaperDetail] abstract_en:', paper.abstract_en);
-      console.log('[PaperDetail] keywords:', paper.keywords);
-      console.log('[PaperDetail] keywords_en:', (paper as OSPaperDetail).keywords_en);
-      console.log('[PaperDetail] references:', paper.references);
-      console.log('[PaperDetail] body_content:', paper.body_content);
-      console.log('[PaperDetail] venue (전체):', JSON.stringify(paper.venue));
-      console.log('[PaperDetail] venue.type:', paper.venue?.type);
-      console.log('[PaperDetail] venue.settings.award:', paper.venue?.settings?.award);
-      console.log('[PaperDetail] cover_url (paper):', paper.cover_url);
-      console.log('[PaperDetail] cover_url (venue):', paper.venue?.cover_url);
-      console.log('[PaperDetail] JSON:', JSON.stringify(paper));
       addRecentPaper({
         id: paper.id,
         title: paper.title,
@@ -311,7 +297,6 @@ function PaperDetailContent() {
         venue: typeof paper.venue === 'string' ? paper.venue : paper.venue?.name,
       });
     }
-    if (fetchError) console.error('[PapersPage] error:', fetchError);
   }, [paper, fetchError]);
 
   const isPurchased = paper?.price === 0 || (loggedIn && (id ? (publicationStatus?.[id]?.purchased ?? false) : false));
@@ -773,7 +758,7 @@ function PaperDetailContent() {
                     <div className="papers-btn-icon-left flex flex-row items-center gap-[16px]">
                       {/* 미리보기 button : h-32px, rounded-[4px], gap 4px, font 17px */}
                       <button
-                        onClick={() => { console.log('[미리보기] 클릭 paper:', paper?.id, 'previewOpen:', previewOpen); setPreviewOpen(true); }}
+                        onClick={() => setPreviewOpen(true)}
                         className="btn_text btn_text-medium icon_document-search"
                       >
                         미리보기
