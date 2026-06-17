@@ -292,19 +292,20 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
       {/* row-1 : 뱃지 */}
       <div style={{ display: 'flex', gap: 8 }}>
         <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: 20,
-            fontSize: 13,
-            fontWeight: 400,
-            color: paper.badgeColor,
-            background: paper.badgeBg,
-            borderRadius: 4,
-            padding: '0 8px',
-            lineHeight: 1.5,
-          }}
+          className='badge badge-small badge-primary'
+          // style={{
+          //   display: 'inline-flex',
+          //   alignItems: 'center',
+          //   justifyContent: 'center',
+          //   height: 20,
+          //   fontSize: 13,
+          //   fontWeight: 400,
+          //   color: paper.badgeColor,
+          //   background: paper.badgeBg,
+          //   borderRadius: 4,
+          //   padding: '0 8px',
+          //   lineHeight: 1.5,
+          // }}
         >
           {paper.badge}
         </span>
@@ -348,14 +349,14 @@ function PaperCard({ paper, isMobile }: { paper: Paper; isMobile: boolean }) {
       {/* row-3 : 저자 + 저널/권호 — 하단 고정 */}
       <div style={{ marginTop: 'auto', paddingTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <span style={{ fontSize: 15, color: '#464C53', fontWeight: 400, lineHeight: 1.5 }}>{paper.author}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 15, color: '#464C53', lineHeight: 1.5 }}>
-          <span>{paper.journal}</span>
-          {paper.journal && paper.volume && (
+        <div className='meta-article' style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 15, color: '#464C53', lineHeight: 1.5 }}>
+          <span className='meta-value info-chevron'>{paper.journal}</span>
+          {/* {paper.journal && paper.volume && (
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
               <path d="M6 4L10 8L6 12" stroke="#8A949E" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          )}
-          <span>{paper.volume}</span>
+          )} */}
+          <span className='meta-value info-chevron'>{paper.volume}</span>
         </div>
       </div>
     </div>

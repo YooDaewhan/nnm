@@ -192,27 +192,15 @@ export default function CartPage() {
                             )}
                           </div>
                         )}
-                        <div className="flex items-center gap-0.5 flex-wrap">
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">발행년월</span>
-                          <svg className="w-4 h-4 text-[#CDD1D5]" viewBox="0 0 16 16" fill="none">
-                            <line x1="7.47" y1="1.47" x2="7.47" y2="14.53" stroke="currentColor" strokeWidth="1.07"/>
-                          </svg>
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">KCI등재</span>
+                        <div className="meta-article">
+                          <span className="meta-value info-divider text-[15px]">발행년월</span>
+                          <span className="meta-value info-divider text-[15px]">KCI등재</span>
                         </div>
-                        <div className="flex items-center gap-0.5 flex-wrap">
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">발행기관</span>
-                          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                            <path d="M5.63 3.13L11.03 8.53L5.63 12.87" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">저널명</span>
-                          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                            <path d="M5.63 3.13L11.03 8.53L5.63 12.87" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">권(호)</span>
-                          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                            <path d="M5.63 3.13L11.03 8.53L5.63 12.87" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span className="h-6 px-0.5 text-[15px] leading-[1.5] text-[#464C53]">페이지 수록 정보</span>
+                        <div className="meta-article">
+                          <span className="meta-value info-chevron text-[15px]">발행기관</span>
+                          <span className="meta-value info-chevron text-[15px]">저널명</span>
+                          <span className="meta-value info-chevron text-[15px]">권(호)</span>
+                          <span className="meta-value info-chevron text-[15px]">페이지 수록 정보</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-center">
@@ -223,12 +211,12 @@ export default function CartPage() {
                       <button
                         onClick={() => removeMutation.mutate(item.id)}
                         disabled={removeMutation.isPending && removeMutation.variables === item.id}
-                        className="flex items-center justify-center disabled:opacity-50"
+                        className="shrink-0 text-[#8A949E] hover:text-[#131416] transition-colors disabled:opacity-50" title="삭제"
                       >
-                        <svg className="w-8 h-8" viewBox="0 0 32 32" fill="none">
-                          <circle cx="16" cy="16" r="13.33" stroke="#33363D" strokeWidth="2"/>
-                          <path d="M11.33 11.33L20.67 20.67M20.67 11.33L11.33 20.67" stroke="#33363D" strokeWidth="2" strokeLinecap="round"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
+
                       </button>
                     </div>
                   </div>

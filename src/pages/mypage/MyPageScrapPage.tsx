@@ -108,12 +108,13 @@ export default function MyPageScrapPage() {
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(scrap.publication_id); }}
                   disabled={deleteMutation.isPending && deleteMutation.variables === scrap.publication_id}
-                  className="shrink-0 text-[#8A949E] hover:text-[#131416] transition-colors disabled:opacity-40"
-                  title="스크랩 삭제"
+                  className="shrink-0 text-[#8A949E] hover:text-[#131416] transition-colors disabled:opacity-50"
+                  title="삭제"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                   </svg>
+
                 </button>
               </div>
             ))}

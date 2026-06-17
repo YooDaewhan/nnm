@@ -12,12 +12,12 @@ import { CitationModal, CITE_FORMATS } from './CitationModal';
 import { PdfPreviewModal } from '../PdfPreviewModal';
 
 const VENUE_TYPE_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  thesis:     { label: '개인논문',   bg: '#F3EDFE', color: '#6B21A8' },
-  journal:    { label: '정기간행물', bg: '#ECF2FE', color: '#0B50D0' },
-  report:     { label: '연구보고서', bg: '#FFF7ED', color: '#C2410C' },
+  thesis: { label: '개인논문', bg: '#F3EDFE', color: '#6B21A8' },
+  journal: { label: '정기간행물', bg: '#ECF2FE', color: '#0B50D0' },
+  report: { label: '연구보고서', bg: '#FFF7ED', color: '#C2410C' },
   conference: { label: '학술대회지', bg: '#ECFDF5', color: '#065F46' },
-  book:       { label: '도서',       bg: '#FDF4FF', color: '#7E22CE' },
-  other:      { label: '기타',       bg: '#F4F5F6', color: '#464C53' },
+  book: { label: '도서', bg: '#FDF4FF', color: '#7E22CE' },
+  other: { label: '기타', bg: '#F4F5F6', color: '#464C53' },
 };
 
 interface SearchResultCardProps {
@@ -242,7 +242,7 @@ export function SearchResultCard({
   const handleShareNotion = (e: React.MouseEvent) => {
     e.stopPropagation();
     const url = window.location.origin + paperUrl;
-    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => {}); }
+    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => { }); }
     window.open('https://www.notion.so', '_blank', 'noopener,noreferrer');
     setShareMenuOpen(false);
   };
@@ -260,7 +260,7 @@ export function SearchResultCard({
     const url = window.location.origin + paperUrl;
     const text = `${result.title}\n${url}`;
     window.location.href = `kakaotalk://send?text=${encodeURIComponent(text)}`;
-    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => {}); }
+    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => { }); }
     setShareMenuOpen(false);
   };
 
@@ -308,8 +308,8 @@ export function SearchResultCard({
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M6.5 9.5a3.18 3.18 0 0 0 4.5 0l1.5-1.5a3.18 3.18 0 0 0-4.5-4.5L7 5" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round"/>
-            <path d="M9.5 6.5a3.18 3.18 0 0 0-4.5 0L3.5 8a3.18 3.18 0 0 0 4.5 4.5L9 11" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M6.5 9.5a3.18 3.18 0 0 0 4.5 0l1.5-1.5a3.18 3.18 0 0 0-4.5-4.5L7 5" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M9.5 6.5a3.18 3.18 0 0 0-4.5 0L3.5 8a3.18 3.18 0 0 0 4.5 4.5L9 11" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           링크 복사
         </button>
@@ -333,9 +333,9 @@ export function SearchResultCard({
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="7" fill="#00A82D"/>
-            <path d="M5.5 11.5V7c0-.83.67-1.5 1.5-1.5h2.5c.55 0 1 .45 1 1V8c0 .55-.45 1-1 1H7v2.5" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M7 9h2" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
+            <circle cx="8" cy="8" r="7" fill="#00A82D" />
+            <path d="M5.5 11.5V7c0-.83.67-1.5 1.5-1.5h2.5c.55 0 1 .45 1 1V8c0 .55-.45 1-1 1H7v2.5" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M7 9h2" stroke="white" strokeWidth="1.1" strokeLinecap="round" />
           </svg>
           에버노트
         </button>
@@ -346,8 +346,8 @@ export function SearchResultCard({
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <ellipse cx="8" cy="7.2" rx="6.3" ry="5.2" fill="#FEE500"/>
-            <path d="M5.2 9.6 4.3 12l3-2.1M8 5.4v2.4M6.1 6.3l1.9 1.5 1.9-1.5" stroke="#3A1D1D" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+            <ellipse cx="8" cy="7.2" rx="6.3" ry="5.2" fill="#FEE500" />
+            <path d="M5.2 9.6 4.3 12l3-2.1M8 5.4v2.4M6.1 6.3l1.9 1.5 1.9-1.5" stroke="#3A1D1D" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           카카오톡
         </button>
@@ -446,21 +446,10 @@ export function SearchResultCard({
             {/* badge-box */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {result.type && VENUE_TYPE_MAP[result.type] && (
-                <span
+                <span className="badge badge-medium"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: 24,
-                    padding: '0 8px',
-                    borderRadius: 4,
                     background: VENUE_TYPE_MAP[result.type].bg,
-                    fontFamily: "'Pretendard GOV', sans-serif",
-                    fontWeight: 400,
-                    fontSize: 14,
-                    lineHeight: '150%',
                     color: VENUE_TYPE_MAP[result.type].color,
-                    whiteSpace: 'nowrap',
                   }}
                 >
                   {VENUE_TYPE_MAP[result.type].label}
@@ -513,26 +502,52 @@ export function SearchResultCard({
                 onClick={handleScrap}
                 disabled={scrapMutation.isPending}
                 title={localScraped ? '보관함 해제' : '보관함 담기'}
-                style={{
-                  ...mobileIconBtn,
-                  opacity: scrapMutation.isPending ? 0.5 : 1,
-                }}
+              // style={{
+              //   ...mobileIconBtn,
+              //   opacity: scrapMutation.isPending ? 0.5 : 1,
+              // }}
               >
-                <img src={localScraped ? '/svg/heart-fill.svg' : '/svg/heart.svg'} width={20} height={20} style={{ display: 'block' }} alt="보관함 담기" />
+                {localScraped ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="#d63d4a"
+                    className="size-5 block"
+                    role="img"
+                    aria-label="보관함 담기"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="size-5 block"
+                    role="img"
+                    aria-label="보관함 담기"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"
+                    />
+                  </svg>
+                )}
               </button>
 
               {/* 장바구니 (유료 논문 구매 전에만 표시) */}
               {!isPurchased && (result.price ?? result.metadata?.price ?? 0) > 0 && (
-                <button
-                  onClick={handleCart}
-                  disabled={cartMutation.isPending}
-                  title={localInCart ? '장바구니 제거' : '장바구니 담기'}
-                  style={{
-                    ...mobileIconBtn,
-                    opacity: cartMutation.isPending ? 0.5 : 1,
-                  }}
-                >
-                  <img src={localInCart ? '/svg/bag-B-fill.svg' : '/svg/bag-B.svg'} width={20} height={20} style={{ display: 'block' }} alt="장바구니 담기" />
+                <button onClick={handleCart} disabled={cartMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title="장바구니 담기">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                  </svg>
                 </button>
               )}
             </div>
@@ -559,48 +574,18 @@ export function SearchResultCard({
               </h3>
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 2,
-              }}
-            >
+            <div className="meta-article">
               {result.authors && result.authors.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <div className="meta-value info-divider text-[15px]" style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   {result.authors.slice(0, 3).map((author: string, i: number) => (
                     <span
                       key={i}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: 24,
-                        padding: '0 2px',
-                        fontFamily: "'Pretendard GOV', sans-serif",
-                        fontWeight: 400,
-                        fontSize: 15,
-                        lineHeight: '150%',
-                        color: '#464C53',
-                      }}
                     >
                       {author}
                     </span>
                   ))}
                   {result.authors.length > 3 && (
                     <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        height: 24,
-                        padding: '0 2px',
-                        fontFamily: "'Pretendard GOV', sans-serif",
-                        fontWeight: 400,
-                        fontSize: 15,
-                        lineHeight: '150%',
-                        color: '#464C53',
-                      }}
                     >
                       외 {result.authors.length - 3}명
                     </span>
@@ -608,28 +593,16 @@ export function SearchResultCard({
                 </div>
               )}
 
-              {result.authors && result.authors.length > 0 && result.year != null && (
+              {/* {result.authors && result.authors.length > 0 && result.year != null && (
                 <svg width="1" height="12" viewBox="0 0 1 12" fill="none" style={{ flexShrink: 0, margin: '0 2px' }}>
                   <line x1="0.5" y1="0" x2="0.5" y2="12" stroke="#CDD1D5" />
                 </svg>
-              )}
+              )} */}
 
               {result.year != null && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    height: 24,
-                    padding: '0 2px',
-                    fontFamily: "'Pretendard GOV', sans-serif",
-                    fontWeight: 400,
-                    fontSize: 15,
-                    lineHeight: '150%',
-                    color: '#464C53',
-                  }}
-                >
+                <div className="meta-value info-divider text-[15px]">
                   {result.year}
-                </span>
+                </div>
               )}
             </div>
 
@@ -774,6 +747,7 @@ export function SearchResultCard({
               )}
             </div>
             <div className="flex items-center gap-1">
+              {/* 링크 URL복사 */}
               <div className="relative">
                 <button type="button" onClick={handleShareLink} className={iconBtn} title="URL복사">
                   {copied ? (
@@ -784,7 +758,6 @@ export function SearchResultCard({
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                     </svg>
-
                   )}
                 </button>
                 {copied && (
@@ -792,39 +765,51 @@ export function SearchResultCard({
                 )}
                 {shareMenuOpen && renderShareMenu()}
               </div>
-              <button 
-                onClick={handleScrap} 
-                disabled={scrapMutation.isPending} 
-                title={isScraped ? '보관함 해제' : '보관함 담기'} 
-                className="btn_icon-box icon-medium"
-              >
-                {isScraped ? (
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    viewBox="0 0 24 24" 
-                    fill="#d63d4a" 
-                    style={{ width: 20, height: 20, display: 'block' }}
-                  >
-                    <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+              {/* 보관함 담기 */}
+              <div className="relative">
+                <button
+                  onClick={handleScrap}
+                  disabled={scrapMutation.isPending}
+                  title={isScraped ? '보관함 해제' : '보관함 담기'}
+                  className="btn_icon-box icon-medium"
+                >
+                  {isScraped ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#d63d4a" className="size-5">
+                      <path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" />
+                    </svg>
+                    // <svg
+                    //   xmlns="http://www.w3.org/2000/svg"
+                    //   viewBox="0 0 24 24"
+                    //   fill="#d63d4a"
+                    //   style={{ width: 20, height: 20, display: 'block' }}
+                    // >
+                    //   <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                    // </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                    </svg>
+                    // <svg
+                    //   xmlns="http://www.w3.org/2000/svg"
+                    //   fill="none"
+                    //   viewBox="0 0 24 24"
+                    //   strokeWidth={1.5}
+                    //   stroke="currentColor"
+                    //   style={{ width: 20, height: 20, display: 'block' }}
+                    // >
+                    //   <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                    // </svg>
+                  )}
+                </button>
+              </div>
+              {/* 장바구니 담기 */}
+              <div className="relative">
+                <button onClick={handleCart} disabled={cartMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title="장바구니 담기">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                   </svg>
-                ) : (
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    strokeWidth={1.5} 
-                    stroke="currentColor" 
-                    style={{ width: 20, height: 20, display: 'block' }}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                  </svg>
-                )}
-              </button>
-              <button onClick={handleCart} disabled={cartMutation.isPending} className={`${iconBtn} disabled:opacity-50`} title="장바구니 담기">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                </svg>
-              </button>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -835,16 +820,15 @@ export function SearchResultCard({
               <h4 className="text-[19px] font-semibold cursor-pointer">
                 {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
               </h4>
-              
-              <div className="flex items-center gap-1 flex-wrap text-[15px] text-[#464C53]">
+
+              <div className="meta-article flex items-center gap-1 flex-wrap text-[15px] text-[#464C53]">
                 {result.authors && result.authors.length > 0 && (
                   <>
                     {result.authors.slice(0, 3).map((a: string, i: number) => (<span key={i}>{a}</span>))}
                     {result.authors.length > 3 && <span>외 {result.authors.length - 3}명</span>}
-                    <span className="text-[#CDD1D5] mx-0.5">|</span>
                   </>
                 )}
-                {result.year != null && (<><span>{result.year}</span></>)}
+                {result.year != null && (<><span className="meta-value info-divider">{result.year}</span></>)}
               </div>
               <PublicationMeta metadata={result.metadata} />
             </div>
@@ -871,17 +855,17 @@ export function SearchResultCard({
                 <>
                   초록보기
                   {/* 꺾쇠 아이콘: expanded 상태에 따라 180도 회전 애니메이션 적용 */}
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    strokeWidth="2.5" 
-                    stroke="currentColor" 
-                    style={{ 
-                      width: '12px', 
-                      height: '12px', 
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2.5"
+                    stroke="currentColor"
+                    style={{
+                      width: '12px',
+                      height: '12px',
                       transition: 'transform 0.15s ease-in-out',
-                      transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' 
+                      transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)'
                     }}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />

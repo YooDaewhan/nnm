@@ -15,9 +15,9 @@ export function PublicationMeta({ metadata }: { metadata: Record<string, unknown
   const segments = [providerName, venueName, volumeIssue, pageRange].filter(Boolean) as string[];
   if (segments.length === 0) return null;
   return (
-    <div className="meta-breadcrumb">
+    <div className="meta-article">
       {segments.map((seg, i) => (
-        <span key={i} className="meta-value journal-nav text-[15px]" style={{ margin: 0 }}>
+        <span key={i} className="meta-value info-chevron text-[15px]" style={{ margin: 0 }}>
           {seg}
         </span>
       ))}
