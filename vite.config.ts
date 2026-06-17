@@ -24,11 +24,11 @@ export default defineConfig({
         secure: true,
       },
       '/api/ai': {
-        target: 'http://192.168.20.231',
+        target: 'https://api.newnonmun.com',
         changeOrigin: true,
       },
       '/api': {
-        target: 'http://192.168.20.231',
+        target: 'https://api.newnonmun.com',
         changeOrigin: true,
       },
     },

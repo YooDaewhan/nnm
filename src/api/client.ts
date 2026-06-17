@@ -1,6 +1,6 @@
 // PDF 서버 클라이언트
 export const PDF_SERVER_BASE_URL =
-  import.meta.env.VITE_PDF_SERVER_URL || 'http://192.168.20.231:4000';
+  import.meta.env.VITE_PDF_SERVER_URL || 'https://api.newnonmun.com';
 
 export const pdfServerFetch = async <T>(
   url: string,
@@ -19,7 +19,7 @@ export const pdfServerFetch = async <T>(
 // 백엔드가 사설 IP(192.168.20.231)를 반환하는 경우 공개 IP로 교체
 export const fixImageUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
-  return url.replace('http://192.168.20.231:8000', import.meta.env.VITE_API_URL || 'http://192.168.20.231');
+  return url.replace('http://192.168.20.231:8000', import.meta.env.VITE_API_URL || 'https://api.newnonmun.com');
 };
 
 // API 클라이언트 설정
