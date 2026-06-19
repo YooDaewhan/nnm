@@ -132,7 +132,9 @@ export default {
     if (pathname.startsWith('/__debug__/')) {
       const id = pathname.replace('/__debug__/', '');
       try {
-        const res = await fetch(`${API_BASE}/papers/${id}`);
+        const res = await fetch(`${API_BASE}/papers/${id}`, {
+          headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (compatible; NewnonmunSEO/1.0)', 'Referer': 'https://newnonmun-front.pages.dev/', 'Origin': 'https://newnonmun-front.pages.dev' },
+        });
         const body = await res.text();
         return new Response(
           JSON.stringify({ status: res.status, ok: res.ok, body: body.slice(0, 500) }, null, 2),
@@ -167,7 +169,14 @@ export default {
       if (html) {
         // API에서 논문 데이터 가져와서 메타 주입 시도
         try {
-          const paperRes = await fetch(`${API_BASE}/papers/${id}`);
+          const paperRes = await fetch(`${API_BASE}/papers/${id}`, {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (compatible; NewnonmunSEO/1.0)',
+              'Referer': 'https://newnonmun-front.pages.dev/',
+              'Origin': 'https://newnonmun-front.pages.dev',
+            },
+          });
           console.log(`[worker] API status: ${paperRes.status}`);
           if (paperRes.ok) {
             const paper = await paperRes.json();
