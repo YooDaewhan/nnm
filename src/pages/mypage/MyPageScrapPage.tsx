@@ -93,14 +93,14 @@ export default function MyPageScrapPage() {
               <div
                 key={scrap.id}
                 onClick={() => navigate(`/papers/${scrap.publication_id}`)}
-                className="flex items-center gap-4 px-4 sm:px-8 py-4 sm:py-5 hover:bg-[#FAFAFC] transition-colors cursor-pointer"
+                className="flex items-center gap-20 px-4 sm:px-8 py-4 sm:py-5 hover:bg-[#FAFAFC] transition-colors cursor-pointer"
               >
                 <div className="flex-1 flex flex-col gap-1 min-w-0">
-                  <p className="text-[17px] font-bold leading-[1.5em] text-[#1E2124] line-clamp-2">
+                  <p className="text-[17px] font-semibold line-clamp-2">
                     {scrap.title ?? scrap.publication_id}
                   </p>
                   {scrap.created_at && (
-                    <span className="text-[15px] text-[#8A949E]">
+                    <span className="text-[13px] text-[#8A949E]">
                       {new Date(scrap.created_at).toLocaleDateString('ko-KR')}
                     </span>
                   )}
@@ -108,12 +108,13 @@ export default function MyPageScrapPage() {
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(scrap.publication_id); }}
                   disabled={deleteMutation.isPending && deleteMutation.variables === scrap.publication_id}
-                  className="shrink-0 text-[#8A949E] hover:text-[#D32F2F] transition-colors disabled:opacity-40"
-                  title="스크랩 삭제"
+                  className="shrink-0 text-[#8A949E] hover:text-[#131416] transition-colors disabled:opacity-50"
+                  title="삭제"
                 >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M3 4.5H15M7.5 4.5V3H10.5V4.5M6 4.5V14.25C6 14.664 6.336 15 6.75 15H11.25C11.664 15 12 14.664 12 14.25V4.5H6Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                   </svg>
+
                 </button>
               </div>
             ))}

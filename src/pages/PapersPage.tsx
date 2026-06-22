@@ -25,12 +25,12 @@ type OSPaperDetail = PaperDetail & {
 };
 
 const AWARD_BADGE_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  thesis:        { label: '개인논문',    bg: '#F5F3FF', color: '#6D28D9' },
-  journal:       { label: '정기간행물',  bg: '#EFF6FF', color: '#1D4ED8' },
-  report:        { label: '연구보고서',  bg: '#FFF7ED', color: '#C2410C' },
-  conference:    { label: '학술대회지',  bg: '#ECFDF5', color: '#065F46' },
-  book:          { label: '도서',        bg: '#FEF9C3', color: '#92400E' },
-  other:         { label: '기타',        bg: '#F3F4F6', color: '#6B7280' },
+  thesis: { label: '개인논문', bg: '#F5F3FF', color: '#6D28D9' },
+  journal: { label: '정기간행물', bg: '#EFF6FF', color: '#1D4ED8' },
+  report: { label: '연구보고서', bg: '#FFF7ED', color: '#C2410C' },
+  conference: { label: '학술대회지', bg: '#ECFDF5', color: '#065F46' },
+  book: { label: '도서', bg: '#FEF9C3', color: '#92400E' },
+  other: { label: '기타', bg: '#F3F4F6', color: '#6B7280' },
 };
 
 import { isAuthenticated } from '../lib/auth';
@@ -157,8 +157,8 @@ function PaperDetailContent() {
     } catch {
       sessionStorage.removeItem('pendingAction');
     }
-  // cartMutation.mutate는 안정적이므로 deps에서 제외
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // cartMutation.mutate는 안정적이므로 deps에서 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedIn, paper]);
 
   const handleShareToggle = () => setShareMenuOpen(prev => !prev);
@@ -182,7 +182,7 @@ function PaperDetailContent() {
 
   const handleShareNotion = () => {
     const url = window.location.href;
-    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => {}); }
+    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => { }); }
     window.open('https://www.notion.so', '_blank', 'noopener,noreferrer');
     setShareMenuOpen(false);
   };
@@ -198,7 +198,7 @@ function PaperDetailContent() {
     const url = window.location.href;
     const text = `${paper?.title ?? ''}\n${url}`;
     window.location.href = `kakaotalk://send?text=${encodeURIComponent(text)}`;
-    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => {}); }
+    if (navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => { }); }
     setShareMenuOpen(false);
   };
 
@@ -227,8 +227,8 @@ function PaperDetailContent() {
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F4F5F6'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M6.5 9.5a3.18 3.18 0 0 0 4.5 0l1.5-1.5a3.18 3.18 0 0 0-4.5-4.5L7 5" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round"/>
-            <path d="M9.5 6.5a3.18 3.18 0 0 0-4.5 0L3.5 8a3.18 3.18 0 0 0 4.5 4.5L9 11" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M6.5 9.5a3.18 3.18 0 0 0 4.5 0l1.5-1.5a3.18 3.18 0 0 0-4.5-4.5L7 5" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M9.5 6.5a3.18 3.18 0 0 0-4.5 0L3.5 8a3.18 3.18 0 0 0 4.5 4.5L9 11" stroke="#464C53" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           링크 복사
         </button>
@@ -246,9 +246,9 @@ function PaperDetailContent() {
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F4F5F6'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="7" fill="#00A82D"/>
-            <path d="M5.5 11.5V7c0-.83.67-1.5 1.5-1.5h2.5c.55 0 1 .45 1 1V8c0 .55-.45 1-1 1H7v2.5" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M7 9h2" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
+            <circle cx="8" cy="8" r="7" fill="#00A82D" />
+            <path d="M5.5 11.5V7c0-.83.67-1.5 1.5-1.5h2.5c.55 0 1 .45 1 1V8c0 .55-.45 1-1 1H7v2.5" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M7 9h2" stroke="white" strokeWidth="1.1" strokeLinecap="round" />
           </svg>
           에버노트
         </button>
@@ -256,8 +256,8 @@ function PaperDetailContent() {
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F4F5F6'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <ellipse cx="8" cy="7.2" rx="6.3" ry="5.2" fill="#FEE500"/>
-            <path d="M5.2 9.6 4.3 12l3-2.1M8 5.4v2.4M6.1 6.3l1.9 1.5 1.9-1.5" stroke="#3A1D1D" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+            <ellipse cx="8" cy="7.2" rx="6.3" ry="5.2" fill="#FEE500" />
+            <path d="M5.2 9.6 4.3 12l3-2.1M8 5.4v2.4M6.1 6.3l1.9 1.5 1.9-1.5" stroke="#3A1D1D" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           카카오톡
         </button>
@@ -535,7 +535,7 @@ function PaperDetailContent() {
                         const key = paper.venue?.type?.trim().toLowerCase();
                         const label = (key && AWARD_BADGE_MAP[key]?.label) || '논문';
                         return (
-                          <span className="badge badge-arge badge-primary">
+                          <span className="badge badge-large badge-primary">
                             {label}
                           </span>
                         );
@@ -577,39 +577,28 @@ function PaperDetailContent() {
                         {shareMenuOpen && renderShareMenu()}
                       </div>
                       {/* heart/scrap */}
-                      <button 
-                        onClick={handleScrap} 
-                        disabled={scrapMutation.isPending} 
-                        title={isScraped ? '보관함 해제' : '보관함 담기'} 
+                      <button
+                        onClick={handleScrap}
+                        disabled={scrapMutation.isPending}
+                        title={isScraped ? '보관함 해제' : '보관함 담기'}
                         className="btn_icon-box icon-large"
                       >
                         {isScraped ? (
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            viewBox="0 0 24 24" 
-                            fill="#d63d4a" 
-                            style={{ width: 24, height: 24, display: 'block' }}
-                          >
-                            <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#d63d4a" className="size-6">
+                            <path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" />
                           </svg>
+
                         ) : (
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
-                            strokeWidth={1.5} 
-                            stroke="currentColor" 
-                            style={{ width: 24, height: 24, display: 'block' }}
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
                           </svg>
                         )}
                       </button>
-                      
+
                       {/* bag/cart */}
                       <button onClick={handleAddToCart} disabled={cartMutation.isPending} title="장바구니 담기" className="btn_icon-box icon-large">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                         </svg>
                       </button>
                     </div>
@@ -638,11 +627,11 @@ function PaperDetailContent() {
                     {/* 저자정보 */}
                     {paper.authors && paper.authors.length > 0 && (
                       <MetaRow label="저자정보">
-                        <div className="meta-breadcrumb">
+                        <div className='meta-article'>
                           {paper.authors.map((a, i) => {
                             const name = typeof a === 'string' ? a : a.name;
                             return (
-                              <span key={i} className="meta-value author-divider">{name}</span>
+                              <span key={i} className='meta-value info-divider'>{name}</span>
                             );
                           })}
                         </div>
@@ -652,16 +641,16 @@ function PaperDetailContent() {
                     {/* 발행정보 : 발행기관 > 저널 > 권호 > 페이지 with arrow icons */}
                     {(paper.venue || paper.published_at || (paper as any).year) && (
                       <MetaRow label="발행정보">
-                        <div className="meta-breadcrumb">
+                        <div className='meta-article'>
                           {paper.provider && (
                             <>
                               {paper.provider.website_url ? (
                                 <a href={/^https?:\/\//i.test(paper.provider.website_url) ? paper.provider.website_url : `https://${paper.provider.website_url}`} target="_blank" rel="noopener noreferrer"
-                                  className="meta-value journal-nav">
+                                  className='meta-value info-chevron'>
                                   {paper.provider.name}
                                 </a>
                               ) : (
-                                <span className="meta-value journal-nav">{paper.provider.name}</span>
+                                <span className='meta-value info-chevron'>{paper.provider.name}</span>
                               )}
                             </>
                           )}
@@ -674,17 +663,17 @@ function PaperDetailContent() {
                                 const journalTo = isValidId
                                   ? `/journal/${venueId}${encodedName ? `?name=${encodedName}` : ''}`
                                   : encodedName
-                                  ? `/journal?name=${encodedName}`
-                                  : null;
+                                    ? `/journal?name=${encodedName}`
+                                    : null;
                                 return journalTo ? (
                                   <Link
                                     to={journalTo}
-                                    className="meta-value journal-nav"
+                                    className='meta-value info-chevron'
                                   >
                                     {paper.venue.name}
                                   </Link>
                                 ) : (
-                                  <span className="meta-value journal-nav">
+                                  <span className='meta-value info-chevron'>
                                     {paper.venue.name}
                                   </span>
                                 );
@@ -701,16 +690,16 @@ function PaperDetailContent() {
                                 ].filter(Boolean).join(' ');
                                 return (
                                   <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="#8A949E" className="size-4 mx-[2px]">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#8A949E" className="size-4 mx-[2px]">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                                     </svg>
-                                    <span className="meta-value journal-nav">{issueLabel}</span>
+                                    <span className='meta-value info-chevron'>{issueLabel}</span>
                                   </>
                                 );
                               })()}
                               {(paper.page_start || paper.page_end) && (
                                 <>
-                                  <span className="meta-value journal-nav">
+                                  <span className='meta-value info-chevron'>
                                     {paper.page_start && paper.page_end
                                       ? `pp.${paper.page_start}-${paper.page_end}`
                                       : paper.page_start ? `p.${paper.page_start}` : ''}
@@ -726,7 +715,7 @@ function PaperDetailContent() {
                     {/* 발행년월 : YYYY.MM */}
                     {paper.published_at && (
                       <MetaRow label="발행년월">
-                        <div className="meta-breadcrumb">
+                        <div className='meta-article'>
                           <span className="meta-value">
                             {(() => {
                               const d = new Date(paper.published_at);
