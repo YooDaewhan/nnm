@@ -130,6 +130,7 @@ export default function JournalPage() {
 
   const handleScrapToggle = () => {
     queryClient.invalidateQueries({ queryKey: ['publications-status', scrapIds] });
+    queryClient.invalidateQueries({ queryKey: ['scraps'] });
   };
 
   const handleSelectAll = () => {

@@ -223,6 +223,11 @@ footer .copyright {
   cursor: pointer;
 }
 
+.meta-static .meta-value:hover {
+  text-decoration: none !important;
+  cursor: default !important;
+}
+
 
 /* button - icon+text */
 .btn_text {

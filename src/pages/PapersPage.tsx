@@ -128,8 +128,9 @@ function PaperDetailContent() {
     mutationFn: () => isScraped ? deleteScrapBatch([id!]) : addScrapBatch([id!]),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['publications-status', id ? [id] : []] });
+      queryClient.invalidateQueries({ queryKey: ['scraps'] });
     },
-    onError: (err) => alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.'),
+    onError: (err) => alert(err instanceof Error ? err.message : '보관함 처리에 실패했습니다.'),
   });
 
   const cartMutation = useMutation({

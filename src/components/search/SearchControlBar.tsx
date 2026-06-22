@@ -151,7 +151,7 @@ export function SearchControlBar({
             <path d="M2.5 5.5H13.5L12 13H4L2.5 5.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
             <path d="M6 5.5C6 3.8 7 2.5 8 2.5C9 2.5 10 3.8 10 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
-          구매하기
+          장바구니 담기
         </button>
 
         {(onSortChange || onItemsPerPageChange) && (

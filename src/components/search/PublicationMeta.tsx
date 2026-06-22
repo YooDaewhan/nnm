@@ -10,12 +10,12 @@ export function PublicationMeta({ metadata }: { metadata: Record<string, unknown
   const pageEnd = metadata.page_end as string | null;
   const pageRange = (metadata.page_range as string | null)
     || (pageStart || pageEnd
-      ? [pageStart, pageEnd].filter(Boolean).join('-') + 'p'
+      ? 'pp. ' + [pageStart, pageEnd].filter(Boolean).join('-')
       : null);
   const segments = [providerName, venueName, volumeIssue, pageRange].filter(Boolean) as string[];
   if (segments.length === 0) return null;
   return (
-    <div className="meta-article">
+    <div className="meta-article meta-static">
       {segments.map((seg, i) => (
         <span key={i} className="meta-value info-chevron text-[15px]" style={{ margin: 0 }}>
           {seg}

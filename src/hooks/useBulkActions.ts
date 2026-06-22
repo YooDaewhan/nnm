@@ -69,9 +69,10 @@ export function useBulkActions(
     try {
       await addScrapBatch(ids);
       queryClient.invalidateQueries({ queryKey: ['publications-status', scrapIds] });
-      alert(`${ids.length}개를 스크랩에 추가했습니다.`);
+      queryClient.invalidateQueries({ queryKey: ['scraps'] });
+      alert(`${ids.length}개를 보관함에 추가했습니다.`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : '스크랩 추가에 실패했습니다.');
+      alert(err instanceof Error ? err.message : '보관함 추가에 실패했습니다.');
     } finally {
       setBulkScrapLoading(false);
     }

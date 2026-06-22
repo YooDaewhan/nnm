@@ -99,8 +99,8 @@ test.describe('마이페이지 - 회원정보', () => {
   test('마이페이지 사이드바 네비게이션 표시', async ({ page }) => {
     // 마이페이지 하위 메뉴 링크들
     await expect(
-      page.getByRole('link', { name: /구매 내역|스크랩|최근 본|Q&A/ }).first().or(
-        page.getByText(/구매 내역|스크랩|최근 본/)
+      page.getByRole('link', { name: /구매 내역|보관함|최근 본|Q&A/ }).first().or(
+        page.getByText(/구매 내역|보관함|최근 본/)
       )
     ).toBeVisible({ timeout: 10000 });
   });
@@ -260,9 +260,9 @@ test.describe('마이페이지 - 보관함', () => {
 });
 
 // ──────────────────────────────────────────────
-// 마이페이지 - 스크랩
+// 마이페이지 - 보관함
 // ──────────────────────────────────────────────
-test.describe('마이페이지 - 스크랩', () => {
+test.describe('마이페이지 - 보관함', () => {
   const mockScraps = [
     {
       id: 1,
@@ -291,19 +291,19 @@ test.describe('마이페이지 - 스크랩', () => {
     await page.goto('/mypage/scraps');
   });
 
-  test('스크랩 페이지 제목 표시', async ({ page }) => {
-    await expect(page.getByText('스크랩')).toBeVisible({ timeout: 10000 });
+  test('보관함 페이지 제목 표시', async ({ page }) => {
+    await expect(page.getByText('보관함')).toBeVisible({ timeout: 10000 });
   });
 
-  test('스크랩 항목 또는 빈 상태 표시', async ({ page }) => {
+  test('보관함 항목 또는 빈 상태 표시', async ({ page }) => {
     await expect(
       page.getByText('교육학 연구방법론의 최신 동향').or(
-        page.getByText(/스크랩한 논문이 없습니다/)
+        page.getByText(/보관함한 논문이 없습니다/)
       )
     ).toBeVisible({ timeout: 10000 });
   });
 
-  test('빈 스크랩 목록 상태 메시지', async ({ page }) => {
+  test('빈 보관함 목록 상태 메시지', async ({ page }) => {
     await page.route('**/api/scraps**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -313,11 +313,11 @@ test.describe('마이페이지 - 스크랩', () => {
     });
     await page.reload();
     await expect(
-      page.getByText(/스크랩한 논문이 없습니다/)
+      page.getByText(/보관함한 논문이 없습니다/)
     ).toBeVisible({ timeout: 5000 });
   });
 
-  test('스크랩 삭제 버튼 표시', async ({ page }) => {
+  test('보관함 삭제 버튼 표시', async ({ page }) => {
     // 삭제(휴지통) 버튼이 각 항목에 있어야 함
     const deleteBtn = page.locator('button[aria-label*="삭제"], button[title*="삭제"]').or(
       page.locator('button').filter({ has: page.locator('svg') }).first()
@@ -327,7 +327,7 @@ test.describe('마이페이지 - 스크랩', () => {
     }
   });
 
-  test('스크랩 항목 클릭 시 논문 상세 페이지로 이동', async ({ page }) => {
+  test('보관함 항목 클릭 시 논문 상세 페이지로 이동', async ({ page }) => {
     const paperTitle = page.getByText('교육학 연구방법론의 최신 동향');
     if (await paperTitle.count() > 0) {
       await paperTitle.click();

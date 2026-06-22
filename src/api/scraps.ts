@@ -8,7 +8,7 @@ export interface PublicationStatus {
 }
 
 /**
- * 여러 논문의 스크랩/장바구니/구매 여부를 한 번에 확인합니다.
+ * 여러 논문의 보관함/장바구니/구매 여부를 한 번에 확인합니다.
  * POST /api/publications/status
  */
 export const getPublicationsStatus = async (
@@ -54,7 +54,7 @@ export interface GetScrapsResponse {
 }
 
 /**
- * 내 스크랩 목록을 조회합니다.
+ * 내 보관함 목록을 조회합니다.
  */
 export const getScraps = async (page = 1, perPage = 10): Promise<GetScrapsResponse> => {
   const token = getToken();
@@ -72,7 +72,7 @@ export const getScraps = async (page = 1, perPage = 10): Promise<GetScrapsRespon
 
   if (!response.ok) {
     if (response.status === 401) { handleAuthExpired(); throw new Error('인증이 필요합니다.'); }
-    throw new Error('스크랩 목록 조회에 실패했습니다.');
+    throw new Error('보관함 목록 조회에 실패했습니다.');
   }
 
   const json = await response.json();
@@ -92,8 +92,8 @@ export const getScraps = async (page = 1, perPage = 10): Promise<GetScrapsRespon
 };
 
 /**
- * 여러 논문의 스크랩 여부를 한 번에 확인합니다.
- * 응답: 스크랩된 publication_id 배열
+ * 여러 논문의 보관함 여부를 한 번에 확인합니다.
+ * 응답: 보관함된 publication_id 배열
  */
 export const checkScrapBatch = async (publicationIds: string[]): Promise<string[]> => {
   const token = getToken();
@@ -127,7 +127,7 @@ export const checkScrapBatch = async (publicationIds: string[]): Promise<string[
 };
 
 /**
- * 특정 논문의 스크랩 여부를 확인합니다.
+ * 특정 논문의 보관함 여부를 확인합니다.
  * 200 → true, 404 → false
  */
 export const checkScrap = async (publicationId: string): Promise<boolean> => {
@@ -167,7 +167,7 @@ export interface AddScrapRequest {
 }
 
 /**
- * 논문을 스크랩합니다.
+ * 논문을 보관함합니다.
  */
 export const addScrap = async (data: AddScrapRequest): Promise<void> => {
   const token = getToken();
@@ -190,11 +190,11 @@ export const addScrap = async (data: AddScrapRequest): Promise<void> => {
     const errorData = await response.json();
     throw new Error(errorData.message || '유효성 검사에 실패했습니다.');
   }
-  throw new Error('스크랩 추가에 실패했습니다.');
+  throw new Error('보관함 추가에 실패했습니다.');
 };
 
 /**
- * 여러 논문을 일괄 스크랩합니다. (최대 50건)
+ * 여러 논문을 일괄 보관함합니다. (최대 50건)
  */
 export const addScrapBatch = async (publicationIds: string[]): Promise<void> => {
   const token = getToken();
@@ -217,11 +217,11 @@ export const addScrapBatch = async (publicationIds: string[]): Promise<void> => 
     const errorData = await response.json();
     throw new Error(errorData.message || '유효성 검사에 실패했습니다.');
   }
-  throw new Error('일괄 스크랩에 실패했습니다.');
+  throw new Error('일괄 보관함에 실패했습니다.');
 };
 
 /**
- * 스크랩을 일괄 제거합니다.
+ * 보관함을 일괄 제거합니다.
  */
 export const deleteScrapBatch = async (publicationIds: string[]): Promise<void> => {
   const token = getToken();
@@ -239,11 +239,11 @@ export const deleteScrapBatch = async (publicationIds: string[]): Promise<void> 
   });
 
   if (response.status === 401) { handleAuthExpired(); throw new Error('인증이 필요합니다.'); }
-  if (!response.ok) throw new Error('스크랩 삭제에 실패했습니다.');
+  if (!response.ok) throw new Error('보관함 삭제에 실패했습니다.');
 };
 
 /**
- * 단일 스크랩 제거
+ * 단일 보관함 제거
  */
 export const deleteScrap = async (publicationId: string): Promise<void> => {
   const token = getToken();
@@ -263,5 +263,5 @@ export const deleteScrap = async (publicationId: string): Promise<void> => {
   );
 
   if (response.status === 401) { handleAuthExpired(); throw new Error('인증이 필요합니다.'); }
-  if (!response.ok) throw new Error('스크랩 삭제에 실패했습니다.');
+  if (!response.ok) throw new Error('보관함 삭제에 실패했습니다.');
 };

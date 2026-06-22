@@ -15,12 +15,20 @@ export interface AiReference {
   doi: string | null;
 }
 
-export interface AnalyzeResponse {
-  question: string;
-  answer: string;
+export interface AiUsage {
+  input_tokens: number;
+  output_tokens: number;
   model: string;
-  chunks: AiChunk[];
+  estimated_cost_usd: number;
+}
+
+export interface AnalyzeResponse {
+  question?: string;
+  answer: string;
+  model?: string;
+  chunks?: AiChunk[];
   references: AiReference[];
+  usage?: AiUsage;
 }
 
 export async function postAnalyze(params: {

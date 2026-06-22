@@ -47,7 +47,7 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
 function AnalyzePanel({ data }: { data: AnalyzeResponse }) {
   // chunk_id → publication_id 매핑
   const chunkToPub = new Map(
-    data.chunks.filter(c => c.publication_id).map(c => [c.chunk_id, c.publication_id!])
+    (data.chunks ?? []).filter(c => c.publication_id).map(c => [c.chunk_id, c.publication_id!])
   );
   // publication_id → 1-based 인용 번호 (references 순서 기준)
   const pubToIdx = new Map(data.references.map((ref, i) => [ref.publication_id, i + 1]));

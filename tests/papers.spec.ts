@@ -81,9 +81,9 @@ test.describe('논문 상세 페이지', () => {
     ).toBeVisible({ timeout: 10000 });
   });
 
-  test('스크랩 버튼 표시', async ({ page }) => {
-    // 스크랩(하트/북마크) 버튼 확인
-    const scrapBtn = page.locator('button[title*="스크랩"], button[aria-label*="스크랩"]').or(
+  test('보관함 버튼 표시', async ({ page }) => {
+    // 보관함(하트/북마크) 버튼 확인
+    const scrapBtn = page.locator('button[title*="보관함"], button[aria-label*="보관함"]').or(
       page.locator('button').filter({ has: page.locator('svg') }).nth(1)
     );
     await expect(scrapBtn.first()).toBeVisible({ timeout: 10000 });

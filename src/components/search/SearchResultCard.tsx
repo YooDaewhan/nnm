@@ -80,7 +80,7 @@ export function SearchResultCard({
     onSuccess: () => onScrapToggle(),
     onError: (err, wasScraped) => {
       setLocalScraped(wasScraped);
-      alert(err instanceof Error ? err.message : '스크랩 처리에 실패했습니다.');
+      alert(err instanceof Error ? err.message : '보관함 처리에 실패했습니다.');
     },
   });
 
@@ -497,7 +497,7 @@ export function SearchResultCard({
                 {shareMenuOpen && renderShareMenu()}
               </div>
 
-              {/* 보관함(스크랩) */}
+              {/* 보관함(보관함) */}
               <button
                 onClick={handleScrap}
                 disabled={scrapMutation.isPending}

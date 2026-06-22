@@ -30,7 +30,7 @@ export default function MyPageScrapPage() {
 
   const scraps = data?.data ?? [];
   const lastPage = data?.last_page ?? 1;
-  const error = fetchError instanceof Error ? fetchError.message : fetchError ? '스크랩 목록을 불러오지 못했습니다.' : null;
+  const error = fetchError instanceof Error ? fetchError.message : fetchError ? '보관함 목록을 불러오지 못했습니다.' : null;
 
   const deleteMutation = useMutation({
     mutationFn: (publicationId: string) => deleteScrapBatch([publicationId]),
@@ -40,7 +40,7 @@ export default function MyPageScrapPage() {
       );
     },
     onError: () => {
-      alert('스크랩 삭제에 실패했습니다.');
+      alert('보관함 삭제에 실패했습니다.');
     },
   });
 
@@ -56,7 +56,7 @@ export default function MyPageScrapPage() {
         <div className="bg-white rounded-xl p-4 sm:p-8 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h1 className="text-xl sm:text-[32px] font-bold leading-[1.5em] tracking-[0.03em] text-[#1E2124]">
-              스크랩
+              보관함
             </h1>
           </div>
           <div className="border-t-2 border-[#1E2124]" />
@@ -82,7 +82,7 @@ export default function MyPageScrapPage() {
         {/* 빈 상태 */}
         {!isLoading && !error && scraps.length === 0 && (
           <div className="bg-white rounded-xl p-8 text-center">
-            <p className="text-[17px] text-[#464C53]">스크랩한 논문이 없습니다.</p>
+            <p className="text-[17px] text-[#464C53]">보관함한 논문이 없습니다.</p>
           </div>
         )}
 

@@ -97,6 +97,7 @@ function OpenSearchTextContent() {
 
   const handleScrapToggle = () => {
     queryClient.invalidateQueries({ queryKey: ['publications-status', scrapIds] });
+    queryClient.invalidateQueries({ queryKey: ['scraps'] });
   };
 
   const handleToggleSelect = (e: React.MouseEvent, id: string) => {
