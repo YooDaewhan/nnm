@@ -1,3 +1,5 @@
+const EMBED_MODEL = "@cf/baai/bge-m3";
+
 function escapeAttr(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -25,10 +27,12 @@ function buildJsonLd(paper, pageUrl) {
   if (paper.published_at) obj.datePublished = paper.published_at;
   if (paper.doi) obj.sameAs = `https://doi.org/${paper.doi}`;
 
-  const kw = [...(Array.isArray(paper.keywords) ? paper.keywords : []), ...(Array.isArray(paper.keywords_en) ? paper.keywords_en : [])];
+  const kw = [
+    ...(Array.isArray(paper.keywords) ? paper.keywords : []),
+    ...(Array.isArray(paper.keywords_en) ? paper.keywords_en : []),
+  ];
   if (kw.length > 0) obj.keywords = kw.join(', ');
 
-  // 발행정보: 저널 > 권호
   if (paper.venue?.name) {
     const periodical = { '@type': 'Periodical', name: paper.venue.name };
     if (paper.issue) {
@@ -49,13 +53,11 @@ function buildJsonLd(paper, pageUrl) {
   }
 
   if (paper.page_start) obj.pageStart = paper.page_start;
-  if (paper.page_end)   obj.pageEnd   = paper.page_end;
+  if (paper.page_end) obj.pageEnd = paper.page_end;
 
-  // 목차
   const toc = paper.table_of_contents || paper.body_content || null;
   if (toc) obj.tableOfContents = toc;
 
-  // 참고문헌
   if (Array.isArray(paper.references) && paper.references.length > 0) {
     obj.citation = paper.references.map(ref => {
       const text = typeof ref === 'string' ? ref : (ref.raw_text || ref.text || '');
@@ -63,58 +65,58 @@ function buildJsonLd(paper, pageUrl) {
     });
   }
 
-  // </script> 이스케이프 (HTML 안에 임베드할 때 파싱 오류 방지)
   return JSON.stringify(obj).replace(/<\/script>/gi, '<\\/script>');
 }
 
 function injectMeta(html, paper, pageUrl) {
-  const title     = paper.title || '논문';
+  const title = paper.title || '논문';
   const safeTitle = escapeAttr(title);
   const abstractText = (paper.abstract || paper.abstract_en || '').slice(0, 200);
-  const safeDesc  = escapeAttr(abstractText);
-  const safeUrl   = escapeAttr(pageUrl);
+  const safeDesc = escapeAttr(abstractText);
+  const safeUrl = escapeAttr(pageUrl);
 
-  html = html.replace(/<title>[^<]*<\/title>/,                  `<title>${safeTitle} - 뉴논문</title>`);
-  html = html.replace(/<meta name="description"[^>]*\/?>/,      `<meta name="description" content="${safeDesc}" />`);
-  html = html.replace(/<meta property="og:title"[^>]*\/?>/,     `<meta property="og:title" content="${safeTitle}" />`);
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${safeTitle} - 뉴논문</title>`);
+  html = html.replace(/<meta name="description"[^>]*\/?>/, `<meta name="description" content="${safeDesc}" />`);
+  html = html.replace(/<meta property="og:title"[^>]*\/?>/, `<meta property="og:title" content="${safeTitle}" />`);
   html = html.replace(/<meta property="og:description"[^>]*\/?>/, `<meta property="og:description" content="${safeDesc}" />`);
-  html = html.replace(/<meta property="og:type"[^>]*\/?>/,      `<meta property="og:type" content="article" />`);
-  html = html.replace(/<meta property="og:url"[^>]*\/?>/,       `<meta property="og:url" content="${safeUrl}" />`);
-  html = html.replace(/<meta name="twitter:title"[^>]*\/?>/,    `<meta name="twitter:title" content="${safeTitle}" />`);
+  html = html.replace(/<meta property="og:type"[^>]*\/?>/, `<meta property="og:type" content="article" />`);
+  html = html.replace(/<meta property="og:url"[^>]*\/?>/, `<meta property="og:url" content="${safeUrl}" />`);
+  html = html.replace(/<meta name="twitter:title"[^>]*\/?>/, `<meta name="twitter:title" content="${safeTitle}" />`);
   html = html.replace(/<meta name="twitter:description"[^>]*\/?>/, `<meta name="twitter:description" content="${safeDesc}" />`);
 
   let extra = '';
 
-  // 저자
   const authorNames = Array.isArray(paper.authors)
     ? paper.authors.map(a => typeof a === 'string' ? a : a.name).filter(Boolean)
     : [];
+
   if (authorNames.length > 0) {
     for (const name of authorNames) {
       extra += `  <meta name="citation_author" content="${escapeAttr(name)}" />\n`;
     }
   }
 
-  // DOI / canonical
   if (paper.doi) {
     extra += `  <link rel="canonical" href="https://doi.org/${escapeAttr(paper.doi)}" />\n`;
     extra += `  <meta name="citation_doi" content="${escapeAttr(paper.doi)}" />\n`;
   }
 
-  // 키워드
-  const kw = [...(Array.isArray(paper.keywords) ? paper.keywords : []), ...(Array.isArray(paper.keywords_en) ? paper.keywords_en : [])];
-  if (kw.length > 0) extra += `  <meta name="keywords" content="${escapeAttr(kw.join(', '))}" />\n`;
+  const kw = [
+    ...(Array.isArray(paper.keywords) ? paper.keywords : []),
+    ...(Array.isArray(paper.keywords_en) ? paper.keywords_en : []),
+  ];
+  if (kw.length > 0) {
+    extra += `  <meta name="keywords" content="${escapeAttr(kw.join(', '))}" />\n`;
+  }
 
-  // 발행정보 (Google Scholar citation_ 메타)
-  if (paper.venue?.name)     extra += `  <meta name="citation_journal_title" content="${escapeAttr(paper.venue.name)}" />\n`;
-  if (paper.provider?.name)  extra += `  <meta name="citation_publisher" content="${escapeAttr(paper.provider.name)}" />\n`;
-  if (paper.published_at)    extra += `  <meta name="citation_publication_date" content="${escapeAttr(paper.published_at.slice(0, 10))}" />\n`;
-  if (paper.issue?.volume)   extra += `  <meta name="citation_volume" content="${escapeAttr(String(paper.issue.volume))}" />\n`;
-  if (paper.issue?.number)   extra += `  <meta name="citation_issue" content="${escapeAttr(String(paper.issue.number))}" />\n`;
-  if (paper.page_start)      extra += `  <meta name="citation_firstpage" content="${escapeAttr(String(paper.page_start))}" />\n`;
-  if (paper.page_end)        extra += `  <meta name="citation_lastpage" content="${escapeAttr(String(paper.page_end))}" />\n`;
+  if (paper.venue?.name) extra += `  <meta name="citation_journal_title" content="${escapeAttr(paper.venue.name)}" />\n`;
+  if (paper.provider?.name) extra += `  <meta name="citation_publisher" content="${escapeAttr(paper.provider.name)}" />\n`;
+  if (paper.published_at) extra += `  <meta name="citation_publication_date" content="${escapeAttr(paper.published_at.slice(0, 10))}" />\n`;
+  if (paper.issue?.volume) extra += `  <meta name="citation_volume" content="${escapeAttr(String(paper.issue.volume))}" />\n`;
+  if (paper.issue?.number) extra += `  <meta name="citation_issue" content="${escapeAttr(String(paper.issue.number))}" />\n`;
+  if (paper.page_start) extra += `  <meta name="citation_firstpage" content="${escapeAttr(String(paper.page_start))}" />\n`;
+  if (paper.page_end) extra += `  <meta name="citation_lastpage" content="${escapeAttr(String(paper.page_end))}" />\n`;
 
-  // JSON-LD 구조화 데이터 (제목·발행정보·저자·초록·목차·참고문헌 포함)
   extra += `  <script type="application/ld+json">${buildJsonLd(paper, pageUrl)}</script>\n`;
 
   if (extra) html = html.replace('</head>', extra + '</head>');
@@ -122,32 +124,222 @@ function injectMeta(html, paper, pageUrl) {
   return html;
 }
 
+async function handleVectorAsk(request, env) {
+  if (!env.AI) {
+    return Response.json({ message: "AI binding is missing" }, { status: 500 });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (err) {
+    return Response.json({ message: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { question, top_k, min_similarity } = body;
+
+  if (!question) {
+    return Response.json({ message: "question is required" }, { status: 422 });
+  }
+
+  const API_BASE = ((env.VITE_API_URL || 'https://api.newnonmun.com').replace(/\/$/, '')) + '/api';
+
+  try {
+    const embeddingResult = await env.AI.run(EMBED_MODEL, {
+      text: [question],
+    });
+
+    if (!embeddingResult?.data?.[0]) {
+      return Response.json({ message: "Embedding failed", raw: embeddingResult }, { status: 500 });
+    }
+
+    const embedding = embeddingResult.data[0];
+
+    const authHeader = request.headers.get('Authorization');
+
+    const backendRes = await fetch(`${API_BASE}/ai/ask`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; NewnonmunSEO/1.0)',
+        'Referer': 'https://newnonmun-front.pages.dev/',
+        'Origin': 'https://newnonmun-front.pages.dev',
+        ...(authHeader ? { 'Authorization': authHeader } : {}),
+      },
+      body: JSON.stringify({ question, embedding, top_k, min_similarity }),
+    });
+
+    const contentType = backendRes.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await backendRes.text();
+      return Response.json({ message: "Backend non-JSON response", status: backendRes.status, body: text.slice(0, 300) }, { status: 502 });
+    }
+
+    const data = await backendRes.json();
+    return Response.json(data, { status: backendRes.status });
+  } catch (err) {
+    return Response.json({ message: "Vector ask failed", error: String(err) }, { status: 500 });
+  }
+}
+
+async function handleVectorUpsert(request, env) {
+  if (!env.AI) {
+    return Response.json({ message: "AI binding is missing" }, { status: 500 });
+  }
+
+  if (!env.VECTORIZE) {
+    return Response.json({ message: "VECTORIZE binding is missing" }, { status: 500 });
+  }
+
+  const auth = request.headers.get("Authorization");
+
+  if (auth !== `Bearer ${env.VECTOR_TOKEN}`) {
+    return Response.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  let body;
+
+  try {
+    body = await request.json();
+  } catch (err) {
+    return Response.json({ message: "Invalid JSON" }, { status: 400 });
+  }
+
+  const papers = body.papers || [];
+
+  if (!Array.isArray(papers) || papers.length === 0) {
+    return Response.json({ message: "papers is required" }, { status: 422 });
+  }
+
+  if (papers.length > 20) {
+    return Response.json(
+      { message: "테스트는 한 번에 20개 이하로 보내세요." },
+      { status: 422 }
+    );
+  }
+
+  const validPapers = papers.filter((paper) => {
+    return paper && paper.id && paper.title;
+  });
+
+  if (validPapers.length === 0) {
+    return Response.json(
+      { message: "id와 title이 있는 논문이 필요합니다." },
+      { status: 422 }
+    );
+  }
+
+  const texts = validPapers.map((paper) => {
+    return [
+      `제목: ${paper.title || ""}`,
+      `영문제목: ${paper.title_en || ""}`,
+      `초록: ${paper.abstract || ""}`,
+      `영문초록: ${paper.abstract_en || ""}`,
+      `키워드: ${Array.isArray(paper.keywords) ? paper.keywords.join(", ") : (paper.keywords || "")}`,
+      `영문키워드: ${Array.isArray(paper.keywords_en) ? paper.keywords_en.join(", ") : (paper.keywords_en || "")}`,
+      `학술지: ${paper.journal || paper.venue?.name || ""}`,
+      `연도: ${paper.year || paper.published_at || ""}`,
+      `분야: ${paper.category || ""}`,
+    ].join("\n");
+  });
+
+  try {
+    const embeddingResult = await env.AI.run(EMBED_MODEL, {
+      text: texts,
+    });
+
+    if (!embeddingResult?.data || !Array.isArray(embeddingResult.data)) {
+      return Response.json(
+        {
+          message: "Embedding failed",
+          raw: embeddingResult,
+        },
+        { status: 500 }
+      );
+    }
+
+    const vectors = validPapers.map((paper, index) => {
+      const journal = paper.journal || paper.venue?.name || "";
+      const year = paper.year || (paper.published_at ? String(paper.published_at).slice(0, 4) : "");
+
+      return {
+        id: String(paper.id),
+        values: embeddingResult.data[index],
+        metadata: {
+          paper_id: String(paper.id),
+          title: String(paper.title || "").slice(0, 200),
+          journal: String(journal || "").slice(0, 100),
+          year: year ? Number(year) : undefined,
+          category: String(paper.category || "").slice(0, 100),
+        },
+      };
+    });
+
+    await env.VECTORIZE.upsert(vectors);
+
+    return Response.json({
+      ok: true,
+      model: EMBED_MODEL,
+      count: vectors.length,
+      ids: vectors.map((v) => v.id),
+    });
+  } catch (err) {
+    return Response.json(
+      {
+        message: "Vector upsert failed",
+        error: String(err),
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export default {
   async fetch(request, env) {
-    const API_BASE = ((env.VITE_API_URL || 'https://api.newnonmun.com').replace(/\/$/, '')) + '/api';
     const url = new URL(request.url);
     const { pathname } = url;
 
-    // ── 디버그 엔드포인트: /__debug__/:paperId ──────────────────────────
+    // ── Vectorize 임베딩 저장 테스트 엔드포인트 ─────────────────────
+    if (pathname === "/vector/upsert" && request.method === "POST") {
+      return handleVectorUpsert(request, env);
+    }
+
+    // ── AI 분석: 질의 임베딩 후 백엔드 프록시 ────────────────────────
+    if (pathname === "/api/ai/ask" && request.method === "POST") {
+      return handleVectorAsk(request, env);
+    }
+
+    const API_BASE = ((env.VITE_API_URL || 'https://api.newnonmun.com').replace(/\/$/, '')) + '/api';
+
+    // ── 디버그 엔드포인트: /__debug__/:paperId ─────────────────────
     if (pathname.startsWith('/__debug__/')) {
       const id = pathname.replace('/__debug__/', '');
       try {
         const res = await fetch(`${API_BASE}/papers/${id}`, {
-          headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (compatible; NewnonmunSEO/1.0)', 'Referer': 'https://newnonmun-front.pages.dev/', 'Origin': 'https://newnonmun-front.pages.dev' },
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (compatible; NewnonmunSEO/1.0)',
+            'Referer': 'https://newnonmun-front.pages.dev/',
+            'Origin': 'https://newnonmun-front.pages.dev',
+          },
         });
+
         const body = await res.text();
+
         return new Response(
           JSON.stringify({ status: res.status, ok: res.ok, body: body.slice(0, 500) }, null, 2),
           { headers: { 'Content-Type': 'application/json' } }
         );
       } catch (err) {
         return new Response(JSON.stringify({ error: String(err) }, null, 2), {
-          status: 500, headers: { 'Content-Type': 'application/json' },
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
         });
       }
     }
 
-    // ── 논문 상세 페이지 감지 ──────────────────────────────────────────
+    // ── 논문 상세 페이지 감지 ─────────────────────────────────────
     const segments = pathname.split('/').filter(Boolean);
     const isPaperDetail =
       segments[0] === 'papers' &&
@@ -157,8 +349,8 @@ export default {
       const id = segments[segments.length - 1];
       console.log(`[worker] paper detail: ${id}`);
 
-      // index.html 먼저 가져옴 (API 실패해도 SPA는 서빙)
       let html = null;
+
       try {
         const htmlRes = await env.ASSETS.fetch(new URL('/index.html', url).toString());
         if (htmlRes.ok) html = await htmlRes.text();
@@ -167,7 +359,6 @@ export default {
       }
 
       if (html) {
-        // API에서 논문 데이터 가져와서 메타 주입 시도
         try {
           const paperRes = await fetch(`${API_BASE}/papers/${id}`, {
             headers: {
@@ -177,13 +368,19 @@ export default {
               'Origin': 'https://newnonmun-front.pages.dev',
             },
           });
+
           console.log(`[worker] API status: ${paperRes.status}`);
+
           if (paperRes.ok) {
             const paper = await paperRes.json();
             html = injectMeta(html, paper, url.href);
             console.log(`[worker] 메타 주입 완료: ${paper.title}`);
+
             return new Response(html, {
-              headers: { 'Content-Type': 'text/html;charset=UTF-8', 'X-Worker': 'meta-injected' },
+              headers: {
+                'Content-Type': 'text/html;charset=UTF-8',
+                'X-Worker': 'meta-injected',
+              },
             });
           } else {
             console.warn(`[worker] API 비정상 응답: ${paperRes.status}`);
@@ -192,18 +389,22 @@ export default {
           console.error('[worker] API 요청 실패:', err);
         }
 
-        // API 실패해도 index.html은 그대로 반환
         return new Response(html, {
-          headers: { 'Content-Type': 'text/html;charset=UTF-8', 'X-Worker': 'api-failed-fallback' },
+          headers: {
+            'Content-Type': 'text/html;charset=UTF-8',
+            'X-Worker': 'api-failed-fallback',
+          },
         });
       }
     }
 
-    // ── 정적 파일 서빙 ────────────────────────────────────────────────
+    // ── 정적 파일 서빙 ───────────────────────────────────────────
     const response = await env.ASSETS.fetch(request);
+
     if (response.status === 404) {
       return env.ASSETS.fetch(new URL('/index.html', url).toString());
     }
+
     return response;
   },
 };

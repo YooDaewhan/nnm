@@ -10,7 +10,7 @@ const menuItems = [
   { label: '구매내역', href: '/mypage/orders' },
   { label: '보관함', href: '/mypage/scraps' },
   { label: '최근 본 논문', href: '/mypage/recent' },
-  { label: 'Q&A', href: '/mypage/qna' },
+  // { label: 'Q&A', href: '/mypage/qna' },
   { label: '회원정보', href: '/mypage' },
 ];
 

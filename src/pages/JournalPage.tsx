@@ -3,8 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL, fixImageUrl } from '../api/client';
 import JournalFilterSidebar from '@/components/JournalFilterSidebar';
-import { OpenSearchTextResultItem } from '@/api/search';
-import { osSearchText } from '@/api/opensearch-direct';
+import { OpenSearchTextResultItem, searchOpensearchText } from '@/api/search';
 import { SearchResultCard } from '@/components/search/SearchResultCard';
 import { SearchControlBar } from '@/components/search/SearchControlBar';
 import { FloatingActionBar } from '@/components/search/FloatingActionBar';
@@ -144,8 +143,8 @@ export default function JournalPage() {
     setSelectedIds(new Set());
     const perPage = size ?? itemsPerPage;
     try {
-      const res = await osSearchText({
-        query: keyword,
+      const res = await searchOpensearchText({
+        query: keyword.trim() || venue.name,
         filters: {
           journal: venue.name,
           ...(yearFrom || yearTo ? {

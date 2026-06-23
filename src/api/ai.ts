@@ -1,5 +1,3 @@
-import { API_BASE_URL } from './client';
-
 export interface AiChunk {
   chunk_id: number;
   publication_id: string | null;
@@ -36,7 +34,7 @@ export async function postAnalyze(params: {
   top_k?: number;
   min_similarity?: number;
 }): Promise<AnalyzeResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/ai/ask`, {
+  const res = await fetch('/api/ai/ask', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(params),
