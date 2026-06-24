@@ -96,6 +96,7 @@ function PaperDetailContent() {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showAllRefs, setShowAllRefs] = useState(false);
 
   const [citeOpen, setCiteOpen] = useState(false);
   const [citeTexts, setCiteTexts] = useState<Record<string, string>>({});
@@ -876,7 +877,7 @@ function PaperDetailContent() {
                   <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">참고문헌</h2>
                   {paper.references && paper.references.length > 0 ? (
                     <div className="flex flex-col">
-                      {paper.references.map((ref, idx) => {
+                      {(showAllRefs ? paper.references : paper.references.slice(0, 8)).map((ref, idx) => {
                         const text = typeof ref === 'string' ? ref : (ref as { raw_text?: string }).raw_text ?? '';
                         return (
                           <ol key={idx}>
@@ -887,6 +888,20 @@ function PaperDetailContent() {
                           </ol>
                         );
                       })}
+                      {paper.references.length > 8 && (
+                        <button
+                          onClick={() => setShowAllRefs(prev => !prev)}
+                          className="flex items-center justify-center gap-[6px] mt-[12px] mx-auto text-[14px] font-medium text-[#464C53] hover:text-[#131416] transition-colors"
+                        >
+                          {showAllRefs ? '접기' : '펼치기'}
+                          <svg
+                            width="18" height="18" viewBox="0 0 18 18" fill="none"
+                            style={{ transition: 'transform 0.2s', transform: showAllRefs ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                          >
+                            <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="#464C53" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <p className="text-[17px] font-normal leading-[150%] text-[#131416]">등록된 참고문헌 정보가 없습니다.</p>
