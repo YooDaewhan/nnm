@@ -82,7 +82,7 @@ export default function SearchFilterSidebar({ onApply, onReset, onWithinSearch, 
                         setWithinQuery('');
                       }
                     }}
-                    placeholder="검색어를 입력해주세요."
+                    placeholder="검색어 또는 질문을 입력하세요."
                     className="w-full h-10 px-4 pr-12 border border-[#CDD1D5] rounded-md text-[14px] text-[#1E2124] placeholder:text-[#8A949E] focus:outline-none focus:border-[#256EF4]"
                   />
                   <button

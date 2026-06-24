@@ -338,7 +338,7 @@ function OpenSearchTextContent() {
                   <input
                     value={mobileWithin}
                     onChange={(e) => setMobileWithin(e.target.value)}
-                    placeholder="검색어를 입력해주세요."
+                    placeholder="검색어 또는 질문을 입력하세요."
                     style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', fontFamily: "'Pretendard GOV', sans-serif", fontWeight: 400, fontSize: 17, lineHeight: '150%', color: '#1E2124' }}
                   />
                   <button type="submit" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#8A949E' }}>

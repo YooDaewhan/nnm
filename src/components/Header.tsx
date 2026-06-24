@@ -136,7 +136,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="검색어를 입력하세요"
+                placeholder="검색어 또는 질문을 입력하세요"
                 className="flex-1 w-full text-[19px] text-[#1E2124] placeholder:text-[#8A949E] outline-none"
               />
 
@@ -247,7 +247,7 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="검색어를 입력하세요"
+                placeholder="검색어 또는 질문을 입력하세요"
                 className="flex-1 w-full text-[19px] text-[#1E2124] placeholder:text-[#8A949E] outline-none"
               />
             </div>

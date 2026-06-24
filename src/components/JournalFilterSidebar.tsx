@@ -144,7 +144,7 @@ export default function JournalFilterSidebar({ onSearch, onReset }: Props) {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleWithinSearch();
                   }}
-                  placeholder="검색어를 입력해주세요."
+                  placeholder="검색어 또는 질문을 입력하세요."
                   style={{
                     flex: 1,
                     height: '100%',

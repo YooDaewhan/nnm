@@ -51,7 +51,7 @@ test.describe('검색 페이지', () => {
   });
 
   test('필터 사이드바 - 결과 내 검색 입력', async ({ page }) => {
-    const innerSearchInput = page.getByPlaceholder('검색어를 입력해주세요.');
+    const innerSearchInput = page.getByPlaceholder('검색어 또는 질문을 입력하세요.');
     await expect(innerSearchInput).toBeVisible();
     await innerSearchInput.fill('심리');
     await innerSearchInput.press('Enter');

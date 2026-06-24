@@ -566,7 +566,7 @@ export default function HomePage() {
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="검색어를 입력하세요"
+                    placeholder="검색어 또는 질문을 입력하세요"
                     style={{
                       flex: 1,
                       minWidth: 0,

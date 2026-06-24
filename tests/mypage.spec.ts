@@ -163,7 +163,7 @@ test.describe('마이페이지 - 구매 내역', () => {
 
   test('검색 입력란 표시', async ({ page }) => {
     await expect(
-      page.getByPlaceholder('검색어를 입력해주세요.')
+      page.getByPlaceholder('검색어 또는 질문을 입력하세요.')
     ).toBeVisible({ timeout: 10000 });
   });
 

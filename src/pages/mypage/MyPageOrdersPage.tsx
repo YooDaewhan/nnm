@@ -167,7 +167,7 @@ export default function MyPageOrdersPage() {
                 type="text"
                 value={searchKeyword}
                 onChange={e => setSearchKeyword(e.target.value)}
-                placeholder="검색어를 입력해주세요."
+                placeholder="검색어 또는 질문을 입력하세요."
                 className="flex-1 bg-transparent text-[17px] leading-[1.5em] text-[#1E2124] placeholder-[#8A949E] focus:outline-none"
               />
             </div>
