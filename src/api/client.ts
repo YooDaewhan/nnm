@@ -19,9 +19,9 @@ export const pdfServerFetch = async <T>(
 // 백엔드가 사설 IP 또는 직접 IP를 반환하는 경우 공개 도메인으로 교체
 export const fixImageUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
-  return url
-    .replace(/https?:\/\/192\.168\.20\.231(:\d+)?/, import.meta.env.VITE_API_URL || 'https://api.newnonmun.com')
-    .replace(/https?:\/\/13\.124\.231\.145(:\d+)?/, 'https://api.newnonmun.com');
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.newnonmun.com';
+  // 사설 IP (192.168.x.x) 또는 AWS 서울 리전 IP (13.x.x.x, 43.x.x.x, 3.x.x.x) 교체
+  return url.replace(/https?:\/\/(192\.168\.\d+\.\d+|13\.\d+\.\d+\.\d+|43\.\d+\.\d+\.\d+|3\.\d+\.\d+\.\d+)(:\d+)?/g, apiUrl);
 };
 
 // API 클라이언트 설정
