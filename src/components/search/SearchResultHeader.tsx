@@ -44,15 +44,16 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
   </svg>
 );
 
-function AnalyzePanel({ data }: { data: AnalyzeResponse }) {
-  // chunk_id → publication_id 매핑
+function buildChunkMap(data: AnalyzeResponse) {
   const chunkToPub = new Map(
     (data.chunks ?? []).filter(c => c.publication_id).map(c => [c.chunk_id, c.publication_id!])
   );
-  // publication_id → 1-based 인용 번호 (references 순서 기준)
   const pubToIdx = new Map(data.references.map((ref, i) => [ref.publication_id, i + 1]));
+  return { chunkToPub, pubToIdx };
+}
 
-  // [#82208] → [1] 형태로 치환
+function AnalysisAnswer({ data }: { data: AnalyzeResponse }) {
+  const { chunkToPub, pubToIdx } = buildChunkMap(data);
   const formattedAnswer = data.answer.replace(/\[#(\d+)\]/g, (_, id) => {
     const pubId = chunkToPub.get(Number(id));
     const idx = pubId ? pubToIdx.get(pubId) : undefined;
@@ -60,22 +61,24 @@ function AnalyzePanel({ data }: { data: AnalyzeResponse }) {
   });
 
   return (
-    <div className="mt-5 pt-5 border-t border-[#C4D8FF] space-y-5">
+    <div className="mt-5 pt-5 border-t border-[#C4D8FF]">
       <p className="text-[14px] text-[#1E2124] leading-relaxed whitespace-pre-wrap">{formattedAnswer}</p>
+    </div>
+  );
+}
 
-      {data.references.length > 0 && (
-        <div>
-          <h4 className="text-[13px] font-semibold text-[#8A949E] mb-2">참고 논문</h4>
-          <ol className="space-y-1">
-            {data.references.map((ref, i) => (
-              <li key={ref.publication_id} className="flex gap-2 text-[12px] text-[#464C53]">
-                <span className="shrink-0 font-medium text-[#256EF4]">[{i + 1}]</span>
-                <span>{ref.title}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
+function RefsPanel({ data }: { data: AnalyzeResponse }) {
+  return (
+    <div className="mt-3">
+      <h4 className="text-[13px] font-semibold text-[#8A949E] mb-2">추천 논문</h4>
+      <ol className="space-y-1">
+        {data.references.map((ref, i) => (
+          <li key={ref.publication_id} className="flex gap-2 text-[12px] text-[#464C53]">
+            <span className="shrink-0 font-medium text-[#256EF4]">[{i + 1}]</span>
+            <span>{ref.title}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -89,13 +92,13 @@ export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemov
   const hasJournalFilter = !!journalString;
   const hasAnyFilter = andConditions.length > 0 || hasYearFilter || hasJournalFilter;
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [refsExpanded, setRefsExpanded] = useState(false);
   const topic = submittedState?.conditions[0]?.keyword ?? '';
 
   const { data: analyzeData, isLoading: analyzeLoading, error: analyzeError } = useQuery({
     queryKey: ['ai-analyze', topic],
     queryFn: () => postAnalyze({ question: topic, top_k: 12, min_similarity: 0.3 }),
-    enabled: isExpanded && !!topic,
+    enabled: !!topic,
     staleTime: 1000 * 60 * 60,
     retry: 1,
   });
@@ -156,35 +159,35 @@ export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemov
             )}
           </div>
 
-          {/* 분석 펼치기 영역 */}
-          {isExpanded && (
+          {/* AI 분석 결과 (검색 시 자동 표시) */}
+          {analyzeLoading && (
+            <div className="mt-5 pt-5 border-t border-[#C4D8FF] flex items-center gap-2 text-[13px] text-[#8A949E]">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#256EF4]" />
+              AI 분석 중...
+            </div>
+          )}
+          {analyzeError && (
+            <div className="mt-5 pt-5 border-t border-[#C4D8FF] text-[13px] text-red-500">
+              분석 요청 중 오류가 발생했습니다.
+            </div>
+          )}
+          {analyzeData && <AnalysisAnswer data={analyzeData} />}
+
+          {/* 추천논문 보기/접기 버튼 */}
+          {analyzeData && analyzeData.references.length > 0 && (
             <>
-              {analyzeLoading && (
-                <div className="mt-5 pt-5 border-t border-[#C4D8FF] flex items-center gap-2 text-[13px] text-[#8A949E]">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#256EF4]" />
-                  AI 분석 중...
-                </div>
-              )}
-              {analyzeError && (
-                <div className="mt-5 pt-5 border-t border-[#C4D8FF] text-[13px] text-red-500">
-                  분석 요청 중 오류가 발생했습니다.
-                </div>
-              )}
-              {analyzeData && <AnalyzePanel data={analyzeData} />}
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => setRefsExpanded(v => !v)}
+                  className="flex items-center gap-1 text-[13px] text-[#256EF4] hover:text-[#1a4fc0] transition-colors"
+                >
+                  <span>{refsExpanded ? '접기' : '추천논문 보기'}</span>
+                  <ChevronIcon open={refsExpanded} />
+                </button>
+              </div>
+              {refsExpanded && <RefsPanel data={analyzeData} />}
             </>
           )}
-
-          {/* 펼치기/접기 버튼 */}
-          <div className="flex justify-center mt-4">
-            <button
-              onClick={() => setIsExpanded(v => !v)}
-              className="flex items-center gap-1 text-[13px] text-[#256EF4] hover:text-[#1a4fc0] transition-colors"
-              title={isExpanded ? '접기' : 'AI 분석 보기'}
-            >
-              <span>{isExpanded ? '접기' : 'AI 분석 보기'}</span>
-              <ChevronIcon open={isExpanded} />
-            </button>
-          </div>
         </>
       ) : (
         <p className="text-[15px] text-gray-500">검색어를 입력하고 검색을 실행하세요.</p>
