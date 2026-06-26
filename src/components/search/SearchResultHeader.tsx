@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DetailedSearchCondition } from '@/api/search';
-import { postAnalyze, AnalyzeResponse } from '@/api/ai';
+import { postAnalyze, AnalyzeResponse, AiApiError } from '@/api/ai';
 
 const FIELD_LABELS: Record<string, string> = {
   title: '제목', author: '저자', abstract: '초록',
@@ -167,8 +167,10 @@ export function SearchResultHeader({ submittedState, yearLabel, onReset, onRemov
             </div>
           )}
           {analyzeError && (
-            <div className="mt-5 pt-5 border-t border-[#C4D8FF] text-[13px] text-red-500">
-              분석 요청 중 오류가 발생했습니다.
+            <div className="mt-5 pt-5 border-t border-[#C4D8FF] text-[13px] text-[#8A949E]">
+              {analyzeError instanceof AiApiError && analyzeError.isRetryable
+                ? '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+                : '분석 요청 중 오류가 발생했습니다.'}
             </div>
           )}
           {analyzeData && <AnalysisAnswer data={analyzeData} />}

@@ -29,6 +29,23 @@ export interface AnalyzeResponse {
   usage?: AiUsage;
 }
 
+const RETRYABLE_CODES = new Set(['empty_response', 'server_error', 'connection_failed', 'timeout', 'search_failed']);
+
+export class AiApiError extends Error {
+  constructor(
+    message: string,
+    public readonly errorCode: string | null,
+    public readonly status: number,
+  ) {
+    super(message);
+  }
+
+  get isRetryable() {
+    if (this.status === 429 || (this.status >= 502 && this.status <= 504)) return true;
+    return this.errorCode != null && RETRYABLE_CODES.has(this.errorCode);
+  }
+}
+
 export async function postAnalyze(params: {
   question: string;
   top_k?: number;
@@ -39,6 +56,13 @@ export async function postAnalyze(params: {
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(params),
   });
-  if (!res.ok) throw new Error(`AI 분석 요청 실패 (${res.status})`);
+  if (!res.ok) {
+    const body: { error_code?: string; message?: string } | null = await res.json().catch(() => null);
+    throw new AiApiError(
+      body?.message ?? `AI 분석 요청 실패 (${res.status})`,
+      body?.error_code ?? null,
+      res.status,
+    );
+  }
   return res.json();
 }
