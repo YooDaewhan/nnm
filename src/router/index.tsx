@@ -68,7 +68,7 @@ export const router = createBrowserRouter([
       { path: '/mypage/library',      element: <MyPageLibraryPage /> },
       { path: '/mypage/scraps',       element: <MyPageScrapPage /> },
       { path: '/mypage/recent',       element: <MyPageRecentPage /> },
-      // { path: '/mypage/qna',          element: <MyPageQnaPage /> },
+      { path: '/mypage/qna',          element: <MyPageQnaPage /> },
       { path: '/login',               element: <LoginPage /> },
       { path: '/register',            element: <RegisterPage /> },
       { path: '/register/complete',   element: <RegisterCompletePage /> },

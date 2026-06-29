@@ -67,6 +67,10 @@ export function SearchResultCard({
 
   const [localScraped, setLocalScraped] = useState(isScraped);
   const [localInCart, setLocalInCart] = useState(isInCart);
+
+  const displayYear = result.metadata?.published_at
+    ? new Date(result.metadata.published_at).getFullYear()
+    : result.year ?? null;
   useEffect(() => { setLocalScraped(isScraped); }, [isScraped]);
   useEffect(() => { setLocalInCart(isInCart); }, [isInCart]);
 
@@ -152,7 +156,7 @@ export function SearchResultCard({
       setCiteTexts(prev => ({ ...prev, [fmt]: text }));
     } catch {
       const authors = result.authors?.slice(0, 3).join(', ') ?? '';
-      const year = result.year ?? '';
+      const year = displayYear != null ? String(displayYear) : '';
       const journal = (result.metadata.journal as string | null)?.trim() ?? '';
       setCiteTexts(prev => ({ ...prev, [fmt]: `${authors} (${year}). ${result.title}. ${journal}.` }));
     } finally {
@@ -410,12 +414,10 @@ export function SearchResultCard({
           </div>
 
           {/* row-2: meta-box */}
-          <div
-            onClick={() => navigate(paperUrl)}
-            style={{ display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer' }}
-          >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
               <h3
+                onClick={() => navigate(paperUrl)}
                 style={{
                   margin: 0,
                   fontFamily: "'Pretendard GOV', sans-serif",
@@ -424,6 +426,7 @@ export function SearchResultCard({
                   lineHeight: '150%',
                   color: '#1E2124',
                   flex: 1,
+                  cursor: 'pointer',
                 }}
               >
                 {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
@@ -455,9 +458,9 @@ export function SearchResultCard({
                 </svg>
               )} */}
 
-              {result.year != null && (
+              {displayYear != null && (
                 <div className="meta-value info-divider text-[15px]">
-                  {result.year}
+                  {displayYear}
                 </div>
               )}
             </div>
@@ -589,7 +592,7 @@ export function SearchResultCard({
         </div>
 
         {/* 본문 */}
-        <div onClick={() => navigate(paperUrl)} className="flex flex-col flex-1 min-w-0">
+        <div className="flex flex-col flex-1 min-w-0">
           {/* 뱃지 + 아이콘 3개 */}
           <div className="flex items-start justify-between gap-1">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -669,7 +672,10 @@ export function SearchResultCard({
           <div className="flex items-center justify-between gap-[80px]">
             <div className="flex flex-col flex-1 min-w-0 gap-1">
               {/* 제목 */}
-              <h4 className="text-[19px] font-semibold cursor-pointer">
+              <h4
+                className="text-[19px] font-semibold cursor-pointer hover:text-[#256EF4] transition-colors"
+                onClick={() => navigate(paperUrl)}
+              >
                 {result.title ? highlightText(result.title, highlightTerms) : '제목 없음'}
               </h4>
 
@@ -680,7 +686,7 @@ export function SearchResultCard({
                     {result.authors.length > 3 && <span>외 {result.authors.length - 3}명</span>}
                   </>
                 )}
-                {result.year != null && (<><span className="meta-value info-divider">{result.year}</span></>)}
+                {displayYear != null && (<><span className="meta-value info-divider">{displayYear}</span></>)}
               </div>
               <PublicationMeta metadata={result.metadata} />
             </div>

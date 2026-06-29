@@ -192,16 +192,6 @@ export default function CartPage() {
                             )}
                           </div>
                         )}
-                        <div className="meta-article">
-                          <span className="meta-value info-divider text-[15px]">발행년월</span>
-                          <span className="meta-value info-divider text-[15px]">KCI등재</span>
-                        </div>
-                        <div className="meta-article">
-                          <span className="meta-value info-chevron text-[15px]">발행기관</span>
-                          <span className="meta-value info-chevron text-[15px]">저널명</span>
-                          <span className="meta-value info-chevron text-[15px]">권(호)</span>
-                          <span className="meta-value info-chevron text-[15px]">페이지 수록 정보</span>
-                        </div>
                       </div>
                       <div className="flex items-center justify-center">
                         <p className="text-[17px] font-bold leading-[1.5] text-center text-[#131416]">

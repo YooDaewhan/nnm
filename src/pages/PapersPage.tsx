@@ -716,7 +716,7 @@ function PaperDetailContent() {
 
                     {/* 발행년월 : YYYY.MM */}
                     {paper.published_at && (
-                      <MetaRow label="발행년월">
+                      <MetaRow label="발행연도">
                         <div className='meta-article'>
                           <span className="meta-value">
                             {(() => {

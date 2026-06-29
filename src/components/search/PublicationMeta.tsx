@@ -1,4 +1,7 @@
+import { useNavigate } from 'react-router-dom';
+
 export function PublicationMeta({ metadata }: { metadata: Record<string, unknown> }) {
+  const navigate = useNavigate();
   const providerName = (metadata.provider_name || metadata.publisher_name) as string | null;
   const venueName = (metadata.venue_name || metadata.journal) as string | null;
   const volume = metadata.volume as string | null | number;
@@ -12,15 +15,35 @@ export function PublicationMeta({ metadata }: { metadata: Record<string, unknown
     || (pageStart || pageEnd
       ? 'pp. ' + [pageStart, pageEnd].filter(Boolean).join('-')
       : null);
-  const segments = [providerName, venueName, volumeIssue, pageRange].filter(Boolean) as string[];
+
+  type Seg = { text: string; link?: string };
+  const segments: Seg[] = [
+    providerName ? { text: providerName } : null,
+    venueName ? { text: venueName, link: `/journal?name=${encodeURIComponent(venueName)}` } : null,
+    volumeIssue ? { text: volumeIssue } : null,
+    pageRange ? { text: pageRange } : null,
+  ].filter(Boolean) as Seg[];
+
   if (segments.length === 0) return null;
   return (
     <div className="meta-article meta-static">
-      {segments.map((seg, i) => (
-        <span key={i} className="meta-value info-chevron text-[15px]" style={{ margin: 0 }}>
-          {seg}
-        </span>
-      ))}
+      {segments.map((seg, i) =>
+        seg.link ? (
+          <a
+            key={i}
+            href={seg.link}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(seg.link!); }}
+            className="meta-value info-chevron text-[15px] hover:text-[#256EF4] hover:underline transition-colors"
+            style={{ margin: 0 }}
+          >
+            {seg.text}
+          </a>
+        ) : (
+          <span key={i} className="meta-value info-chevron text-[15px]" style={{ margin: 0 }}>
+            {seg.text}
+          </span>
+        )
+      )}
     </div>
   );
 }
