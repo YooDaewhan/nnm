@@ -181,6 +181,11 @@ footer .copyright {
   color: #052B57;
 }
 
+.badge-success {
+  background-color: #DCFCE7;
+  color: #15803D;
+}
+
 
 /* meta-article */
 .meta-article {

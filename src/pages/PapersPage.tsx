@@ -18,7 +18,7 @@ type OSPaperDetail = PaperDetail & {
   issue_number?: string;
   source?: string;
   indexing?: { kci?: string; kci_status?: number; index_info?: string };
-  venue?: PaperDetail['venue'] & { settings?: { award?: string[]; kci?: boolean } };
+  venue?: PaperDetail['venue'] & { kci?: boolean; settings?: { award?: string[]; kci?: boolean } };
   price?: number | null;
   is_free?: boolean;
   is_purchasable?: boolean;
@@ -548,10 +548,11 @@ function PaperDetailContent() {
                         const indexLabel =
                           idx?.index_info?.trim() ||
                           idx?.kci?.trim() ||
-                          (paper.venue?.settings?.kci ? 'KCI등재' : null);
+                          (paper.venue?.settings?.kci ? 'KCI등재' : null) ||
+                          (paper.venue?.kci ? 'KCI등재' : null);
                         if (!indexLabel) return null;
                         return (
-                          <span className="badge badge-large badge-color-primary">
+                          <span className="badge badge-large badge-success">
                             {indexLabel}
                           </span>
                         );
@@ -691,12 +692,7 @@ function PaperDetailContent() {
                                   num ? `제${num}호` : '',
                                 ].filter(Boolean).join(' ');
                                 return (
-                                  <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#8A949E" className="size-4 mx-[2px]">
-                                      <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                                    </svg>
-                                    <span className='meta-value info-chevron'>{issueLabel}</span>
-                                  </>
+                                  <span className='meta-value info-chevron'>{issueLabel}</span>
                                 );
                               })()}
                               {(paper.page_start || paper.page_end) && (
