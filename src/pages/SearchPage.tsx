@@ -12,6 +12,7 @@ import { SearchPagination } from '@/components/search/SearchPagination';
 import { SearchResultCard } from '@/components/search/SearchResultCard';
 import { useSearchSubmit } from '@/hooks/useSearchSubmit';
 import { useBulkActions } from '@/hooks/useBulkActions';
+import { AiSearchSidebar } from '@/components/search/AiSearchSidebar';
 
 function OpenSearchTextContent() {
   const navigate = useNavigate();
@@ -355,8 +356,9 @@ function OpenSearchTextContent() {
             <div style={{ borderTop: '1px solid #CDD1D5' }} />
           </div>
 
-          {/* ─── 데스크탑 전용: 사이드바 ─── */}
-          <div className="hidden md:block md:sticky top-24 md:self-start">
+          {/* ─── 데스크탑 전용: 왼쪽 사이드바 컬럼 (AI 검색 + 필터) ─── */}
+          <div className="hidden md:flex md:flex-col md:gap-4 md:w-[300px] md:flex-shrink-0 md:sticky top-24 md:self-start">
+            <AiSearchSidebar />
             <SearchFilterSidebar
               providers={providers}
               onApply={(filters) => {
