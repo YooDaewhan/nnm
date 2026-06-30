@@ -386,7 +386,7 @@ export type PaperDetail = {
   published_at?: string;
   type?: string;
   abstract?: string;
-  abstract_en?: string;
+  abstractEn?: string;
   body_content?: string | null;
   keywords?: string[];
   table_of_contents?: string;
@@ -777,7 +777,6 @@ export type OpenSearchResultMetadata = {
   h_index?: number | null;
   impact_factor?: number | null;
   keywords?: string | null;
-  keywords_en?: string | null;
   pub_month?: number | null;
   issue_number?: string | null;
   page_start?: string | null;

@@ -10,7 +10,6 @@ import { addToCart, removeFromCartByPublicationId } from '../api/cart';
 import { addScrapBatch, deleteScrapBatch, getPublicationsStatus } from '../api/scraps';
 
 type OSPaperDetail = PaperDetail & {
-  keywords_en?: string[];
   publisher_name?: string;
   pissn?: string;
   eissn?: string;
@@ -18,7 +17,7 @@ type OSPaperDetail = PaperDetail & {
   issue_number?: string;
   source?: string;
   indexing?: { kci?: string; kci_status?: number; index_info?: string };
-  venue?: PaperDetail['venue'] & { kci?: boolean; settings?: { award?: string[]; kci?: boolean } };
+  venue?: PaperDetail['venue'] & { settings?: { award?: string[]; kci?: boolean } };
   price?: number | null;
   is_free?: boolean;
   is_purchasable?: boolean;
@@ -548,11 +547,10 @@ function PaperDetailContent() {
                         const indexLabel =
                           idx?.index_info?.trim() ||
                           idx?.kci?.trim() ||
-                          (paper.venue?.settings?.kci ? 'KCI등재' : null) ||
-                          (paper.venue?.kci ? 'KCI등재' : null);
+                          (paper.venue?.settings?.kci ? 'KCI등재' : null);
                         if (!indexLabel) return null;
                         return (
-                          <span className="badge badge-large badge-success">
+                          <span className="badge badge-large badge-color-primary">
                             {indexLabel}
                           </span>
                         );
@@ -569,7 +567,7 @@ function PaperDetailContent() {
                               <path d="M5 12l5 5L19 7" stroke="#256EF4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                            <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                             </svg>
                           )}
@@ -587,12 +585,12 @@ function PaperDetailContent() {
                         className="btn_icon-box icon-large"
                       >
                         {isScraped ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#d63d4a" className="size-6">
+                          <svg viewBox="0 0 24 24" fill="#d63d4a" className="size-6">
                             <path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" />
                           </svg>
 
                         ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
                           </svg>
                         )}
@@ -600,7 +598,7 @@ function PaperDetailContent() {
 
                       {/* bag/cart */}
                       <button onClick={handleAddToCart} disabled={cartMutation.isPending} title="장바구니 담기" className="btn_icon-box icon-large">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill={isInCart ? '#256EF4' : 'none'} viewBox="0 0 24 24" stroke-width="1.5" stroke={isInCart ? '#256EF4' : 'currentColor'} className="size-6">
+                        <svg fill={isInCart ? '#256EF4' : 'none'} viewBox="0 0 24 24" stroke-width="1.5" stroke={isInCart ? '#256EF4' : 'currentColor'} className="size-6">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                         </svg>
                       </button>
@@ -809,14 +807,14 @@ function PaperDetailContent() {
               <div className="flex flex-col gap-[64px] w-full">
 
                 {/* con-abstract : 초록 (국문 + 영문), gap 20px */}
-                {(paper.abstract || paper.abstract_en) && (
+                {(paper.abstract || paper.abstractEn) && (
                   <div ref={abstractRef} className="flex flex-col gap-[20px] w-full">
                     <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">초록</h2>
                     {paper.abstract && (
                       <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract}</p>
                     )}
-                    {paper.abstract_en && (
-                      <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstract_en}</p>
+                    {paper.abstractEn && (
+                      <p className="papers-body-text text-[17px] font-normal leading-[150%] text-[#464C53] w-full break-words">{paper.abstractEn}</p>
                     )}
                   </div>
                 )}
@@ -825,28 +823,8 @@ function PaperDetailContent() {
                 {paper.keywords && paper.keywords.length > 0 && (
                   <div className="flex flex-col gap-[20px]">
                     <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">키워드</h2>
-                    {/* keyword__list : gap 10px */}
                     <div className="flex flex-wrap gap-[10px]">
                       {paper.keywords.map((kw, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => navigate(`/search?q=${encodeURIComponent(kw)}`)}
-                          className="inline-flex items-center justify-center h-[39px] rounded-[1000px] text-[15px] leading-[150%] font-normal hover:opacity-80 transition-opacity cursor-pointer"
-                          style={{ background: '#EFF2F5', color: '#052B57', padding: '8px 20px' }}
-                        >
-                          {kw}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 영문 키워드 */}
-                {paper.keywords_en && paper.keywords_en.length > 0 && (
-                  <div className="flex flex-col gap-[20px]">
-                    <h2 className="papers-section-heading text-[24px] font-bold leading-[150%] text-[#131416]">영문 키워드</h2>
-                    <div className="flex flex-wrap gap-[10px]">
-                      {paper.keywords_en.map((kw, idx) => (
                         <button
                           key={idx}
                           onClick={() => navigate(`/search?q=${encodeURIComponent(kw)}`)}
