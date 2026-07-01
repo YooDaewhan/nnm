@@ -13,6 +13,7 @@ import { SearchResultCard } from '@/components/search/SearchResultCard';
 import { useSearchSubmit } from '@/hooks/useSearchSubmit';
 import { useBulkActions } from '@/hooks/useBulkActions';
 import { AiSearchSidebar } from '@/components/search/AiSearchSidebar';
+import { postAnalyze, AiApiError } from '@/api/ai';
 
 function OpenSearchTextContent() {
   const navigate = useNavigate();
@@ -37,6 +38,18 @@ function OpenSearchTextContent() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [mobileWithin, setMobileWithin] = useState('');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [mobileAiOpen, setMobileAiOpen] = useState(false);
+  const [mobileAiQuestion, setMobileAiQuestion] = useState('');
+  const [mobileAiSubmitted, setMobileAiSubmitted] = useState('');
+  const [mobileAiRefsExpanded, setMobileAiRefsExpanded] = useState(false);
+
+  const { data: mobileAiData, isLoading: mobileAiLoading, error: mobileAiError } = useQuery({
+    queryKey: ['ai-mobile-analyze', mobileAiSubmitted],
+    queryFn: () => postAnalyze({ question: mobileAiSubmitted, top_k: 12, min_similarity: 0.3 }),
+    enabled: !!mobileAiSubmitted,
+    staleTime: 1000 * 60 * 60,
+    retry: 1,
+  });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['detailed-search', submittedState, currentPage, itemsPerPage],
@@ -294,6 +307,109 @@ function OpenSearchTextContent() {
         )}
 
         <div className="flex flex-col md:flex-row gap-5 md:gap-6 items-start">
+
+          {/* ─── 모바일 전용: AI 검색 아코디언 ─── */}
+          <div className="md:hidden w-full">
+            <div style={{ display: 'flex', alignItems: 'center', padding: '12px 0' }}>
+              <span style={{ flex: 1, fontFamily: "'Pretendard GOV', sans-serif", fontWeight: 700, fontSize: 17, lineHeight: '150%', color: '#1E2124', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="8.5" stroke="#256EF4" strokeWidth="1.5"/>
+                  <path d="M7.5 8C7.5 6.61929 8.61929 5.5 10 5.5C11.3807 5.5 12.5 6.61929 12.5 8C12.5 9.38071 11.3807 10.5 10 10.5V12" stroke="#256EF4" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="10" cy="14" r="0.75" fill="#256EF4"/>
+                </svg>
+                AI 검색
+              </span>
+              <button
+                onClick={() => setMobileAiOpen(v => !v)}
+                style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 2px', height: 20, background: 'none', border: 'none', fontFamily: "'Pretendard GOV', sans-serif", fontWeight: 400, fontSize: 15, lineHeight: '150%', color: '#1E2124', cursor: 'pointer' }}
+              >
+                {mobileAiOpen ? '닫기' : '열기'}
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ transform: mobileAiOpen ? 'none' : 'rotate(180deg)', transition: 'transform 0.2s' }}>
+                  <path d="M5 12.5L10 7.5L15 12.5" stroke="#464C53" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {mobileAiOpen && (
+              <div style={{ padding: '4px 0 16px' }}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const q = mobileAiQuestion.trim();
+                    if (!q || mobileAiLoading) return;
+                    setMobileAiSubmitted(q);
+                    setMobileAiRefsExpanded(false);
+                  }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+                >
+                  <textarea
+                    value={mobileAiQuestion}
+                    onChange={(e) => setMobileAiQuestion(e.target.value)}
+                    placeholder="AI에게 질문을 입력하세요."
+                    rows={3}
+                    style={{ width: '100%', padding: '12px 16px', background: '#F4F5F6', border: 'none', borderRadius: 8, fontFamily: "'Pretendard GOV', sans-serif", fontSize: 16, color: '#1E2124', resize: 'none', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!mobileAiQuestion.trim() || mobileAiLoading}
+                    style={{ height: 44, borderRadius: 8, background: '#256EF4', color: '#fff', border: 'none', fontFamily: "'Pretendard GOV', sans-serif", fontSize: 15, cursor: 'pointer', opacity: (!mobileAiQuestion.trim() || mobileAiLoading) ? 0.5 : 1 }}
+                  >
+                    질문 보내기
+                  </button>
+                </form>
+
+                {mobileAiLoading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, color: '#8A949E', fontSize: 13, fontFamily: "'Pretendard GOV', sans-serif" }}>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#256EF4]" />
+                    AI 분석 중...
+                  </div>
+                )}
+
+                {mobileAiError && !mobileAiLoading && (
+                  <p style={{ marginTop: 12, fontSize: 13, color: '#8A949E', fontFamily: "'Pretendard GOV', sans-serif" }}>
+                    {mobileAiError instanceof AiApiError && mobileAiError.isRetryable
+                      ? '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+                      : '분석 요청 중 오류가 발생했습니다.'}
+                  </p>
+                )}
+
+                {mobileAiData && !mobileAiLoading && (
+                  <div style={{ marginTop: 12 }}>
+                    <p style={{ fontSize: 13, color: '#1E2124', lineHeight: '1.7', whiteSpace: 'pre-wrap', fontFamily: "'Pretendard GOV', sans-serif" }}>
+                      {mobileAiData.answer}
+                    </p>
+                    {mobileAiData.references.length > 0 && (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+                          <button
+                            onClick={() => setMobileAiRefsExpanded(v => !v)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#256EF4', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Pretendard GOV', sans-serif" }}
+                          >
+                            {mobileAiRefsExpanded ? '접기' : '추천논문 보기'}
+                            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" style={{ transform: mobileAiRefsExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                              <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                        {mobileAiRefsExpanded && (
+                          <ol style={{ marginTop: 8, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {mobileAiData.references.map((ref, i) => (
+                              <li key={ref.publication_id} style={{ display: 'flex', gap: 6, fontSize: 12, color: '#464C53', fontFamily: "'Pretendard GOV', sans-serif" }}>
+                                <span style={{ color: '#256EF4', fontWeight: 600, flexShrink: 0 }}>[{i + 1}]</span>
+                                <span>{ref.title}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ borderTop: '1px solid #CDD1D5' }} />
+          </div>
 
           {/* ─── 모바일 전용: 결과 내 검색 아코디언 (사이드바 없음) ─── */}
           <div className="md:hidden w-full">
