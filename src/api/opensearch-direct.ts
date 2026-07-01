@@ -299,7 +299,7 @@ export async function osGetPaperById(id: string): Promise<OSPaperDetail> {
     published_at: publishedAt,
     type: src.type,
     abstract: src.abstract || undefined,
-    abstract_en: src.abstract_en,
+    abstractEn: src.abstract_en,
     body_content: null,
     keywords: koKeywordsFinal,
     table_of_contents: src.table_of_contents,
