@@ -17,7 +17,7 @@ type OSPaperDetail = PaperDetail & {
   issue_number?: string;
   source?: string;
   indexing?: { kci?: string; kci_status?: number; index_info?: string };
-  venue?: PaperDetail['venue'] & { settings?: { award?: string[]; kci?: boolean } };
+  venue?: PaperDetail['venue'] & { award?: string[]; kci?: boolean };
   price?: number | null;
   is_free?: boolean;
   is_purchasable?: boolean;
@@ -542,19 +542,11 @@ function PaperDetailContent() {
                         );
                       })()}
                       {/* 등재정보 배지 */}
-                      {(() => {
-                        const idx = paper.indexing;
-                        const indexLabel =
-                          idx?.index_info?.trim() ||
-                          idx?.kci?.trim() ||
-                          (paper.venue?.settings?.kci ? 'KCI등재' : null);
-                        if (!indexLabel) return null;
-                        return (
-                          <span className="badge badge-large badge-color-primary">
-                            {indexLabel}
-                          </span>
-                        );
-                      })()}
+                      {(paper.venue?.award ?? []).map((award, i) => (
+                        <span key={i} className="badge badge-large badge-success">
+                          {award}
+                        </span>
+                      ))}
                     </div>
 
                     {/* btn-icon-box : share, heart, bag icons (gap 16px) */}
