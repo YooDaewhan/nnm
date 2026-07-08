@@ -443,10 +443,13 @@ function OpenSearchTextContent() {
                     e.preventDefault();
                     const kw = mobileWithin.trim();
                     if (!kw) return;
-                    const newCond: DetailedSearchCondition = { field: 'title', keyword: kw, operator: 'AND' };
-                    setSubmittedState(prev => prev
-                      ? { ...prev, conditions: [...prev.conditions, newCond] }
-                      : { conditions: [newCond], sort: 'relevance', filters: {} });
+                    setSubmittedState(prev => {
+                      const field = prev?.conditions[prev.conditions.length - 1]?.field ?? 'title';
+                      const newCond: DetailedSearchCondition = { field, keyword: kw, operator: 'AND' };
+                      return prev
+                        ? { ...prev, conditions: [...prev.conditions, newCond] }
+                        : { conditions: [newCond], sort: 'relevance', filters: {} };
+                    });
                     setSearchParams({ page: '1' });
                     setMobileWithin('');
                   }}
@@ -493,9 +496,11 @@ function OpenSearchTextContent() {
               }}
               onReset={handleResetFilters}
               onWithinSearch={(keyword) => {
-                if (!keyword.trim()) return;
-                const newCond: DetailedSearchCondition = { field: 'title', keyword: keyword.trim(), operator: 'AND' };
+                const kw = keyword.trim();
+                if (!kw) return;
                 setSubmittedState(prev => {
+                  const field = prev?.conditions[prev.conditions.length - 1]?.field ?? 'title';
+                  const newCond: DetailedSearchCondition = { field, keyword: kw, operator: 'AND' };
                   if (!prev) return { conditions: [newCond], sort: 'relevance', filters: {} };
                   return { ...prev, conditions: [...prev.conditions, newCond] };
                 });
