@@ -1046,7 +1046,7 @@ const SIMS_SERVICES = [
     id: 1,
     title: '학회/협회 웹사이트',
     description: '회원관리, 회비납부, 증명서 발급 등 효율적인 행정업무를 위한 관리 기능 지원',
-    href: 'https://sims.newnonmun.com/',
+    href: 'https://sims.newnonmun.com/#web-service',
     image: '/images/sims-01.png' as string | null,
   },
   {
@@ -1101,176 +1101,93 @@ const SIMS_SERVICES = [
 ];
 
 function SimsSection({ isMobile, navigate: _navigate }: { isMobile: boolean; navigate: ReturnType<typeof useNavigate> }) {
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [noTransition, setNoTransition] = useState(false);
-
-  const gap = isMobile ? 24 : 48;
-  const itemsPerPage = isMobile ? 1 : 4;
-  const n = SIMS_SERVICES.length;
-  const canScroll = n > itemsPerPage;
-  const arrowSize = 40;
-  const arrowOffset = isMobile ? -14 : -20;
-
-  const clonedItems = canScroll
-    ? [...SIMS_SERVICES.slice(-itemsPerPage), ...SIMS_SERVICES, ...SIMS_SERVICES.slice(0, itemsPerPage)]
-    : SIMS_SERVICES;
-
-  const displayIndex = canScroll ? slideIndex + itemsPerPage : 0;
-
-  const goLeft = () => {
-    if (noTransition) return;
-    const next = slideIndex - 1;
-    setSlideIndex(next);
-    if (next < 0) {
-      setTimeout(() => {
-        setNoTransition(true);
-        setSlideIndex(n - 1);
-        requestAnimationFrame(() => requestAnimationFrame(() => setNoTransition(false)));
-      }, 360);
-    }
-  };
-
-  const goRight = () => {
-    if (noTransition) return;
-    const next = slideIndex + 1;
-    setSlideIndex(next);
-    if (next >= n) {
-      setTimeout(() => {
-        setNoTransition(true);
-        setSlideIndex(0);
-        requestAnimationFrame(() => requestAnimationFrame(() => setNoTransition(false)));
-      }, 360);
-    }
-  };
-
-  const ArrowBtn = ({ dir }: { dir: 'left' | 'right' }) => (
-    <button
-      onClick={dir === 'left' ? goLeft : goRight}
-      style={{
-        position: 'absolute',
-        [dir]: arrowOffset,
-        top: '30%',
-        transform: 'translateY(-50%)',
-        zIndex: 2,
-        width: arrowSize,
-        height: arrowSize,
-        borderRadius: '50%',
-        background: '#FFFFFF',
-        border: '1px solid #CDD1D5',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-        padding: 0,
-        flexShrink: 0,
-      }}
-    >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        {dir === 'left'
-          ? <path d="M15 5L8 12L15 19" stroke="#1E2124" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          : <path d="M9 5L16 12L9 19" stroke="#1E2124" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />}
-      </svg>
-    </button>
-  );
+  const displayedServices = SIMS_SERVICES.slice(0, 4);
 
   return (
     <section style={{ backgroundColor: '#FFFFFF', padding: '64px 0', width: '100%', boxSizing: 'border-box' }}>
       <div style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: '0 16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 32 }}>
         <SectionTitle title="학회통합관리시스템 SIMS" sub="학회 운영에 필요한 시스템을 제공합니다." isMobile={isMobile} />
 
-        <div style={{ position: 'relative' }}>
-          {canScroll && <ArrowBtn dir="left" />}
-          {canScroll && <ArrowBtn dir="right" />}
-
-          <div style={{ overflow: 'hidden' }}>
-            <div
-              className="predictive-smooth"
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: isMobile ? 16 : 24,
+            width: isMobile ? '100%' : '62.5%',
+            margin: '0 auto',
+          }}
+        >
+          {displayedServices.map((service) => (
+            <a
+              key={service.id}
+              href={service.href}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
+                cursor: 'pointer',
+                textDecoration: 'none',
                 display: 'flex',
-                gap,
-                transform: `translateX(calc(-${displayIndex} * (100% + ${gap}px) / ${itemsPerPage}))`,
-                transition: noTransition ? 'none' : 'transform 0.35s ease',
-                width: '100%',
+                flexDirection: 'column',
               }}
             >
-              {clonedItems.map((service, i) => (
-                <a
-                  key={`${service.id}-${i}`}
-                  href={service.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {/* 이미지 영역 (276x160 비율) */}
+              <div
+                style={{
+                  width: '100%',
+                  aspectRatio: '276 / 160',
+                  background: '#DFE8F4',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                }}
+              >
+                {service.image ? (
+                  <img
+                    src={service.image}
+                    alt={service.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                ) : (
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect x="4" y="4" width="40" height="40" rx="4" stroke="#B7C6DD" strokeWidth="1.5" fill="none" />
+                    <line x1="12" y1="12" x2="36" y2="36" stroke="#B7C6DD" strokeWidth="1.5" />
+                    <line x1="36" y1="12" x2="12" y2="36" stroke="#B7C6DD" strokeWidth="1.5" />
+                  </svg>
+                )}
+              </div>
+
+              {/* 텍스트 영역 : padding 24px 0, gap 16 */}
+              <div style={{ padding: '24px 0', display: 'flex', flexDirection: 'column', gap: 16, background: '#FFFFFF' }}>
+                <p
                   style={{
-                    flexShrink: 0,
-                    flexGrow: 0,
-                    width: `calc((100% - ${(itemsPerPage - 1) * gap}px) / ${itemsPerPage})`,
-                    minWidth: 0,
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
+                    fontSize: isMobile ? 17 : 19,
+                    fontWeight: 700,
+                    color: '#1E2124',
+                    lineHeight: 1.5,
+                    margin: 0,
                   }}
                 >
-                  {/* 이미지 영역 (276x160 비율) */}
-                  <div
-                    style={{
-                      width: '100%',
-                      aspectRatio: '276 / 160',
-                      background: '#DFE8F4',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {service.image ? (
-                      <img
-                        src={service.image}
-                        alt={service.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                    ) : (
-                      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                        <rect x="4" y="4" width="40" height="40" rx="4" stroke="#B7C6DD" strokeWidth="1.5" fill="none" />
-                        <line x1="12" y1="12" x2="36" y2="36" stroke="#B7C6DD" strokeWidth="1.5" />
-                        <line x1="36" y1="12" x2="12" y2="36" stroke="#B7C6DD" strokeWidth="1.5" />
-                      </svg>
-                    )}
-                  </div>
-
-                  {/* 텍스트 영역 : padding 24px 0, gap 16 */}
-                  <div style={{ padding: '24px 0', display: 'flex', flexDirection: 'column', gap: 16, background: '#FFFFFF' }}>
-                    <p
-                      style={{
-                        fontSize: isMobile ? 17 : 19,
-                        fontWeight: 700,
-                        color: '#1E2124',
-                        lineHeight: 1.5,
-                        margin: 0,
-                      }}
-                    >
-                      {service.title}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: isMobile ? 15 : 17,
-                        color: '#464C53',
-                        fontWeight: 400,
-                        lineHeight: 1.5,
-                        margin: 0,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {service.description}
-                    </p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
+                  {service.title}
+                </p>
+                <p
+                  style={{
+                    fontSize: isMobile ? 15 : 17,
+                    color: '#464C53',
+                    fontWeight: 400,
+                    lineHeight: 1.5,
+                    margin: 0,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {service.description}
+                </p>
+              </div>
+            </a>
+          ))}
         </div>
       </div>
     </section>

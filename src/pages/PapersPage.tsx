@@ -714,6 +714,15 @@ function PaperDetailContent() {
                       </MetaRow>
                     )}
 
+                    {/* 이용정보 : 조회수 / 인용수 / 다운로드 수 */}
+                    <MetaRow label="이용정보">
+                      <div className='meta-article'>
+                        <span className='meta-value info-divider'>조회수 {(paper.view_count ?? 0).toLocaleString()}</span>
+                        <span className='meta-value info-divider'>인용수 {(paper.references_count ?? 0).toLocaleString()}</span>
+                        <span className='meta-value info-divider'>다운로드 수 {(paper.download_count ?? 0).toLocaleString()}</span>
+                      </div>
+                    </MetaRow>
+
                     {/* DOI */}
                     {paper.doi && (
                       <MetaRow label="DOI">

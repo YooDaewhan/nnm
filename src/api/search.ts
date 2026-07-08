@@ -368,6 +368,10 @@ export type PaperVenue = {
   name: string;
   type: string;
   cover_url?: string | null;
+  kci_impact_factor?: number | null;
+  kci_paper_count?: number | null;
+  kci_citation_count?: number | null;
+  kci_synced_at?: string | null;
 };
 
 export type PaperProvider = {
@@ -396,6 +400,7 @@ export type PaperDetail = {
   venue?: PaperVenue;
   provider?: PaperProvider;
   references: unknown[];
+  references_count?: number | null;
   citation_count?: number | null;
   view_count?: number | null;
   download_count?: number | null;
