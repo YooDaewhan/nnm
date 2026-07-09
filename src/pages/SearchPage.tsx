@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
 import { searchOpensearchDetailed, searchOpensearchText, DetailedSearchCondition } from '@/api/search';
+import { baseModeOf } from '@/hooks/useSearchSubmit';
 import { getPublicationsStatus } from '@/api/scraps';
 import SearchFilterSidebar from '@/components/SearchFilterSidebar';
 import { SearchResultHeader } from '@/components/search/SearchResultHeader';
@@ -62,11 +63,13 @@ function OpenSearchTextContent() {
           }
         : undefined;
 
-      if (submittedState!.conditions.length === 1) {
+      const mode = submittedState!.mode ?? baseModeOf(submittedState!.conditions);
+
+      // 일반검색: 전체 필드 대상 전문검색 (field 미지정)
+      if (mode === 'text') {
         const cond = submittedState!.conditions[0];
         const res = await searchOpensearchText({
           query: cond.keyword,
-          field: cond.field,
           offset: (currentPage - 1) * itemsPerPage,
           limit: itemsPerPage,
           sort: submittedState!.sort,
@@ -187,6 +190,23 @@ function OpenSearchTextContent() {
     buyNowMutation.mutate(resultId);
   };
 
+  // 결과 내 재검색: AND 조건을 추가해 상세검색(/detailed)으로 전환 → 필터·연산자 유지
+  const handleWithinSearch = (keyword: string) => {
+    const kw = keyword.trim();
+    if (!kw) return;
+    if (submittedState && submittedState.conditions.length >= 10) {
+      alert('검색 조건은 최대 10개까지 추가할 수 있습니다.');
+      return;
+    }
+    setSubmittedState(prev => {
+      const field = prev?.conditions[prev.conditions.length - 1]?.field ?? 'full_text';
+      const newCond: DetailedSearchCondition = { field, keyword: kw, operator: 'AND' };
+      if (!prev) return { mode: 'detailed', conditions: [newCond], sort: 'relevance', filters: {} };
+      return { ...prev, mode: 'detailed', conditions: [...prev.conditions, newCond] };
+    });
+    setSearchParams({ page: '1' });
+  };
+
   const handleItemsPerPageChange = (size: number) => {
     setItemsPerPage(size);
     setSearchParams(prev => { prev.set('page', '1'); return prev; });
@@ -201,7 +221,11 @@ function OpenSearchTextContent() {
   const goToPage = (page: number) => setSearchParams({ page: String(page) });
 
   const handleResetFilters = () => {
-    setSubmittedState(prev => prev ? { ...prev, conditions: prev.conditions.slice(0, 1), filters: {} } : prev);
+    setSubmittedState(prev => {
+      if (!prev) return prev;
+      const conditions = prev.conditions.slice(0, 1);
+      return { ...prev, conditions, filters: {}, mode: baseModeOf(conditions) };
+    });
     setSearchParams({ page: '1' });
   };
 
@@ -468,16 +492,7 @@ function OpenSearchTextContent() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const kw = mobileWithin.trim();
-                    if (!kw) return;
-                    setSubmittedState(prev => {
-                      const field = prev?.conditions[prev.conditions.length - 1]?.field ?? 'title';
-                      const newCond: DetailedSearchCondition = { field, keyword: kw, operator: 'AND' };
-                      return prev
-                        ? { ...prev, conditions: [...prev.conditions, newCond] }
-                        : { conditions: [newCond], sort: 'relevance', filters: {} };
-                    });
-                    setSearchParams({ page: '1' });
+                    handleWithinSearch(mobileWithin);
                     setMobileWithin('');
                   }}
                   style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px', height: 48, background: '#F4F5F6', borderRadius: 8 }}
@@ -522,17 +537,7 @@ function OpenSearchTextContent() {
                 setSearchParams({ page: '1' });
               }}
               onReset={handleResetFilters}
-              onWithinSearch={(keyword) => {
-                const kw = keyword.trim();
-                if (!kw) return;
-                setSubmittedState(prev => {
-                  const field = prev?.conditions[prev.conditions.length - 1]?.field ?? 'title';
-                  const newCond: DetailedSearchCondition = { field, keyword: kw, operator: 'AND' };
-                  if (!prev) return { conditions: [newCond], sort: 'relevance', filters: {} };
-                  return { ...prev, conditions: [...prev.conditions, newCond] };
-                });
-                setSearchParams({ page: '1' });
-              }}
+              onWithinSearch={handleWithinSearch}
             />
           </div>
 

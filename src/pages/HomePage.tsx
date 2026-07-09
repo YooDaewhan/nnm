@@ -435,7 +435,7 @@ export default function HomePage() {
   const handleDetailedSearch = () => {
     const valid = conditions.filter(c => c.keyword.trim());
     if (valid.length === 0) return;
-    const submittedState = { conditions: valid, sort: 'relevance' as const, filters: {} };
+    const submittedState = { mode: 'detailed' as const, conditions: valid, sort: 'relevance' as const, filters: {} };
     sessionStorage.setItem('search_conditions', JSON.stringify(valid));
     sessionStorage.setItem('search_submitted', JSON.stringify(submittedState));
     navigate('/search');
