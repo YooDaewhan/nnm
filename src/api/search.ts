@@ -770,6 +770,7 @@ export async function searchAdvanced(params: {
 export type OpenSearchTextFilters = {
   year?: { gte?: number; lte?: number };
   journal?: string;
+  publisher_name?: string;
   doi?: string;
 };
 
@@ -794,6 +795,7 @@ export type OpenSearchResultMetadata = {
   source?: string | null;
   indexing?: { kci?: string; kci_status?: number; index_info?: string; scopus?: string } | null;
   authors_display?: string | null;
+  venue_id?: number | null;
   venue_name?: string | null;
   volume?: number | string | null;
   number?: number | string | null;
@@ -802,10 +804,14 @@ export type OpenSearchResultMetadata = {
   provider_name?: string | null;
   subject_area?: string | null;
   price?: number | null;
+  award?: string[] | null;
+  kci?: boolean | null;
 };
 
 export type PostApiSearchOpensearchTextBody = {
   query: string;
+  /** 검색 대상 필드 (title, author, abstract, keyword, doi, full_text). 미지정 시 전체 필드 검색 */
+  field?: DetailedSearchField;
   limit?: number;
   offset?: number;
   filters?: OpenSearchTextFilters;
@@ -847,6 +853,7 @@ export type PostApiSearchOpensearchText200 = {
   limit: number;
   offset: number;
   sort?: string;
+  venues?: OpenSearchVenue[];
   providers?: OpenSearchProvider[];
   filter_context?: {
     provider?: { id: number; name: string };
@@ -887,12 +894,14 @@ export type OpenSearchTextSearchResponse = {
   limit: number;
   offset: number;
   sort?: string;
+  venues?: OpenSearchVenue[];
   providers?: OpenSearchProvider[];
   filter_context?: PostApiSearchOpensearchText200['filter_context'];
 };
 
 export async function searchOpensearchText(params: {
   query: string;
+  field?: DetailedSearchField;
   limit?: number;
   offset?: number;
   filters?: OpenSearchTextFilters;
@@ -923,6 +932,7 @@ export async function searchOpensearchText(params: {
     limit: data.limit ?? 10,
     offset: data.offset ?? 0,
     sort: data.sort,
+    venues: data.venues,
     providers: data.providers,
     filter_context: data.filter_context,
   };
@@ -1180,6 +1190,7 @@ export type DetailedSearchFilters = {
   year_from?: number;
   year_to?: number;
   journal?: string;
+  publisher_name?: string;
 };
 
 export type PostApiSearchOpensearchDetailedBody = {

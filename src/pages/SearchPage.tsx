@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
-import { searchOpensearchDetailed, DetailedSearchCondition } from '@/api/search';
+import { searchOpensearchDetailed, searchOpensearchText, DetailedSearchCondition } from '@/api/search';
 import { getPublicationsStatus } from '@/api/scraps';
 import SearchFilterSidebar from '@/components/SearchFilterSidebar';
 import { SearchResultHeader } from '@/components/search/SearchResultHeader';
@@ -53,32 +53,59 @@ function OpenSearchTextContent() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['detailed-search', submittedState, currentPage, itemsPerPage],
-    queryFn: () => searchOpensearchDetailed({
-      conditions: submittedState!.conditions,
-      page: currentPage,
-      size: itemsPerPage,
-      sort: submittedState!.sort,
-      filters: (submittedState!.filters.year_from || submittedState!.filters.year_to || submittedState!.filters.journal)
+    queryFn: async () => {
+      const filters = (submittedState!.filters.year_from || submittedState!.filters.year_to || submittedState!.filters.journal)
         ? {
             year_from: submittedState!.filters.year_from,
             year_to: submittedState!.filters.year_to,
-            journal: submittedState!.filters.journal,
+            publisher_name: submittedState!.filters.journal,
           }
-        : undefined,
-    }),
+        : undefined;
+
+      if (submittedState!.conditions.length === 1) {
+        const cond = submittedState!.conditions[0];
+        const res = await searchOpensearchText({
+          query: cond.keyword,
+          field: cond.field,
+          offset: (currentPage - 1) * itemsPerPage,
+          limit: itemsPerPage,
+          sort: submittedState!.sort,
+          filters: filters
+            ? { year: { gte: filters.year_from, lte: filters.year_to }, publisher_name: filters.publisher_name }
+            : undefined,
+        });
+        return {
+          success: res.success,
+          results: res.results,
+          count: res.count,
+          total: res.total,
+          has_more: res.has_more,
+          page: currentPage,
+          size: itemsPerPage,
+          sort: res.sort,
+          venues: res.venues,
+          providers: res.providers,
+        };
+      }
+
+      return searchOpensearchDetailed({
+        conditions: submittedState!.conditions,
+        page: currentPage,
+        size: itemsPerPage,
+        sort: submittedState!.sort,
+        filters,
+      });
+    },
     enabled: submittedState !== null,
   });
 
   const searchResults = useMemo(() => {
     const venues = data?.venues ?? [];
-    const providers = data?.providers ?? [];
-    const providerIdToType: Record<number, string> = {};
-    venues.forEach(v => { providerIdToType[v.provider_id] = v.type; });
-    const providerNameToType: Record<string, string> = {};
-    providers.forEach(p => { if (providerIdToType[p.id]) providerNameToType[p.name] = providerIdToType[p.id]; });
+    const venueIdToType: Record<number, string> = {};
+    venues.forEach(v => { venueIdToType[v.id] = v.type; });
     return (data?.results ?? []).map(r => ({
       ...r,
-      type: r.type ?? providerNameToType[r.metadata?.provider_name ?? ''] ?? null,
+      type: r.type ?? venueIdToType[Number(r.metadata?.venue_id)] ?? null,
     }));
   }, [data]);
   const totalResults = data?.total ?? data?.count ?? 0;
@@ -86,7 +113,7 @@ function OpenSearchTextContent() {
   const providers = useMemo(() => {
     const seen = new Set<string>();
     return searchResults
-      .map(r => r.metadata?.journal)
+      .map(r => (r.metadata?.provider_name || r.metadata?.publisher_name) as string | undefined)
       .filter((j): j is string => !!j && !seen.has(j) && !!seen.add(j))
       .map((name, idx) => ({ id: idx, name }));
   }, [searchResults]);

@@ -4,6 +4,7 @@ export function PublicationMeta({ metadata }: { metadata: Record<string, unknown
   const navigate = useNavigate();
   const providerName = (metadata.provider_name || metadata.publisher_name) as string | null;
   const venueName = (metadata.venue_name || metadata.journal) as string | null;
+  const venueId = metadata.venue_id as number | string | null | undefined;
   const volume = metadata.volume as string | null | number;
   const issue = (metadata.issue_number || metadata.number) as string | null;
   const volumeIssue = volume || issue
@@ -19,7 +20,14 @@ export function PublicationMeta({ metadata }: { metadata: Record<string, unknown
   type Seg = { text: string; link?: string };
   const segments: Seg[] = [
     providerName ? { text: providerName } : null,
-    venueName ? { text: venueName, link: `/journal?name=${encodeURIComponent(venueName)}` } : null,
+    venueName
+      ? {
+          text: venueName,
+          link: venueId
+            ? `/journal/${venueId}?name=${encodeURIComponent(venueName)}`
+            : `/journal?name=${encodeURIComponent(venueName)}`,
+        }
+      : null,
     volumeIssue ? { text: volumeIssue } : null,
     pageRange ? { text: pageRange } : null,
   ].filter(Boolean) as Seg[];
