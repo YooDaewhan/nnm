@@ -8,7 +8,7 @@ const SEARCH_CATEGORIES = [
   { value: 'title',     label: '제목' },
   { value: 'author',    label: '저자' },
   { value: 'keyword',   label: '키워드' },
-  { value: 'full_text', label: '전문' },
+  { value: 'full_text', label: '본문' },
 ];
 
 interface HeaderProps {
@@ -141,13 +141,6 @@ export default function Header({ isLoggedIn: propIsLoggedIn, onLogout }: HeaderP
               />
 
               <div className='flex items-center gap-3'>
-                {/* 상세검색 아이콘 */}
-                <button type="button" aria-label="상세검색">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-8">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                  </svg>
-                </button>
-  
                 {/* 검색 아이콘 */}
                 <button type="submit" aria-label="검색" >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-8">

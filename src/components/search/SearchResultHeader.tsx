@@ -2,7 +2,7 @@ import { DetailedSearchCondition } from '@/api/search';
 
 const FIELD_LABELS: Record<string, string> = {
   title: '제목', author: '저자', abstract: '초록',
-  keyword: '키워드', doi: 'DOI', full_text: '전문',
+  keyword: '키워드', doi: 'DOI', full_text: '본문',
 };
 
 interface SubmittedState {

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm run:*)",
       "Bash(find 'c:\\\\Users\\\\iok11\\\\yoo\\\\backup' -name \"a.*.php\" -type f 2>/dev/null | sort)",
-      "Read(//c/Users/iok11/yoo/backup/**)"
+      "Read(//c/Users/iok11/yoo/backup/**)",
+      "mcp__claude-in-chrome__tabs_context_mcp"
     ]
   }
 }

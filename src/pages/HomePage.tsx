@@ -413,10 +413,28 @@ export default function HomePage() {
   const [venueSlideIndex, setVenueSlideIndex] = useState(0);
   const [venueNoTransition, setVenueNoTransition] = useState(false);
 
+  const scopeToField = (s: string): DetailedSearchCondition['field'] => {
+    const valid = ['title', 'author', 'abstract', 'keyword', 'doi', 'full_text'];
+    return (valid.includes(s) ? s : 'full_text') as DetailedSearchCondition['field'];
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
-    navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    const params = new URLSearchParams({ q: query.trim() });
+    if (searchScope !== 'all') params.set('field', searchScope);
+    navigate(`/search?${params.toString()}`);
+  };
+
+  // 상세검색 팝업 열 때 검색바 주제어를 첫 조건으로 seed
+  const openDetailedSearch = () => {
+    setConditions(prev => {
+      const first: DetailedSearchCondition = { field: scopeToField(searchScope), keyword: query.trim(), operator: 'AND' };
+      if (prev.length === 0) return [first];
+      if (!prev[0].keyword.trim() && query.trim()) return [first, ...prev.slice(1)];
+      return prev;
+    });
+    setShowDetailedSearch(true);
   };
 
   const addCondition = () => {
@@ -586,7 +604,7 @@ export default function HomePage() {
                   {/* 상세검색 토글 (three-dots) */}
                   <button
                     type="button"
-                    onClick={() => setShowDetailedSearch(v => !v)}
+                    onClick={() => showDetailedSearch ? setShowDetailedSearch(false) : openDetailedSearch()}
                     title="상세 검색"
                     style={{
                       width: 32,
@@ -667,7 +685,7 @@ export default function HomePage() {
                           <option value="author">저자</option>
                           <option value="abstract">초록</option>
                           <option value="keyword">키워드</option>
-                          <option value="full_text">전문</option>
+                          <option value="full_text">본문</option>
                         </select>
                         <input
                           type="text" value={cond.keyword}
