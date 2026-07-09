@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { postAnalyze, AnalyzeResponse, AiApiError } from '@/api/ai';
+import { useSessionState } from '@/hooks/useSessionState';
 
 function buildChunkMap(data: AnalyzeResponse) {
   const chunkToPub = new Map(
@@ -40,7 +41,9 @@ function RefsPanel({ data }: { data: AnalyzeResponse }) {
         {data.references.map((ref, i) => (
           <li key={ref.publication_id} className="flex gap-2 text-[12px] text-[#464C53]">
             <span className="shrink-0 font-medium text-[#256EF4]">[{i + 1}]</span>
-            <span>{ref.title}</span>
+            <Link to={`/papers/${ref.publication_id}`} className="hover:underline hover:text-[#256EF4]">
+              {ref.title}
+            </Link>
           </li>
         ))}
       </ol>
@@ -49,10 +52,10 @@ function RefsPanel({ data }: { data: AnalyzeResponse }) {
 }
 
 export function AiSearchSidebar() {
-  const [open, setOpen] = useState(true);
-  const [question, setQuestion] = useState('');
-  const [submittedQuestion, setSubmittedQuestion] = useState('');
-  const [refsExpanded, setRefsExpanded] = useState(false);
+  const [open, setOpen] = useSessionState('ai_sidebar_open', true);
+  const [question, setQuestion] = useSessionState('ai_sidebar_question', '');
+  const [submittedQuestion, setSubmittedQuestion] = useSessionState('ai_sidebar_submitted', '');
+  const [refsExpanded, setRefsExpanded] = useSessionState('ai_sidebar_refs_expanded', false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['ai-sidebar-analyze', submittedQuestion],

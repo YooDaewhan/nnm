@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAuthenticated } from '@/lib/auth';
 import { searchOpensearchDetailed, searchOpensearchText, DetailedSearchCondition } from '@/api/search';
@@ -13,6 +13,7 @@ import { SearchPagination } from '@/components/search/SearchPagination';
 import { SearchResultCard } from '@/components/search/SearchResultCard';
 import { useSearchSubmit } from '@/hooks/useSearchSubmit';
 import { useBulkActions } from '@/hooks/useBulkActions';
+import { useSessionState } from '@/hooks/useSessionState';
 import { AiSearchSidebar } from '@/components/search/AiSearchSidebar';
 import { postAnalyze, AiApiError } from '@/api/ai';
 
@@ -39,10 +40,10 @@ function OpenSearchTextContent() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [mobileWithin, setMobileWithin] = useState('');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [mobileAiOpen, setMobileAiOpen] = useState(false);
-  const [mobileAiQuestion, setMobileAiQuestion] = useState('');
-  const [mobileAiSubmitted, setMobileAiSubmitted] = useState('');
-  const [mobileAiRefsExpanded, setMobileAiRefsExpanded] = useState(false);
+  const [mobileAiOpen, setMobileAiOpen] = useSessionState('ai_mobile_open', false);
+  const [mobileAiQuestion, setMobileAiQuestion] = useSessionState('ai_mobile_question', '');
+  const [mobileAiSubmitted, setMobileAiSubmitted] = useSessionState('ai_mobile_submitted', '');
+  const [mobileAiRefsExpanded, setMobileAiRefsExpanded] = useSessionState('ai_mobile_refs_expanded', false);
 
   const { data: mobileAiData, isLoading: mobileAiLoading, error: mobileAiError } = useQuery({
     queryKey: ['ai-mobile-analyze', mobileAiSubmitted],
@@ -447,7 +448,14 @@ function OpenSearchTextContent() {
                             {mobileAiData.references.map((ref, i) => (
                               <li key={ref.publication_id} style={{ display: 'flex', gap: 6, fontSize: 12, color: '#464C53', fontFamily: "'Pretendard GOV', sans-serif" }}>
                                 <span style={{ color: '#256EF4', fontWeight: 600, flexShrink: 0 }}>[{i + 1}]</span>
-                                <span>{ref.title}</span>
+                                <Link
+                                  to={`/papers/${ref.publication_id}`}
+                                  style={{ color: '#464C53', textDecoration: 'none' }}
+                                  onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+                                  onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+                                >
+                                  {ref.title}
+                                </Link>
                               </li>
                             ))}
                           </ol>

@@ -8,9 +8,14 @@ export interface AiChunk {
 }
 
 export interface AiReference {
+  ref: number;
   publication_id: string;
   title: string;
   doi: string | null;
+  url: string | null;
+  source: string | null;
+  excerpt: string | null;
+  score: number;
 }
 
 export interface AiUsage {

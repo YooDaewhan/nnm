@@ -157,7 +157,7 @@ async function handleVectorAsk(request, env) {
 
     const authHeader = request.headers.get('Authorization');
 
-    const backendRes = await fetch(`${API_BASE}/ai/ask`, {
+    const backendRes = await fetch(`${API_BASE}/v1/ai/ask`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
