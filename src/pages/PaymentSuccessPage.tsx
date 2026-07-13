@@ -130,7 +130,7 @@ function PaymentSuccessContent() {
           status: result.payment.status,
           totalAmount: result.payment.total_amount,
           virtualAccount: result.payment.virtual_account,
-          items: result.order.items || [],
+          items: (result.order.metadata as any)?.items || result.order.items || [],
         });
 
         const pendingIds = sessionStorage.getItem('pendingCartItemIds');
@@ -276,15 +276,15 @@ function PaymentSuccessContent() {
                         </>
                       )}
                     </div>
-                    {(item.publisher || item.journalName) && (
+                    {(item.publisher || item.journalName || item.journal) && (
                       <div className="flex items-center gap-1 flex-wrap">
                         {item.publisher && <span className="text-sm sm:text-[15px] text-[#464C53]">{item.publisher}</span>}
-                        {item.journalName && (
+                        {(item.journalName || item.journal) && (
                           <>
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                               <path d="M6 12L10 8L6 4" stroke="#CDD1D5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            <span className="text-sm sm:text-[15px] text-[#464C53]">{item.journalName}</span>
+                            <span className="text-sm sm:text-[15px] text-[#464C53]">{item.journalName || item.journal}</span>
                           </>
                         )}
                       </div>

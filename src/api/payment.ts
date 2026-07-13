@@ -29,7 +29,7 @@ export interface Order {
   metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
-  items?: { title: string; authors?: string; publisher?: string; journalName?: string; publishDate?: string; grade?: string; price?: number; publication_id?: string }[];
+  items?: { title: string; authors?: string; publisher?: string; journal?: string; journalName?: string; publishDate?: string; grade?: string; price?: number; publication_id?: string }[];
 }
 
 export interface CreateOrderResponse {
@@ -63,7 +63,7 @@ export interface Payment {
 // 결제 확인 응답 타입
 export interface ConfirmPaymentResponse {
   success: boolean;
-  order: Pick<Order, 'id' | 'order_id' | 'order_name' | 'amount' | 'status' | 'items'>;
+  order: Pick<Order, 'id' | 'order_id' | 'order_name' | 'amount' | 'status' | 'items' | 'metadata'>;
   payment: Payment;
 }
 

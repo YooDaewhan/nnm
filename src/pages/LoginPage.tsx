@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated, saveToken, saveRefreshToken } from '../lib/auth';
 import { postApiAuthLogin, type PostApiAuthLoginBody } from '../api/generated';
 import { startSocialLogin, type SocialProvider } from '../api/social-auth';
+import { forgotPassword } from '../api/auth';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -20,6 +21,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotMessage, setForgotMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated()) navigate('/');
@@ -57,6 +63,31 @@ export default function LoginPage() {
     }
   };
 
+  const openForgotPasswordModal = () => {
+    setForgotEmail('');
+    setForgotError(null);
+    setForgotMessage(null);
+    setShowForgotPasswordModal(true);
+  };
+
+  const closeForgotPasswordModal = () => {
+    setShowForgotPasswordModal(false);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError(null);
+    try {
+      const data = await forgotPassword(forgotEmail);
+      setForgotMessage(data.message || '입력하신 이메일로 임시 비밀번호를 발송했습니다. 이메일을 확인해주세요.');
+    } catch (err) {
+      setForgotError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   const handleSocialLogin = (provider: SocialProvider) => {
     setLoading(provider);
     setError(null);
@@ -79,6 +110,49 @@ export default function LoginPage() {
     <div className="bg-[#FAFAFC] min-h-screen flex justify-center items-start py-0 sm:py-10">
       {showTermsModal && modalContent('약관 및 정책', () => setShowTermsModal(false))}
       {showSupportModal && modalContent('고객센터', () => setShowSupportModal(false))}
+      {showForgotPasswordModal && (
+        <div onClick={closeForgotPasswordModal} className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] px-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl p-8 w-full max-w-md flex flex-col gap-6">
+            <span className="font-bold text-xl text-[#1E2124]" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>비밀번호 찾기</span>
+            {forgotMessage ? (
+              <>
+                <span className="text-base text-[#464C53] text-center py-10 whitespace-pre-line" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>{forgotMessage}</span>
+                <button type="button" onClick={closeForgotPasswordModal} className="h-12 bg-[#039BE5] rounded-lg border-none cursor-pointer text-white text-lg" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>닫기</button>
+              </>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="flex flex-col gap-6">
+                <span className="text-sm text-[#464C53]" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>
+                  가입하신 이메일로 임시 비밀번호를 발송합니다. 임시 비밀번호로 로그인한 뒤 반드시 비밀번호를 변경해주세요.
+                </span>
+                <div className="flex flex-row items-center gap-2 px-4 py-3 bg-[#F4F5F6] border border-[#CDD1D5] rounded-md">
+                  <input
+                    type="email"
+                    required
+                    autoFocus
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="이메일"
+                    disabled={forgotLoading}
+                    className="flex-1 bg-transparent border-none outline-none text-base text-[#1E2124]"
+                    style={{ fontFamily: 'Pretendard GOV, sans-serif' }}
+                  />
+                </div>
+                {forgotError && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm whitespace-pre-line">
+                    {forgotError}
+                  </div>
+                )}
+                <div className="flex flex-row gap-3">
+                  <button type="button" onClick={closeForgotPasswordModal} disabled={forgotLoading} className="flex-1 h-12 bg-[#F4F5F6] rounded-lg border-none cursor-pointer text-[#464C53] text-lg disabled:opacity-50" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>취소</button>
+                  <button type="submit" disabled={forgotLoading} className="flex-1 h-12 bg-[#039BE5] rounded-lg border-none cursor-pointer text-white text-lg disabled:opacity-50" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>
+                    {forgotLoading ? '전송 중...' : '임시 비밀번호 발급'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="w-full sm:w-[600px] flex flex-col gap-8 px-5 py-8 sm:px-10 sm:py-10 bg-white sm:rounded-none min-h-screen sm:min-h-0">
         {/* 로고 */}
@@ -137,7 +211,7 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              {/* 자동로그인 / 이메일·비밀번호 찾기 */}
+              {/* 자동로그인 / 비밀번호 찾기 */}
               <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-row items-center gap-1">
                   <input
@@ -150,8 +224,7 @@ export default function LoginPage() {
                   <label htmlFor="remember" className="text-sm sm:text-[15px] leading-relaxed text-[#464C53] cursor-pointer" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>자동 로그인</label>
                 </div>
                 <div className="flex flex-row items-center gap-3 sm:gap-4">
-                  <button type="button" className="bg-transparent border-none cursor-pointer px-0.5 text-sm sm:text-[15px] leading-relaxed text-[#464C53]" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>이메일 찾기</button>
-                  <button type="button" className="bg-transparent border-none cursor-pointer px-0.5 text-sm sm:text-[15px] leading-relaxed text-[#464C53]" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>비밀번호 찾기</button>
+                  <button type="button" onClick={openForgotPasswordModal} className="bg-transparent border-none cursor-pointer px-0.5 text-sm sm:text-[15px] leading-relaxed text-[#464C53]" style={{ fontFamily: 'Pretendard GOV, sans-serif' }}>비밀번호 찾기</button>
                 </div>
               </div>
             </div>

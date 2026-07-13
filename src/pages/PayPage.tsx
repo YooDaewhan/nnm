@@ -177,6 +177,9 @@ function PayPageContent() {
             title: item.title,
             price: item.unit_price * item.quantity,
             publication_id: item.publication_id,
+            authors: item.authors?.join(', '),
+            publisher: item.publisher ?? undefined,
+            journal: item.journal ?? undefined,
           })),
         },
       });

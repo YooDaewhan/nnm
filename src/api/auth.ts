@@ -203,6 +203,32 @@ export const changePassword = async (currentPassword: string, newPassword: strin
 };
 
 /**
+ * 임시 비밀번호 발급을 요청합니다. 이메일 열거 방지를 위해 가입 여부와 무관하게 항상 동일한 200 응답을 반환합니다.
+ */
+export const forgotPassword = async (email: string) => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/password/forgot`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json();
+
+  if (response.status === 429) {
+    throw new Error(data.message || '요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || '임시 비밀번호 발급 요청에 실패했습니다.');
+  }
+
+  return data;
+};
+
+/**
  * 소셜 계정 연동을 해제합니다.
  */
 export const disconnectSocialAccount = async (provider: 'google' | 'naver' | 'kakao') => {
