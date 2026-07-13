@@ -94,7 +94,6 @@ function PayPageContent() {
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [phoneVerifyModalOpen, setPhoneVerifyModalOpen] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
-  const [phoneCheckLoading, setPhoneCheckLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated()) { navigate('/login?redirect=/pay'); return; }
@@ -107,8 +106,7 @@ function PayPageContent() {
           setPhoneVerified(true);
         }
       })
-      .catch(() => { /* 실패해도 인증 모달로 fallback */ })
-      .finally(() => setPhoneCheckLoading(false));
+      .catch(() => { /* 실패해도 인증 모달로 fallback */ });
   }, [navigate]);
 
   useEffect(() => {

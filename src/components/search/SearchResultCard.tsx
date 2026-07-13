@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { OpenSearchTextResultItem, fetchAiSummary } from '@/api/search';
+import { OpenSearchTextResultItem } from '@/api/search';
 import { getPdfFull, PdfApiError } from '@/api/pdf';
 import { PdfFullViewerModal } from '../PdfFullViewerModal';
 import { addScrapBatch, deleteScrapBatch } from '@/api/scraps';
@@ -60,10 +60,6 @@ export function SearchResultCard({
   const [citeCopied, setCiteCopied] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [aiSummaryExpanded, setAiSummaryExpanded] = useState(false);
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
-  const [aiSummaryError, setAiSummaryError] = useState(false);
 
   const [localScraped, setLocalScraped] = useState(isScraped);
   const [localInCart, setLocalInCart] = useState(isInCart);
@@ -195,26 +191,6 @@ export function SearchResultCard({
   }, [citeTexts]);
 
   const paperUrl = `/papers/${result.id}`;
-
-  const handleAiSummary = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (aiSummaryExpanded) {
-      setAiSummaryExpanded(false);
-      return;
-    }
-    setAiSummaryExpanded(true);
-    if (aiSummary !== null) return;
-    setAiSummaryLoading(true);
-    setAiSummaryError(false);
-    try {
-      const summary = await fetchAiSummary(result.id);
-      setAiSummary(summary);
-    } catch {
-      setAiSummaryError(true);
-    } finally {
-      setAiSummaryLoading(false);
-    }
-  }, [aiSummaryExpanded, aiSummary, result.title]);
 
   const handleShareLink = (e: React.MouseEvent) => {
     e.stopPropagation();

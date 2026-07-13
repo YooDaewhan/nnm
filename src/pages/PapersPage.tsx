@@ -162,7 +162,6 @@ function PaperDetailContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedIn, paper]);
 
-  const handleShareToggle = () => setShareMenuOpen(prev => !prev);
 
   const handleShareLink = () => {
     const url = window.location.href;
@@ -362,9 +361,6 @@ function PaperDetailContent() {
   }, [paper]);
 
 
-  const handleScrollToAbstract = () => {
-    abstractRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
 
   const CITE_FORMATS = [
     { key: 'apa', label: 'APA(7th ed.)' },

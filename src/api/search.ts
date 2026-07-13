@@ -1036,23 +1036,6 @@ export type AiSearchResponse = {
   [key: string]: unknown;
 };
 
-export async function fetchAiSummary(paperId: string): Promise<string> {
-  const accessToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-  const res = await fetch(`/api/ai/papers/${paperId}/summary`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
-    },
-  });
-  if (!res.ok) throw new Error('AI 요약을 불러오는데 실패했습니다.');
-  const data = await res.json();
-  const summary = data.summary ?? data.data?.summary;
-  if (!summary) throw new Error('AI 요약 결과가 없습니다.');
-  return summary;
-}
-
 // ===== OpenSearch 하이브리드 검색 API =====
 
 export type PostApiSearchOpensearchHybridBody = {

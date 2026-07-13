@@ -4,7 +4,8 @@
       "Bash(npm run:*)",
       "Bash(find 'c:\\\\Users\\\\iok11\\\\yoo\\\\backup' -name \"a.*.php\" -type f 2>/dev/null | sort)",
       "Read(//c/Users/iok11/yoo/backup/**)",
-      "mcp__claude-in-chrome__tabs_context_mcp"
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "Bash(grep -E '\\\\.\\(js|jsx|ts|tsx|vue|css|scss\\)$')"
     ]
   }
 }
