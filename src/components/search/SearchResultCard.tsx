@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { OpenSearchTextResultItem } from '@/api/search';
 import { getPdfFull, PdfApiError } from '@/api/pdf';
+import { API_BASE_URL } from '@/api/client';
 import { PdfFullViewerModal } from '../PdfFullViewerModal';
 import { addScrapBatch, deleteScrapBatch } from '@/api/scraps';
 import { addToCart, removeFromCartByPublicationId } from '@/api/cart';
@@ -142,7 +143,6 @@ export function SearchResultCard({
   const fetchCitation = useCallback(async (fmt: string) => {
     setCiteLoadings(prev => ({ ...prev, [fmt]: true }));
     try {
-      const { API_BASE_URL } = await import('../../api/client');
       const res = await fetch(`${API_BASE_URL}/api/citations/${result.id}?format=${fmt}`, {
         headers: { 'Accept': 'application/json' },
       });

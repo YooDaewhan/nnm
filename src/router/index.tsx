@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { createBrowserRouter, useRouteError, isRouteErrorResponse } from 'react-router-dom';
 import RootLayout from '@/layouts/RootLayout';
 
@@ -24,27 +25,28 @@ function ErrorPage() {
     </div>
   );
 }
-import HomePage from '@/pages/HomePage';
-import SearchPage from '@/pages/SearchPage';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import RegisterCompletePage from '@/pages/RegisterCompletePage';
-import AuthCallbackPage from '@/pages/AuthCallbackPage';
-import CartPage from '@/pages/CartPage';
-import PayPage from '@/pages/PayPage';
-import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
-import PaymentFailPage from '@/pages/PaymentFailPage';
-import LibraryPage from '@/pages/LibraryPage';
-import PapersPage from '@/pages/PapersPage';
-import ProvidersPage from '@/pages/ProvidersPage';
-import ProvidersDetailPage from '@/pages/ProvidersDetailPage';
-import JournalPage from '@/pages/JournalPage';
-import MyPageInfoPage from '@/pages/mypage/MyPageInfoPage';
-import MyPageOrdersPage from '@/pages/mypage/MyPageOrdersPage';
-import MyPageLibraryPage from '@/pages/mypage/MyPageLibraryPage';
-import MyPageRecentPage from '@/pages/mypage/MyPageRecentPage';
-import MyPageScrapPage from '@/pages/mypage/MyPageScrapPage';
-import MyPageQnaPage from '@/pages/mypage/MyPageQnaPage';
+// 라우트별 코드 스플리팅 — 각 페이지는 방문 시점에 로드됨
+const HomePage = lazy(() => import('@/pages/HomePage'));
+const SearchPage = lazy(() => import('@/pages/SearchPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const RegisterCompletePage = lazy(() => import('@/pages/RegisterCompletePage'));
+const AuthCallbackPage = lazy(() => import('@/pages/AuthCallbackPage'));
+const CartPage = lazy(() => import('@/pages/CartPage'));
+const PayPage = lazy(() => import('@/pages/PayPage'));
+const PaymentSuccessPage = lazy(() => import('@/pages/PaymentSuccessPage'));
+const PaymentFailPage = lazy(() => import('@/pages/PaymentFailPage'));
+const LibraryPage = lazy(() => import('@/pages/LibraryPage'));
+const PapersPage = lazy(() => import('@/pages/PapersPage'));
+const ProvidersPage = lazy(() => import('@/pages/ProvidersPage'));
+const ProvidersDetailPage = lazy(() => import('@/pages/ProvidersDetailPage'));
+const JournalPage = lazy(() => import('@/pages/JournalPage'));
+const MyPageInfoPage = lazy(() => import('@/pages/mypage/MyPageInfoPage'));
+const MyPageOrdersPage = lazy(() => import('@/pages/mypage/MyPageOrdersPage'));
+const MyPageLibraryPage = lazy(() => import('@/pages/mypage/MyPageLibraryPage'));
+const MyPageRecentPage = lazy(() => import('@/pages/mypage/MyPageRecentPage'));
+const MyPageScrapPage = lazy(() => import('@/pages/mypage/MyPageScrapPage'));
+const MyPageQnaPage = lazy(() => import('@/pages/mypage/MyPageQnaPage'));
 
 export const router = createBrowserRouter([
   {

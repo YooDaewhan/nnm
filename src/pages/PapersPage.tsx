@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPaperDetail, PaperDetail } from '../api/search';
 import { API_BASE_URL, fixImageUrl } from '../api/client';
+import { getPdfFull } from '../api/pdf';
 import { PdfPreviewModal } from '../components/PdfPreviewModal';
 import { PdfFullViewerModal } from '../components/PdfFullViewerModal';
 import { addToCart, removeFromCartByPublicationId } from '../api/cart';
@@ -335,7 +336,6 @@ function PaperDetailContent() {
     if (!paper) return;
     setDownloading(true);
     try {
-      const { getPdfFull } = await import('../api/pdf');
       const { url } = await getPdfFull(paper.id);
       const S3_HOST = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
       const h = window.location.hostname;
@@ -372,7 +372,6 @@ function PaperDetailContent() {
     if (!paper) return;
     setCiteLoadings(prev => ({ ...prev, [fmt]: true }));
     try {
-      const { API_BASE_URL } = await import('../api/client');
       const res = await fetch(`${API_BASE_URL}/api/citations/${paper.id}?format=${fmt}`, {
         headers: { 'Accept': 'application/json' },
       });

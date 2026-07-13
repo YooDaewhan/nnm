@@ -49,5 +49,15 @@ export default defineConfig({
     outDir: 'dist',
     // 청크 사이즈 경고 기준 올리기
     chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // 자주 안 바뀌는 벤더는 별도 청크로 → 앱 코드만 배포해도 브라우저 캐시 유지
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'query-vendor': ['@tanstack/react-query'],
+          'pdf-vendor': ['react-pdf'],
+        },
+      },
+    },
   },
 });
