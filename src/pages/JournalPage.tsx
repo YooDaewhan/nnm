@@ -64,9 +64,6 @@ export default function JournalPage() {
   const nameParam = useMemo(() => new URLSearchParams(location.search).get('name'), [location.search]);
   const validId = id && id !== '0' && id !== 'undefined' && id !== 'null' ? id : undefined;
   const isLoggedIn = isAuthenticated();
-  const [venue, setVenue] = useState<VenueDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [itemsPerPage, setItemsPerPage] = useState(4);
   const [detailedSort, setDetailedSort] = useState<'relevance' | 'latest'>('latest');
@@ -198,44 +195,33 @@ export default function JournalPage() {
     executeSearch(lastSearchParams.keyword, lastSearchParams.yearFrom, lastSearchParams.yearTo, 1, undefined, size);
   };
 
-  useEffect(() => {
-    if (!validId && !nameParam) {
-      setLoading(false);
-      setError('404');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    const token = localStorage.getItem('access_token');
-    const headers: HeadersInit = {
-      Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-    const fetchByName = (name: string) => {
-      fetch(`${API_BASE_URL}/api/venues?name=${encodeURIComponent(name)}&per_page=100`, { headers })
-        .then((res) => { if (!res.ok) throw new Error(`${res.status}`); return res.json(); })
-        .then((data) => {
-          const list: VenueDetail[] = Array.isArray(data) ? data : (data.data ?? []);
-          const match = list.find((v: VenueDetail) => v.name?.toLowerCase() === name.toLowerCase());
-          if (match) setVenue(match); else setError('404');
-        })
-        .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
-    };
-    if (validId) {
-      fetch(`${API_BASE_URL}/api/venues/${validId}`, { headers })
-        .then(async (res) => {
-          if (res.status === 404 && nameParam) { fetchByName(nameParam); return; }
-          if (!res.ok) throw new Error(`${res.status}`);
-          const data = await res.json();
-          setVenue(data);
-          setLoading(false);
-        })
-        .catch((e) => { setError(e.message); setLoading(false); });
-    } else if (nameParam) {
-      fetchByName(nameParam);
-    }
-  }, [validId, nameParam]);
+  const { data: venue, isLoading: loading, error } = useQuery<VenueDetail, Error>({
+    queryKey: ['venue', validId, nameParam],
+    enabled: !!(validId || nameParam),
+    queryFn: async () => {
+      const token = localStorage.getItem('access_token');
+      const headers: HeadersInit = {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+      const fetchByName = async (name: string): Promise<VenueDetail> => {
+        const res = await fetch(`${API_BASE_URL}/api/venues?name=${encodeURIComponent(name)}&per_page=100`, { headers });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data = await res.json();
+        const list: VenueDetail[] = Array.isArray(data) ? data : (data.data ?? []);
+        const match = list.find((v: VenueDetail) => v.name?.toLowerCase() === name.toLowerCase());
+        if (!match) throw new Error('404');
+        return match;
+      };
+      if (validId) {
+        const res = await fetch(`${API_BASE_URL}/api/venues/${validId}`, { headers });
+        if (res.status === 404 && nameParam) return fetchByName(nameParam);
+        if (!res.ok) throw new Error(`${res.status}`);
+        return res.json();
+      }
+      return fetchByName(nameParam!);
+    },
+  });
 
   useEffect(() => {
     if (!venue) return;
@@ -252,7 +238,7 @@ export default function JournalPage() {
   }
 
   if (error || !venue) {
-    const is404 = error === '404';
+    const is404 = error?.message === '404' || (!validId && !nameParam);
     return (
       <div className="flex flex-col items-center justify-center w-full" style={{ minHeight: 500, padding: '80px 16px' }}>
         <div className="flex flex-col items-center text-center" style={{ maxWidth: 480 }}>
@@ -314,7 +300,7 @@ export default function JournalPage() {
     cursor: 'pointer',
   };
 
-  const CoverImg = ({ width, height }: { width: number; height: number }) => (
+  const renderCover = (width: number, height: number) => (
     <div style={{ flexShrink: 0, width, height, borderRadius: 6, overflow: 'hidden', background: '#F4F5F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {venue?.cover_url ? (
         <img
@@ -335,7 +321,7 @@ export default function JournalPage() {
     </div>
   );
 
-  const ResultList = () => (
+  const resultList = (
     <>
       {searchLoading ? (
         <div className="flex justify-center py-8">
@@ -409,7 +395,7 @@ export default function JournalPage() {
             <span style={{ textDecoration: 'underline', padding: '0 4px', fontFamily: "'Pretendard GOV', sans-serif", fontSize: 15, color: '#F4F5F6' }}>저널 메인</span>
           </nav>
           <div className="flex items-start" style={{ gap: 60 }}>
-            <CoverImg width={160} height={221} />
+            {renderCover(160, 221)}
             <div className="flex flex-col flex-1" style={{ gap: 32 }}>
               <h1 style={{ fontFamily: "'Pretendard GOV', sans-serif", fontWeight: 700, fontSize: 32, lineHeight: '150%', letterSpacing: '1px', color: '#E6E8EA', margin: 0 }}>{venue.name}</h1>
               <div style={{ display: 'grid', gridTemplateColumns: '334px 334px', rowGap: 2, fontFamily: "'Pretendard GOV', sans-serif", fontSize: 15, lineHeight: '150%' }}>
@@ -432,7 +418,7 @@ export default function JournalPage() {
         <div className="flex md:hidden flex-col" style={{ gap: 16, padding: '0 16px' }}>
           {/* 커버 + 정보 */}
           <div className="flex items-start" style={{ gap: 24 }}>
-            <CoverImg width={100} height={138} />
+            {renderCover(100, 138)}
             <div className="flex flex-col flex-1" style={{ gap: 16, minWidth: 0 }}>
               <div>
                 <h1 style={{ fontFamily: "'Pretendard GOV', sans-serif", fontWeight: 700, fontSize: 24, lineHeight: '150%', color: '#E6E8EA', margin: 0, wordBreak: 'keep-all' }}>{venue.name}</h1>
@@ -585,7 +571,7 @@ export default function JournalPage() {
                 </div>
               </div>
 
-              <ResultList />
+              {resultList}
             </div>
           </div>
         </div>
