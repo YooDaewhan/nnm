@@ -1,6 +1,8 @@
 import { lazy } from 'react';
 import { createBrowserRouter, useRouteError, isRouteErrorResponse } from 'react-router-dom';
 import RootLayout from '@/layouts/RootLayout';
+// 랜딩(첫 진입) 라우트는 정적 import — 메인 번들에 포함해 lazy 청크 직렬 왕복 제거
+import HomePage from '@/pages/HomePage';
 
 function ErrorPage() {
   const error = useRouteError();
@@ -25,8 +27,7 @@ function ErrorPage() {
     </div>
   );
 }
-// 라우트별 코드 스플리팅 — 각 페이지는 방문 시점에 로드됨
-const HomePage = lazy(() => import('@/pages/HomePage'));
+// 라우트별 코드 스플리팅 — 각 페이지는 방문 시점에 로드됨 (HomePage 제외: 위에서 정적 import)
 const SearchPage = lazy(() => import('@/pages/SearchPage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
