@@ -41,7 +41,7 @@ export default function LoginPage() {
       if (response.status === 200 && 'access_token' in response.data) {
         const data = response.data;
         if (data.access_token) {
-          saveToken(data.access_token);
+          saveToken(data.access_token, rememberEmail);
           const refresh = (data as any).refresh_token;
           if (refresh) saveRefreshToken(refresh);
           navigate(from, { replace: true });

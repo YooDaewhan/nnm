@@ -279,6 +279,18 @@ export default function HomePage() {
     }
   }, [categoryData, selectedTab]);
 
+  // 검색 페이지 청크를 유휴 시간에 미리 받아둔다 — 라우터 lazy()와 동일 경로라 같은 청크. 검색 진입 시 즉시 렌더.
+  useEffect(() => {
+    const prefetch = () => { import('@/pages/SearchPage'); };
+    const ric = window.requestIdleCallback;
+    if (ric) {
+      const id = ric(prefetch);
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(prefetch, 1500);
+    return () => clearTimeout(t);
+  }, []);
+
   const { data: featuredVenues = [], isLoading: venuesLoading } = useQuery<FeaturedVenue[]>({
     queryKey: FEATURED_VENUES_KEY,
     queryFn: fetchFeaturedVenues,

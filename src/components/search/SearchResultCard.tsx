@@ -117,8 +117,12 @@ export function SearchResultCard({
     setDownloading(true);
     try {
       const { url: pdfUrl } = await getPdfFull(result.id);
-      const proxiedUrl = pdfUrl.replace('https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com', '/s3-proxy');
-      const res = await fetch(proxiedUrl);
+      const S3_HOST = 'https://newnonmun-archive.s3.ap-northeast-2.amazonaws.com';
+      const h = window.location.hostname;
+      const useProxy = h === 'localhost' || h === '127.0.0.1'
+        || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+      const fetchUrl = useProxy ? pdfUrl.replace(S3_HOST, '/s3-proxy') : pdfUrl;
+      const res = await fetch(fetchUrl);
       if (!res.ok) throw new Error('다운로드 실패');
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
