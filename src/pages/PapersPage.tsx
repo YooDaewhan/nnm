@@ -695,13 +695,18 @@ function PaperDetailContent() {
                       </MetaRow>
                     )}
 
-                    {/* 발행년월 : YYYY.MM */}
-                    {paper.published_at && (
+                    {/* 발행년월 : YYYY.MM (issue의 year/month 우선 사용, 없으면 published_at) */}
+                    {(paper.issue?.year || paper.published_at) && (
                       <MetaRow label="발행연도">
                         <div className='meta-article'>
                           <span className="meta-value">
                             {(() => {
-                              const d = new Date(paper.published_at);
+                              if (paper.issue?.year) {
+                                return paper.issue.month
+                                  ? `${paper.issue.year}.${String(paper.issue.month).padStart(2, '0')}`
+                                  : `${paper.issue.year}`;
+                              }
+                              const d = new Date(paper.published_at!);
                               return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
                             })()}
                           </span>

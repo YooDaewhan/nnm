@@ -361,6 +361,7 @@ export type PaperIssue = {
   id: string;
   label: string;
   year: number;
+  month?: number | null;
 };
 
 export type PaperVenue = {
